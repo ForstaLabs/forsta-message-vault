@@ -1,10 +1,6 @@
 const WebServer = require('./web_server');
 const MessageVault = require('./message_vault');
 const process = require('process');
-const relay = require('librelay');
-
-//relay.storage.setBacking('redis');
-//relay.storage.setLabel('superman');
 
 
 let _rejectCount = 0;
@@ -19,7 +15,7 @@ process.on('unhandledRejection', ev => {
 
 async function run() {
     const msgVault = new MessageVault();
-    await msgVault.start();
+    //await msgVault.start();
     const webServer = new WebServer();
     await webServer.start();
 }

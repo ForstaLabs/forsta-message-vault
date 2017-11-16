@@ -2,9 +2,6 @@
 
 'use strict';
 
-const axios = require('axios');
-const http = require('http');
-const https = require('https');
 const relay = require('librelay');
 
 
