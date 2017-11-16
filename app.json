@@ -1,0 +1,7 @@
+{
+    "name": "Forsta Vault",
+    "description": "Message Vault for the Forsta messaging platform.",
+    "repository": "https://github.com/ForstaLabs/vault.git",
+    "logo": "https://github.com/ForstaLabs/vault/master/tree/logo.png",
+    "keywords": ["forsta", "valult", "e-discovery"]
+}
