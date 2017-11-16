@@ -3,5 +3,7 @@
     "description": "Message Vault for the Forsta messaging platform.",
     "repository": "https://github.com/ForstaLabs/vault.git",
     "logo": "https://github.com/ForstaLabs/vault/raw/master/logo.png?v=232424",
-    "keywords": ["forsta", "valult", "e-discovery"]
+    "keywords": ["forsta", "valult", "e-discovery"],
+    "website": "https://forsta.io",
+    "success_url": "https://api.forsta.io/v1/provision/vault"
 }
