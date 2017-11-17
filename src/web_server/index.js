@@ -22,6 +22,12 @@ class WebServer {
         this.app.use('/v1/', (new V1Handler(this)).router);
         this.app.use('/static/', express.static(path.join(root, 'static'), {strict: true}));
         this.app.get('/', (req, res) => res.sendFile('static/index.html', {root}));
+        this.app.get('/env.js', (req, res) => {
+            res.setHeader('Content-Type', 'application/javascript');
+            res.send(`self.F = self.F || {}; F.env = ${JSON.stringify({
+                AUTH_TAG: process.env.AUTH_TAG
+            })};\n`);
+        });
     }
 
     async start() {
