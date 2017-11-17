@@ -5,9 +5,6 @@
     "logo": "https://github.com/ForstaLabs/vault/raw/master/static/images/logo.png",
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
-    "scripts": {
-        "postdeploy": "env > ./.postdeploy_env"
-    },
     "env": {
         "AUTH_TAG": {
             "required": false,
