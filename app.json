@@ -1,6 +1,6 @@
 {
     "name": "Forsta Vault",
-    "description": "Forsta Vault lets you safely manage your message retention and security policies from your own data center our the cloud provider of your choosing.",
+    "description": "Forsta Vault lets you safely manage your message retention and security policies from your own data center or cloud provider.",
     "repository": "https://github.com/ForstaLabs/vault.git",
     "logo": "https://github.com/ForstaLabs/vault/raw/master/static/images/logo.png",
     "keywords": ["forsta", "valult", "e-discovery"],
