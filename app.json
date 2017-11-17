@@ -7,5 +7,11 @@
     "website": "https://forsta.io",
     "scripts": {
         "postdeploy": "env > ./.postdeploy_env"
+    },
+    "env": {
+        "AUTH_TAG": {
+            "required": false,
+            "description": "The username tag to authenticate this vault service with.  E.g. @my.name:myorg"
+        }
     }
 }
