@@ -5,11 +5,6 @@
 const relay = require('librelay');
 
 
-async function sleep(seconds) {
-    await new Promise(done => setTimeout(done, seconds * 1000));
-}
-
-
 class MessageVault {
 
     async start() {

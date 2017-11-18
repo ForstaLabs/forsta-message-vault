@@ -14,7 +14,7 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
-    const msgVault = new MessageVault();
+    //const msgVault = new MessageVault();
     //await msgVault.start();
     const webServer = new WebServer();
     await webServer.start();

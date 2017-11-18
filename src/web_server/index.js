@@ -6,7 +6,6 @@ const morgan = require('morgan');
 const path = require('path');
 const process = require('process');
 const relay = require('librelay');
-const uuid4 = require('uuid/v4');
 
 const root = `${__dirname}/../..`;
 const port = process.env.PORT || '4096';
@@ -59,9 +58,10 @@ class V1Handler extends VersionedHandler {
 
     async onAuthPut(req, res) {
         const tag = req.params.tag;
+        console.log('tag:', tag);
         //const uuid = req.body.uuid;
         //const key = req.body.key;
-        if (!addr) {
+        if (!tag) {
             res.status(400).json({error: 'Missing URL param: tag'});
             return;
         }
