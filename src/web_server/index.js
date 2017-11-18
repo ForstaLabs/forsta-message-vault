@@ -48,59 +48,28 @@ class V1Handler extends VersionedHandler {
     constructor(server) {
         super();
         this.server = server;
-        this.router.post('/provision/request/:addr', this.onProvisionRequest.bind(this));
+        this.router.get('/auth', this.onAuthGet.bind(this));
+        this.router.put('/auth/:tag', this.onAuthPut.bind(this));
+        this.router.get('/messages', this.onMessagesGet.bind(this));
     }
 
-    async onProvisionRequest(req, res) {
-        const addr = req.params.addr;
-        const uuid = req.body.uuid;
-        const key = req.body.key;
+    async onAuthGet(req, res) {
+        res.status(200).json(await relay.hub.getAtlasConfig());
+    }
+
+    async onAuthPut(req, res) {
+        const tag = req.params.tag;
+        //const uuid = req.body.uuid;
+        //const key = req.body.key;
         if (!addr) {
-            res.status(400).json({error: 'Invalid URL param: addr'});
+            res.status(400).json({error: 'Missing URL param: tag'});
             return;
         }
-        if (!uuid) {
-            res.status(400).json({error: 'Missing required field: uuid'});
-            return;
-        }
-        if (!key) {
-            res.status(400).json({error: 'Missing required field: key'});
-            return;
-        }
-        console.info("Sending provisioning request to:", addr);
-        try {
-            const msgBus = await this.server.msgSender.sendMessageToAddrs([addr], [{
-                version: 1,
-                userAgent: 'superman',
-                messageType: 'control',
-                messageId: uuid4(),
-                sender: {
-                    userId: await relay.storage.getState('addr')
-                },
-                data: {
-                    control: 'provisionRequest',
-                    uuid,
-                    key
-                }
-            }], null, Date.now());
-            let done = false;
-            msgBus.on('error', ev => {
-                console.error('Provision send error', ev);
-                if (!done) {
-                    done = true;
-                    res.status(400).json(ev);
-                }
-            });
-            msgBus.on('sent', ev => {
-                if (!done) {
-                    done = true;
-                    res.status(200).json(ev);
-                }
-            });
-        } catch(e) {
-            console.error('Provision error:', e);
-            res.status(500).json({error: e.toString()});
-        }
+        res.status(200).json({});
+    }
+
+    async onMessagesGet(req, res) {
+        res.status(200).json(await relay.storage.get('messages'));
     }
 }
 
