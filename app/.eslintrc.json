@@ -1,0 +1,36 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 8
+    },
+    "env": {
+        "es6": true,
+        "browser": true
+    },
+    "globals": {
+      "F": true,
+      "_": true,
+      "$": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+        "quotes": "off",
+        "semi": [
+            "error",
+            "always"
+        ],
+        "no-console": "off",
+        "no-debugger": "off",
+        "no-unused-vars": [
+            "error",
+            {
+                "args": "none"
+            }
+        ],
+        "no-constant-condition": [
+            "error",
+            {
+                "checkLoops": false
+            }
+        ]
+    }
+}
