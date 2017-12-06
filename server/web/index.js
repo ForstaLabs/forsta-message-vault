@@ -28,7 +28,7 @@ class WebServer {
             res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`);
         });
         this.app.get('/install', (req, res) => res.sendFile('static/html/install.html', {root}));
-        this.app.get('/*', (req, res) => res.sendFile('static/html/main.html', {root}));
+        this.app.get('/', (req, res) => res.sendFile('static/html/main.html', {root}));
         this.app.use((req, res, next) => {
             res.status(404).json({
                 error: 'bad_request',
