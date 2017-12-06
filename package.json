@@ -16,7 +16,7 @@
   },
   "homepage": "https://github.com/ForstaLabs/vault#readme",
   "scripts": {
-    "heroku-postbuild": "make",
+    "postinstall": "SKIP_PACKAGES=1 make",
     "start": "node server"
   },
   "dependencies": {

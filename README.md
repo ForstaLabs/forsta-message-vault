@@ -3,20 +3,23 @@ Forsta Messaging Vault
 Safe data retention service for the Forsta messaging platform.
 
 
-Usage
+Quick Start
 --------
 Forsta vault is a Node.js application but it is designed to be easily
-deployable in any environment that supports Docker.  Better yet there
-are fast installation options for Heroku and AWS.
+deployable in any environment that supports Docker too.  If you want to test
+the vault in a heroku we have an App button for that too.
 
-### Heroku Deploy
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault&env[AUTH_TAG]=@username:organization)
+### Heroku Deploy _(requires a Heroku account)_
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault)
 
-### Amazon EC2 Machine Image (us-west-2)
-Coming soon!
+### Docker Cloud Deploy _(requires a Docker Cloud account)_
+[![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
+
+### Docker Locally
+    docker run -p4096:4096 forstalabs/vault
 
 
-Installation
+Expert Installation
 --------
 If you want to install and run vault by hand you can install on *NIX platform
 that has Node.js version 8 or newer installed.
@@ -25,3 +28,16 @@ that has Node.js version 8 or newer installed.
     cd vault
     npm install
     npm start
+
+
+Usage
+--------
+Once running the default port and listening address are `0.0.0.0:4096` so if you are
+running locally you can access the web interface by opening *http://localhost:4096*.
+
+You can change the listening address by setting `LISTEN_ADDR` to a valid host address
+for your server, E.g. something like `localhost` or `127.0.0.1` to only accept local
+connections.
+
+The default listening port can be changed by setting `PORT` to any valid numeric
+port, e.g. `8000`.

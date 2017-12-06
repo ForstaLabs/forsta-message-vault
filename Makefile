@@ -19,9 +19,14 @@ SRC := $(shell find app html images stylesheets -type f)
 # Building & cleaning targets
 ########################################################
 
+ifneq ($(SKIP_PACKAGES),1)
 $(PACKAGES): package.json
 	npm install
 	touch $@
+else
+$(PACKAGES):
+	touch $@
+endif
 
 $(SEMANTIC): $(shell find semantic/src -type f)
 	cd semantic && $(NPATH)/gulp build
@@ -60,7 +65,7 @@ watch:
 	$(NPATH)/grunt watch
 
 run: $(BUILD)
-	node src/server.js
+	npm start
 
 forcerun:
-	node src/server.js
+	npm start
