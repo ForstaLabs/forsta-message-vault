@@ -2,18 +2,12 @@
     "name": "Forsta Vault",
     "description": "Forsta Vault lets you safely manage your message retention and security policies from your own data center or cloud provider.",
     "repository": "https://github.com/ForstaLabs/vault.git",
-    "logo": "https://github.com/ForstaLabs/vault/raw/master/static/images/logo.png",
+    "logo": "https://github.com/ForstaLabs/vault/raw/master/images/logo.png",
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
-    "env": {
-        "LISTEN_ADDR": {
-            "required": false,
-            "description": "Default: 0.0.0.0"
-        }
-    },
     "buildpacks": [{
-        "url": "https://github.com/heroku/heroku-buildpack-nodejs"
+        "url": "heroku/ruby"
     }, {
-        "url": "https://github.com/heroku/heroku-buildpack-ruby"
+        "url": "heroku/nodejs"
     }]
 }
