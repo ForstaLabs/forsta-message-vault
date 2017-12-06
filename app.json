@@ -6,9 +6,14 @@
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
     "env": {
-        "AUTH_TAG": {
+        "LISTEN_ADDR": {
             "required": false,
-            "description": "The username tag to authenticate this vault service with.  E.g. @my.name:myorg"
+            "description": "Default: 0.0.0.0"
         }
-    }
+    },
+    "buildpacks": [{
+        "url": "https://github.com/heroku/heroku-buildpack-nodejs"
+    }, {
+        "url": "https://github.com/heroku/heroku-buildpack-ruby"
+    }]
 }
