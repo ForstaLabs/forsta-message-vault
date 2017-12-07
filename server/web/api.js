@@ -11,6 +11,15 @@ class VersionedHandler {
             console.warn("IMPLEMENT ME: requireAuth", lineContext());
         }
     }
+
+    asyncRoute(fn) {
+        /* Add error handling for async exceptions.  Otherwise the server just hangs
+         * the request or subclasses have to do this by hand for each async routine. */
+        return (req, res, next) => fn.call(this, req, res, next).catch(e => {
+            console.error('Async Route Error:', e);
+            next();
+        });
+    }
 }
 
 
@@ -18,16 +27,16 @@ class RegistrationAPIV1 extends VersionedHandler {
 
     constructor(options) {
         super(options);
-        this.router.get('/status/v1', this.onStatusGet.bind(this));
-        this.router.get('/authcode/v1/:tag', this.onAuthCodeGet.bind(this));
-        this.router.post('/authcode/v1/:tag', this.onAuthCodePost.bind(this));
+        this.router.get('/status/v1', this.asyncRoute(this.onStatusGet));
+        this.router.get('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodeGet));
+        this.router.post('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodePost));
     }
 
     async onStatusGet(req, res, next) {
         /* Registration status (local only, we don't check the remote server(s)) */
-        const regid = await relay.storage.getOurRegistrationId();
-        if (!regid) {
-            res.status(404).json({error: 'no_config'});
+        const registered = !!await relay.storage.getState('atlasToken');
+        if (!registered) {
+            res.status(404).json({error: 'not_registered'});
         } else {
             res.status(204).send();
         }
@@ -45,13 +54,7 @@ class RegistrationAPIV1 extends VersionedHandler {
             });
             return;
         }
-        try {
-            res.status(200).json(await relay.AtlasClient.authenticate(tag));
-        } catch(e) {
-            console.error('Atlas Request Error:', e);
-            res.status(500).json(e);
-            throw e;
-        }
+        res.status(200).json(await relay.AtlasClient.authenticate(tag));
     }
 
     async onAuthCodePost(req, res) {
@@ -73,13 +76,36 @@ class RegistrationAPIV1 extends VersionedHandler {
             });
             return;
         }
-        try {
-            res.status(200).json(await relay.AtlasClient.authValidate(tag, code));
-        } catch(e) {
-            console.error('Atlas Request Error:', e);
-            res.status(500).json(e);
-            throw e;
-        }
+        const {user: regUser, token: regToken} = await relay.AtlasClient.authValidate(tag, code);
+        const regAtlas = new relay.AtlasClient({jwt: regToken});
+        const vaultUser = await regAtlas.fetch('/v1/user/', {
+            method: 'POST',
+            json: {
+                "first_name": "Vault",
+                "last_name": `(${regUser.org.slug})`,
+                "email": regUser.email,
+                "phone": regUser.phone,
+                "user_type": 'BOT',
+                "is_monitor": true // XXX Once we can do the PATCH below make this false.
+            }
+        });
+        const vaultToken = await regAtlas.fetch('/v1/provision/token', {
+            method: 'POST',
+            json: {"user_id": vaultUser.id}
+        });
+        await relay.storage.putState('vaultUserId', vaultUser.id);
+        await relay.storage.putState('vaultToken', vaultToken.token);
+        const vaultAtlas = new relay.AtlasClient({token: vaultToken.token, userId: vaultUser.id});
+        await relay.registerAccount({
+            name: `Vault (${vaultUser.tag.slug})`,
+            atlasClient: vaultAtlas
+        });
+        // XXX Doesn't work just yet.  Atlas token auth handling is work-in-progress.
+        //await vaultAtlas.fetch(`/v1/user/${vaultUser.id}/`, {
+        //    method: 'PATCH',
+        //    json: {is_monitor: true}
+        //});
+        res.status(204).send();
     }
 }
 
