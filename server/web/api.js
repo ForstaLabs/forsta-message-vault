@@ -1,4 +1,5 @@
 const VaultAtlasClient = require('../atlas_client');
+const csv = require('csv');
 const express = require('express');
 const relay = require('librelay');
 
@@ -106,7 +107,19 @@ class MessagesAPIV1 extends VersionedHandler {
         const keys = await relay.storage.keys('messages');
         keys.sort();
         const messages = await Promise.all(keys.map(x => relay.storage.get('messages', x)));
-        res.status(200).json(messages);
+        if (req.accepts('json')) {
+            res.status(200).json(messages);
+        } else if (req.accepts('csv')) {
+            // XXX Doesn't work yet.
+            res.header('Content-Type', 'text/csv');
+            res.status(200);
+            csv.parse(messages, (e, data) =>
+                csv.transform(data, x => x, (e, data) =>
+                    csv.stringify(data, (e, data) => { console.log(data); res.write(data)})));
+                //res.end();
+        } else {
+            res.status(400).send('unsupported accept header');
+        }
     }
 }
 
