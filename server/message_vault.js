@@ -48,17 +48,12 @@ class MessageVault {
     async onMessage(ev) {
         const message = ev.data.message;
         const body = JSON.parse(message.body);
-        await relay.storage.put('messages', body);
-        for (const msgVersion of body) {
-            if (message.attachments) {
-                const metas = msgVersion.data.attachments || [];
-                for (let i = 0; i < message.attachments.length; i++) {
-                    const attachment = message.attachments[i];
-                    await relay.storage.put('attachments', {
-                        attachment,
-                        meta: metas[i]
-                    });
-                }
+        const ts = ev.data.timestamp.toString();
+        await relay.storage.set('messages', ts, body);
+        if (message.attachments) {
+            for (let i = 0; i < message.attachments.length; i++) {
+                const attachment = message.attachments[i];
+                await relay.storage.set('attachments', `${ts}-${i}`, attachment.data);
             }
         }
     }
