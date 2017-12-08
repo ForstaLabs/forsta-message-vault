@@ -1,5 +1,5 @@
 const WebServer = require('./web');
-//const MessageVault = require('./message_vault');
+const MessageVault = require('./message_vault');
 const process = require('process');
 
 
@@ -14,9 +14,9 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
-    //const msgVault = new MessageVault();
-    //await msgVault.start();
-    const webServer = new WebServer();
+    const msgVault = new MessageVault();
+    await msgVault.start();
+    const webServer = new WebServer(msgVault);
     await webServer.start();
 }
 
