@@ -12,17 +12,18 @@ const port = process.env.PORT || '4096';
 
 class WebServer {
 
-    constructor() {
+    constructor(msgVault) {
         const jsenv = {};
         for (const key of Object.keys(build)) {
             jsenv[key.toUpperCase()] = build[key];
         }
+        this.msgVault = msgVault;
         this.port = port;
         this.app = express();
         this.app.use(morgan('dev')); // logging
         this.app.use(bodyParser.json());
-        this.app.use('/api/onboard/', (new api.OnboardAPIV1(this)).router);
-        this.app.use('/api/messages/', (new api.MessagesAPIV1(this)).router);
+        this.app.use('/api/onboard/', (new api.OnboardAPIV1({server: this})).router);
+        this.app.use('/api/messages/', (new api.MessagesAPIV1({server: this})).router);
         this.app.use('/static/', express.static(path.join(root, 'static'), {strict: true}));
         this.app.get('/env.js', (req, res) => {
             res.setHeader('Content-Type', 'application/javascript');

@@ -6,7 +6,9 @@ const lineContext = () => new Error().stack.split(/\n/)[2].trim();
 
 
 class VersionedHandler {
-    constructor({requireAuth=true}) {
+
+    constructor({server, requireAuth=true}) {
+        this.server = server;
         this.router = express.Router();
         if (requireAuth) {
             /* XXX For Greg: insert auth middleware here maybe? */
@@ -79,10 +81,12 @@ class OnboardAPIV1 extends VersionedHandler {
             return;
         }
         const atlas = await VaultAtlasClient.onboardVault(tag, code);
+        this.server.msgVault.stop();
         await relay.registerAccount({
             name: `Vault (Created by: ${tag})`,
             atlasClient: atlas
         });
+        await this.server.msgVault.start();
         await atlas.fetch(`/v1/user/${atlas.userId}/`, {
             method: 'PATCH',
             json: {is_monitor: true}

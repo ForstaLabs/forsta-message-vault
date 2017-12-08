@@ -16,7 +16,6 @@ class VaultAtlasClient extends relay.AtlasClient {
             json: {
                 "first_name": "Message",
                 "last_name": "Vault",
-                "gravatar_hash": '4f6bf2b1952eb7ba06f066e6a101341b',
                 "user_type": 'BOT',
                 "is_monitor": false // turn on once we are fully configured.,
             }
