@@ -109,9 +109,14 @@ class MessagesAPIV1 extends VersionedHandler {
         if (req.accepts('json')) {
             res.status(200).json(messages);
         } else if (req.accepts('csv')) {
-            //res.header('Content-Type', 'text/csv');
+            // XXX demo hack
+            const csv = ['threadId,messageId,timestamp,message'];
+            for (const mEnv of messages) {
+                const m = mEnv[0]; // XXX
+                csv.push([m.threadId, m.messageId, m.sendTime, m.data.body[0].value].join(','));
+            }
             res.attachment(`messages-${Date.now()}.csv`);
-            res.status(200).send('asdf,asdf\n1111,222');
+            res.status(200).send(csv.join('\n'));
         } else {
             res.status(400).send('unsupported accept header');
         }
