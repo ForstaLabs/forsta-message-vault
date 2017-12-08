@@ -99,11 +99,14 @@ class MessagesAPIV1 extends VersionedHandler {
 
     constructor(options) {
         super(options);
-        this.router.get('/v1', this.onGet.bind(this));
+        this.router.get('/v1', this.asyncRoute(this.onGet));
     }
 
     async onGet(req, res) {
-        res.status(200).json(await relay.storage.get('messages'));
+        const keys = await relay.storage.keys('messages');
+        keys.sort();
+        const messages = await Promise.all(keys.map(x => relay.storage.get('messages', x)));
+        res.status(200).json(messages);
     }
 }
 
