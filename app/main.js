@@ -50,7 +50,10 @@
         });
 
         // dashboard pane
-        $('button#export').on('click', () => { exportCSV(); });
+        $('button#export').on('click', () => {
+            exportCSV();
+            return false; // preventDefault
+        });
     }
 
     function setPane(name) {
@@ -143,24 +146,29 @@
         return false;
     }
 
-    function exportCSV() {
+    async function exportCSV() {
         console.log('exporting csv...');
         formLoading('.enter-tag', true);
-        fetch('/api/messages/v1')
-        .then(result => {
+        let result;
+        try {
+            result = await fetch('/api/messages/v1', {
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            });
+        } catch(err) {
             buttonLoading('#export', false);
-            console.log('got result', result);
-            if (result.ok) {
-                return false;
-            } else {
-                return false;
-            }
-        })
-        .catch(err => {
-            buttonLoading('#export', false);
-            console.log('had error', err);
-        });
-        return false;
+            console.error('had error', err);
+            return;
+        }
+        buttonLoading('#export', false);
+        if (result.ok) {
+            const blob = await result.blob();
+            const anchor = document.createElement('a');
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = result.headers.get('content-disposition').match(/ filename="(.*?)"/)[1];
+            anchor.click();
+        }
     }
 
 })();
