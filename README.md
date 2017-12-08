@@ -41,3 +41,10 @@ connections.
 
 The default listening port can be changed by setting `PORT` to any valid numeric
 port, e.g. `8000`.
+
+License
+--------
+Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
+
+* Copyright 2015-2016 Open Whisper Systems
+* Copyright 2017 Forsta Inc.
