@@ -1,10 +1,15 @@
+const VaultAtlasClient = require('../atlas_client');
+const csv = require('csv');
 const express = require('express');
 const relay = require('librelay');
 
 const lineContext = () => new Error().stack.split(/\n/)[2].trim();
 
+
 class VersionedHandler {
-    constructor({requireAuth=true}) {
+
+    constructor({server, requireAuth=true}) {
+        this.server = server;
         this.router = express.Router();
         if (requireAuth) {
             /* XXX For Greg: insert auth middleware here maybe? */
@@ -23,7 +28,7 @@ class VersionedHandler {
 }
 
 
-class RegistrationAPIV1 extends VersionedHandler {
+class OnboardAPIV1 extends VersionedHandler {
 
     constructor(options) {
         super(options);
@@ -34,7 +39,7 @@ class RegistrationAPIV1 extends VersionedHandler {
 
     async onStatusGet(req, res, next) {
         /* Registration status (local only, we don't check the remote server(s)) */
-        const registered = !!await relay.storage.getState('atlasToken');
+        const registered = !!await relay.storage.getState('vaultToken');
         if (!registered) {
             res.status(404).json({error: 'not_registered'});
         } else {
@@ -54,7 +59,7 @@ class RegistrationAPIV1 extends VersionedHandler {
             });
             return;
         }
-        res.status(200).json(await relay.AtlasClient.authenticate(tag));
+        res.status(200).json(await VaultAtlasClient.authenticate(tag));
     }
 
     async onAuthCodePost(req, res) {
@@ -76,35 +81,17 @@ class RegistrationAPIV1 extends VersionedHandler {
             });
             return;
         }
-        const {user: regUser, token: regToken} = await relay.AtlasClient.authValidate(tag, code);
-        const regAtlas = new relay.AtlasClient({jwt: regToken});
-        const vaultUser = await regAtlas.fetch('/v1/user/', {
-            method: 'POST',
-            json: {
-                "first_name": "Vault",
-                "last_name": `(${regUser.org.slug})`,
-                "email": regUser.email,
-                "phone": regUser.phone,
-                "user_type": 'BOT',
-                "is_monitor": true // XXX Once we can do the PATCH below make this false.
-            }
-        });
-        const vaultToken = await regAtlas.fetch('/v1/provision/token', {
-            method: 'POST',
-            json: {"user_id": vaultUser.id}
-        });
-        await relay.storage.putState('vaultUserId', vaultUser.id);
-        await relay.storage.putState('vaultToken', vaultToken.token);
-        const vaultAtlas = new relay.AtlasClient({token: vaultToken.token, userId: vaultUser.id});
+        const atlas = await VaultAtlasClient.onboardVault(tag, code);
+        this.server.msgVault.stop();
         await relay.registerAccount({
-            name: `Vault (${vaultUser.tag.slug})`,
-            atlasClient: vaultAtlas
+            name: `Vault (Created by: ${tag})`,
+            atlasClient: atlas
         });
-        // XXX Doesn't work just yet.  Atlas token auth handling is work-in-progress.
-        //await vaultAtlas.fetch(`/v1/user/${vaultUser.id}/`, {
-        //    method: 'PATCH',
-        //    json: {is_monitor: true}
-        //});
+        await this.server.msgVault.start();
+        await atlas.fetch(`/v1/user/${atlas.userId}/`, {
+            method: 'PATCH',
+            json: {is_monitor: true}
+        });
         res.status(204).send();
     }
 }
@@ -113,15 +100,30 @@ class MessagesAPIV1 extends VersionedHandler {
 
     constructor(options) {
         super(options);
-        this.router.get('/v1', this.onGet.bind(this));
+        this.router.get('/v1', this.asyncRoute(this.onGet));
     }
 
     async onGet(req, res) {
-        res.status(200).json(await relay.storage.get('messages'));
+        const keys = await relay.storage.keys('messages');
+        keys.sort();
+        const messages = await Promise.all(keys.map(x => relay.storage.get('messages', x)));
+        if (req.accepts('json')) {
+            res.status(200).json(messages);
+        } else if (req.accepts('csv')) {
+            // XXX Doesn't work yet.
+            res.header('Content-Type', 'text/csv');
+            res.status(200);
+            csv.parse(messages, (e, data) =>
+                csv.transform(data, x => x, (e, data) =>
+                    csv.stringify(data, (e, data) => { console.log(data); res.write(data)})));
+                //res.end();
+        } else {
+            res.status(400).send('unsupported accept header');
+        }
     }
 }
 
 module.exports = {
-    RegistrationAPIV1,
+    OnboardAPIV1,
     MessagesAPIV1
 };
