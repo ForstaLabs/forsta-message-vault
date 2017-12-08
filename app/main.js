@@ -4,7 +4,9 @@
     'use strict';
 
     function main() {
-        
+        $('button#authorize').on('click', () => {
+            $.tab('change tab', 'authenticate');
+        });
     }
 
     addEventListener('load', main);
