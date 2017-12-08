@@ -10,7 +10,7 @@ deployable in any environment that supports Docker too.  If you want to test
 the vault in a heroku we have an App button for that too.
 
 ### Heroku Deploy _(requires a Heroku account)_
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/gregperk/vault/tree/wip)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault)
 
 ### Docker Cloud Deploy _(requires a Docker Cloud account)_
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)

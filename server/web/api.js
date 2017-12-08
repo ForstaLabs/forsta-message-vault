@@ -115,7 +115,7 @@ class MessagesAPIV1 extends VersionedHandler {
             res.status(200);
             csv.parse(messages, (e, data) =>
                 csv.transform(data, x => x, (e, data) =>
-                    csv.stringify(data, (e, data) => { console.log(data); res.write(data)})));
+                    csv.stringify(data, (e, data) => { console.log(data); res.write(data); })));
                 //res.end();
         } else {
             res.status(400).send('unsupported accept header');
