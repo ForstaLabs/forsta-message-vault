@@ -5,6 +5,13 @@
     "logo": "https://github.com/ForstaLabs/vault/raw/master/images/logo.png",
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
+    "addons": [{
+      "plan": "rediscloud",
+      "as": "redis"
+    }],
+    "env": {
+      "RELAY_STORAGE_BACKING": "redis"
+    },
     "buildpacks": [{
         "url": "heroku/ruby"
     }, {

@@ -9,3 +9,11 @@ body > .ui.segment:first-child {
 .ui.divider {
     margin-top: 4em;
 }
+
+.tab.tall {
+    min-height: 80vh;
+}
+
+.hidden {
+    display: none!important;
+}

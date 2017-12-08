@@ -22,7 +22,7 @@ the vault in a heroku we have an App button for that too.
 Expert Installation
 --------
 If you want to install and run vault by hand you can install on *NIX platform
-that has Node.js version 8 or newer installed.
+that has Node.js version 8 or newer installed, and ruby and the sass gem.
 
     git clone https://github.com/ForstaLabs/vault.git
     cd vault
