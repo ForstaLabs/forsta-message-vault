@@ -1,11 +1,12 @@
 const VaultAtlasClient = require('../atlas_client');
+const csvStringify = require('csv-stringify');
 const express = require('express');
 const relay = require('librelay');
 
 const lineContext = () => new Error().stack.split(/\n/)[2].trim();
 
 
-class VersionedHandler {
+class APIHandler {
 
     constructor({server, requireAuth=true}) {
         this.server = server;
@@ -24,10 +25,26 @@ class VersionedHandler {
             next();
         });
     }
+
+    async toCSV(data) {
+        return await new Promise((resolve, reject) => {
+            try {
+                csvStringify(data, (e, output) => {
+                    if (e) {
+                        reject(e);
+                    } else {
+                        resolve(output);
+                    }
+                });
+            } catch(e) {
+                reject(e);
+            }
+        });
+    }
 }
 
 
-class OnboardAPIV1 extends VersionedHandler {
+class OnboardAPIV1 extends APIHandler {
 
     constructor(options) {
         super(options);
@@ -95,11 +112,34 @@ class OnboardAPIV1 extends VersionedHandler {
     }
 }
 
-class MessagesAPIV1 extends VersionedHandler {
+class MessagesAPIV1 extends APIHandler {
 
     constructor(options) {
         super(options);
         this.router.get('/v1', this.asyncRoute(this.onGet));
+        this.csvFields = [
+            [x => x.sendTime, 'Sent'],
+            [x => x.messageId, 'Message ID'],
+            [x => x.threadId, 'Thread ID'],
+            [x => x.sender.userId, 'Sender'],
+            [this.msgBodyGetter('text/plain'), 'Message Body'],
+            [x => x.threadType, 'Thread Type'],
+            [x => x.messageType, 'Message Type'],
+            [x => x.distribution.expression, 'Distribution'],
+        ];
+    }
+
+    msgBodyGetter(type) {
+        return msg => {
+            if (!msg.data || !msg.data.body) {
+                return;
+            }
+            for (const body of msg.data.body) {
+                if (body.type === type) {
+                    return body.value;
+                }
+            }
+        };
     }
 
     async onGet(req, res) {
@@ -107,18 +147,23 @@ class MessagesAPIV1 extends VersionedHandler {
         keys.sort();
         const messages = await Promise.all(keys.map(x => relay.storage.get('messages', x)));
         if (req.accepts('json')) {
-            res.status(200).json(messages);
+            res.status(200).json({
+                meta: {
+                    total_count: messages.length,
+                    limit: null,
+                    offset: 0
+                },
+                data: messages
+            });
         } else if (req.accepts('csv')) {
-            // XXX demo hack
-            const csv = ['threadId,messageId,timestamp,message'];
-            for (const mEnv of messages) {
-                const m = mEnv[0]; // XXX
-                csv.push([m.threadId, m.messageId, m.sendTime, m.data.body[0].value].join(','));
+            const buf = [this.csvFields.map(x => x[1])];
+            for (const msg of messages) {
+                buf.push(this.csvFields.map(x => x[0](msg)));
             }
             res.attachment(`messages-${Date.now()}.csv`);
-            res.status(200).send(csv.join('\n'));
+            res.status(200).send(await this.toCSV(buf));
         } else {
-            res.status(400).send('unsupported accept header');
+            res.status(400).send('Unsupported "Accept" header');
         }
     }
 }

@@ -2,7 +2,10 @@
 
 'use strict';
 
+const VaultAtlasClient = require('./atlas_client');
+const cache = require('./cache');
 const relay = require('librelay');
+const uuid4 = require('uuid/v4');
 
 
 class MessageVault {
@@ -14,6 +17,9 @@ class MessageVault {
             return;
         }
         console.info("Starting message receiver for:", ourId);
+        this.atlas = await VaultAtlasClient.factory();
+        this.getUsers = cache.ttl(30, this.atlas.getUsers.bind(this.atlas));
+        this.resolveTags = cache.ttl(30, this.atlas.resolveTags.bind(this.atlas));
         this.msgReceiver = await relay.MessageReceiver.factory();
         this.msgReceiver.addEventListener('keychange', this.onKeyChange.bind(this));
         this.msgReceiver.addEventListener('message', this.onMessage.bind(this));
@@ -45,17 +51,74 @@ class MessageVault {
         console.error('Message Error', e, e.stack);
     }
 
+    fqTag(user) {
+        return `@${user.tag.slug}:${user.org.slug}`;
+    }
+
     async onMessage(ev) {
         const message = ev.data.message;
-        const body = JSON.parse(message.body);
-        const ts = ev.data.timestamp.toString();
-        await relay.storage.set('messages', ts, body);
-        if (message.attachments) {
-            for (let i = 0; i < message.attachments.length; i++) {
-                const attachment = message.attachments[i];
-                await relay.storage.set('attachments', `${ts}-${i}`, attachment.data);
+        const msgEnvelope = JSON.parse(message.body);
+        let msg;
+        for (const x of msgEnvelope) {
+            if (x.version === 1) {
+                msg = x;
+                break;
             }
         }
+        if (!msg) {
+            console.error("Received unsupported message:", msgEnvelope);
+            return;
+        }
+        const dist = await this.resolveTags(msg.distribution.expression);
+        const memberIds = dist.userids;
+        const members = await this.getUsers(memberIds);
+        const memberTags = members.map(this.fqTag);
+        const id = uuid4();
+        const entry = {
+            id,
+            messageId: msg.messageId,
+            messageType: msg.messageType,
+            threadId: msg.threadId,
+            threadType: msg.threadType,
+            threadTitle: msg.threadTitle,
+            sender: msg.sender.userId,
+            senderTag: this.fqTag((await this.getUsers([msg.sender.userId]))[0]),
+            userAgent: msg.userAgent,
+            members: memberIds,
+            memberTags,
+            distribution: dist.universal,
+            distributionPretty: dist.pretty,
+            expiration: msg.expiration,
+            messageRef: msg.messageRef,
+        };
+        if (msg.data) {
+            const data = msg.data;
+            Object.assign(entry, {
+                attachments: data.attachments,
+                expiration: data.expiration,
+                control: data.control,
+            });
+            if (msg.data.body) {
+                entry.body = {};
+                for (const x of msg.data.body) {
+                    entry.body[x.type] = x.value;
+                }
+            }
+        }
+        if (message.attachments) {
+            entry.attachments = (msg.data && msg.data.attachments) || [];
+            for (let i = 0; i < message.attachments.length; i++) {
+                const attachment = message.attachments[i];
+                const id = uuid4();
+                await relay.storage.set('attachments', id, attachment.data);
+                if (entry.attachments[i]) {
+                    entry.attachments[i].id = id;
+                } else {
+                    entry.attachments.push({id});
+                }
+            }
+        }
+        await relay.storage.set('messages', id, entry);
     }
 }
 
