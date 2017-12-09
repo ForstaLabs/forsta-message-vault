@@ -15,8 +15,16 @@ the vault in a heroku we have an App button for that too.
 ### Docker Cloud Deploy _(requires a Docker Cloud account)_
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
 
-### Docker Locally
+### Docker
     docker run -p4096:4096 forstalabs/vault
+
+ or
+
+    docker-compose up
+
+### NPM
+    npm install -g forsta-vault
+    vault
 
 
 Expert Installation
