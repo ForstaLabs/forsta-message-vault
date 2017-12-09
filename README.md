@@ -22,13 +22,8 @@ These quick start options can be used to validate that Forsta Vault will
 meet your organizations needs with as little setup pain as possible.  For some
 organizations they may also be perfectly sufficient for your data retention needs.
 
-### Heroku Deploy
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault)
-_(requires a Heroku account)_
-
-### Docker Cloud Deploy
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
-_(requires a Docker Cloud account)_
 
 
 Install Requirements
@@ -68,7 +63,7 @@ and run directly from the source code.
 
 Usage
 --------
-Once running the default port and listening address are `0.0.0.0:4096` so if
+Once running, the default port and listening address are `0.0.0.0:4096`.  If
 you are running locally you can access the web interface by opening
 *http://localhost:4096*.
 
@@ -78,6 +73,11 @@ accept local connections.
 
 The default listening port can be changed by setting `PORT` to any valid
 numeric port, e.g. `8000`.
+
+Storage is managed through the Forsta librelay library which currently supports
+local filesystem backing and redis backing.  For more information about setting
+up your vault for alternate storage see,
+https://github.com/ForstaLabs/librelay-node#storage.
 
 
 License
