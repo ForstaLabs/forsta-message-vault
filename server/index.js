@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const WebServer = require('./web');
 const MessageVault = require('./message_vault');
 const process = require('process');
