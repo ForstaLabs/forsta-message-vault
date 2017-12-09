@@ -118,44 +118,50 @@ class MessagesAPIV1 extends APIHandler {
         super(options);
         this.router.get('/v1', this.asyncRoute(this.onGet));
         this.csvFields = [
-            [x => x.sendTime, 'Sent'],
+            [x => x.id, 'ID'],
             [x => x.messageId, 'Message ID'],
             [x => x.threadId, 'Thread ID'],
-            [x => x.sender.userId, 'Sender'],
-            [this.msgBodyGetter('text/plain'), 'Message Body'],
+            [x => x.sender, 'Sender ID'],
+            [x => x.senderTag, 'Sender Tag'],
+            [x => x.body && x.body['text/plain'], 'Body'],
             [x => x.threadType, 'Thread Type'],
             [x => x.messageType, 'Message Type'],
-            [x => x.distribution.expression, 'Distribution'],
+            [x => x.distribution, 'Distribution'],
+            [x => x.distributionPretty, 'Distribution Pretty'],
+            [x => x.members.join(), 'Members'],
+            [x => x.memberTags.join(), 'Member Tags'],
         ];
     }
 
-    msgBodyGetter(type) {
-        return msg => {
-            if (!msg.data || !msg.data.body) {
-                return;
-            }
-            for (const body of msg.data.body) {
-                if (body.type === type) {
-                    return body.value;
-                }
-            }
-        };
-    }
-
     async onGet(req, res) {
-        const keys = await relay.storage.keys('messages');
-        keys.sort();
-        const messages = await Promise.all(keys.map(x => relay.storage.get('messages', x)));
-        if (req.accepts('json')) {
+        const format = req.query.format ||
+                       (req.accepts('json') && 'json') ||
+                       (req.accepts('csv') && 'csv') ||
+                       null;
+        if (!format) {
+            res.status(400).send('Unsupported format or "Accept" header requirement');
+            return;
+        }
+        const limit = parseInt(req.query.limit) || 10000;
+        const offset = parseInt(req.query.offset) || 0;
+        const index = await relay.storage.keys('index-messages-ts');
+        index.sort();
+        if (req.query.order && req.query.order.toLowerCase() === 'desc') {
+            index.reverse();
+        }
+        const keys = index.slice(offset, offset + limit);
+        const messages = await Promise.all(keys.map(x =>
+            relay.storage.get('messages', x.split(',')[1])));
+        if (format === 'json') {
             res.status(200).json({
                 meta: {
-                    total_count: messages.length,
-                    limit: null,
-                    offset: 0
+                    total_count: index.length,
+                    limit,
+                    offset
                 },
                 data: messages
             });
-        } else if (req.accepts('csv')) {
+        } else if (format === 'csv') {
             const buf = [this.csvFields.map(x => x[1])];
             for (const msg of messages) {
                 buf.push(this.csvFields.map(x => x[0](msg)));
@@ -163,12 +169,43 @@ class MessagesAPIV1 extends APIHandler {
             res.attachment(`messages-${Date.now()}.csv`);
             res.status(200).send(await this.toCSV(buf));
         } else {
-            res.status(400).send('Unsupported "Accept" header');
+            res.status(400).send('Unsupported format: ' + format);
         }
+    }
+}
+
+class AttachmentsAPIV1 extends APIHandler {
+
+    constructor(options) {
+        super(options);
+        this.router.get('/v1/:id', this.asyncRoute(this.onGet));
+    }
+
+    async onGet(req, res) {
+        const id = req.params.id;
+        const attachment = await relay.storage.get('attachments', id);
+        const msgKey = (await relay.storage.keys('index-attachments-message',
+                                                    new RegExp(`,${id}$`)))[0];
+        if (!msgKey || !attachment) {
+            res.status(404).send();
+            return;
+        }
+        const message = await relay.storage.get('messages', msgKey.split(',')[0]);
+        if (message && message.attachments) {
+            for (const a of message.attachments) {
+                if (a.id === id) {
+                    res.attachment(a.name);
+                    res.header('Content-Type', a.type);
+                    break;
+                }
+            }
+        }
+        res.status(200).send(attachment);
     }
 }
 
 module.exports = {
     OnboardAPIV1,
-    MessagesAPIV1
+    MessagesAPIV1,
+    AttachmentsAPIV1
 };

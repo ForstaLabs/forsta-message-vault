@@ -18,11 +18,11 @@ class MessageVault {
         }
         console.info("Starting message receiver for:", ourId);
         this.atlas = await VaultAtlasClient.factory();
-        this.getUsers = cache.ttl(30, this.atlas.getUsers.bind(this.atlas));
-        this.resolveTags = cache.ttl(30, this.atlas.resolveTags.bind(this.atlas));
+        this.getUsers = cache.ttl(60, this.atlas.getUsers.bind(this.atlas));
+        this.resolveTags = cache.ttl(60, this.atlas.resolveTags.bind(this.atlas));
         this.msgReceiver = await relay.MessageReceiver.factory();
         this.msgReceiver.addEventListener('keychange', this.onKeyChange.bind(this));
-        this.msgReceiver.addEventListener('message', this.onMessage.bind(this));
+        this.msgReceiver.addEventListener('message', ev => this.onMessage(ev), null);
         this.msgReceiver.addEventListener('error', this.onError.bind(this));
         await this.msgReceiver.connect();
     }
@@ -56,6 +56,7 @@ class MessageVault {
     }
 
     async onMessage(ev) {
+        const ts = ev.data.timestamp;
         const message = ev.data.message;
         const msgEnvelope = JSON.parse(message.body);
         let msg;
@@ -108,16 +109,19 @@ class MessageVault {
         if (message.attachments) {
             entry.attachments = (msg.data && msg.data.attachments) || [];
             for (let i = 0; i < message.attachments.length; i++) {
-                const attachment = message.attachments[i];
-                const id = uuid4();
-                await relay.storage.set('attachments', id, attachment.data);
+                const a = message.attachments[i];
+                const aId = uuid4();
+                await relay.storage.set('index-attachments-message', [id, aId].join(), aId);
+                await relay.storage.set('attachments', aId, a.data);
                 if (entry.attachments[i]) {
-                    entry.attachments[i].id = id;
+                    entry.attachments[i].id = aId;
                 } else {
-                    entry.attachments.push({id});
+                    entry.attachments.push({id: aId});
                 }
             }
         }
+        await relay.storage.set('index-messages-ts', [ts, id].join(), id);
+        await relay.storage.set('index-messages-threadId-ts', [msg.threadId, ts, id].join(), id);
         await relay.storage.set('messages', id, entry);
     }
 }
