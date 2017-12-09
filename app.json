@@ -8,7 +8,7 @@
     "addons": ["heroku-redis"],
     "env": {
       "RELAY_STORAGE_BACKING": {
-        "description": "Control where Vault settings and data will be stored.  For heroku 'redis' is recommended",
+        "description": "Control where Vault settings and data will be stored.  For heroku 'redis' is recommended.",
         "required": false,
         "value": "redis"
       }
