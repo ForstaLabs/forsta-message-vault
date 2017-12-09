@@ -8,10 +8,10 @@ Decentralized data retention application for the Forsta messaging platform.
 
 About
 --------
-Forsta Vault is a Node.js application that leverges end-to-end encryption 
-for collection of your organization's messages and data.  Your data lives with the
-provider of your choice, be it a cloud provider or a server inside your own
-datacenters.
+Forsta Vault is a Node.js application that leverages end-to-end encryption
+for collection of your organization's messages and data.  Your data lives with
+the provider of your choice, be it a cloud provider or a server inside your own
+data centers.
 
 **Your data lives where it belongs - with you.**
 
@@ -70,15 +70,16 @@ and run directly from the source code.
 
 Usage
 --------
-Once running the default port and listening address are `0.0.0.0:4096` so if you are
-running locally you can access the web interface by opening *http://localhost:4096*.
+Once running the default port and listening address are `0.0.0.0:4096` so if
+you are running locally you can access the web interface by opening
+*http://localhost:4096*.
 
-You can change the listening address by setting `LISTEN_ADDR` to a valid host address
-for your server, E.g. something like `localhost` or `127.0.0.1` to only accept local
-connections.
+You can change the listening address by setting `LISTEN_ADDR` to a valid host
+address for your server, E.g. something like `localhost` or `127.0.0.1` to only
+accept local connections.
 
-The default listening port can be changed by setting `PORT` to any valid numeric
-port, e.g. `8000`.
+The default listening port can be changed by setting `PORT` to any valid
+numeric port, e.g. `8000`.
 
 
 License
