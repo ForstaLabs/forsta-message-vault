@@ -5,12 +5,13 @@
     "logo": "https://github.com/ForstaLabs/vault/raw/master/images/logo.png",
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
-    "addons": [{
-      "plan": "rediscloud",
-      "as": "redis"
-    }],
+    "addons": ["heroku-redis"],
     "env": {
-      "RELAY_STORAGE_BACKING": "redis"
+      "RELAY_STORAGE_BACKING": {
+        "description": "Control where Vault settings and data will be stored.  For heroku 'redis' is recommended.",
+        "required": false,
+        "value": "redis"
+      }
     },
     "buildpacks": [{
         "url": "heroku/ruby"
