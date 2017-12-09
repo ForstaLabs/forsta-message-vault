@@ -185,7 +185,7 @@ class AttachmentsAPIV1 extends APIHandler {
         const id = req.params.id;
         const attachment = await relay.storage.get('attachments', id);
         const msgKey = (await relay.storage.keys('index-attachments-message',
-                                                    new RegExp(`,${id}$`)))[0];
+                                                 new RegExp(`,${id}$`)))[0];
         if (!msgKey || !attachment) {
             res.status(404).send();
             return;
