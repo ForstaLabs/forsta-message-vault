@@ -11,7 +11,7 @@ About
 Forsta Vault is a Node.js application that leverages end-to-end encryption
 for collection of your organization's messages and data.  Your data lives with
 the provider of your choice, be it a cloud provider or a server inside your own
-data centers.
+data center.
 
 **Your data lives where it belongs - with you.**
 
@@ -23,14 +23,12 @@ meet your organizations needs with as little setup pain as possible.  For some
 organizations they may also be perfectly sufficient for your data retention needs.
 
 ### Heroku Deploy
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault)
 _(requires a Heroku account)_
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/vault)
-
 ### Docker Cloud Deploy
-_(requires a Docker Cloud account)_
-
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
+_(requires a Docker Cloud account)_
 
 
 Install Requirements
@@ -42,13 +40,13 @@ Install Requirements
 
 Installation
 --------
-You can choose from a our official docker image or NPM package depending on your
+You can choose from our official docker image or NPM package depending on your
 preference.
 
 ### Docker
     docker run -p4096:4096 forstalabs/vault
 
-Or to run a stack that uses redis for storage automatically...
+Or to run a stack using docker-compose that includes redis for storage...
 
     docker-compose up
 
