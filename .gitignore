@@ -5,3 +5,4 @@ dist
 .*.build
 .*.pass
 .cscope_db
+*.scssc
