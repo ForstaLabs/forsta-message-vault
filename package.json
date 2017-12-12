@@ -31,7 +31,7 @@
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-sass": "1.0.0",
     "jquery": "3.2.1",
-    "librelay": "2.0.2",
+    "librelay": "2.0.3",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
     "uuid": "3.1.0"
