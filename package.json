@@ -1,6 +1,6 @@
 {
   "name": "forsta-vault",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Forsta Messaging Vault",
   "engines": {
     "node": "8"
@@ -31,7 +31,7 @@
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-sass": "1.0.0",
     "jquery": "3.2.1",
-    "librelay": "2.0.1",
+    "librelay": "2.0.2",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
     "uuid": "3.1.0"
