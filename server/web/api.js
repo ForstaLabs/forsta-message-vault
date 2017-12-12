@@ -118,18 +118,18 @@ class MessagesAPIV1 extends APIHandler {
         super(options);
         this.router.get('/v1', this.asyncRoute(this.onGet));
         this.csvFields = [
-            [x => x.id, 'ID'],
-            [x => x.messageId, 'Message ID'],
-            [x => x.threadId, 'Thread ID'],
-            [x => x.sender, 'Sender ID'],
-            [x => x.senderTag, 'Sender Tag'],
-            [x => x.body && x.body['text/plain'], 'Body'],
-            [x => x.threadType, 'Thread Type'],
-            [x => x.messageType, 'Message Type'],
-            [x => x.distribution, 'Distribution'],
-            [x => x.distributionPretty, 'Distribution Pretty'],
-            [x => x.members.join(), 'Members'],
-            [x => x.memberTags.join(), 'Member Tags'],
+            [x => x.id, 'id'],
+            [x => x.messageId, 'message_id'],
+            [x => x.threadId, 'thread_id'],
+            [x => x.sender, 'sender_id'],
+            [x => x.senderTag, 'sender_tag'],
+            [x => x.body && x.body['text/plain'], 'body'],
+            [x => x.threadType, 'thread_type'],
+            [x => x.messageType, 'message_type'],
+            [x => x.distribution, 'distribution'],
+            [x => x.distributionPretty, 'distribution_pretty'],
+            [x => x.members.join(), 'members'],
+            [x => x.memberTags.join(), 'member_tags'],
         ];
     }
 
