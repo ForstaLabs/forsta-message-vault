@@ -1,6 +1,6 @@
 {
   "name": "forsta-vault",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Forsta Messaging Vault",
   "engines": {
     "node": "8"
