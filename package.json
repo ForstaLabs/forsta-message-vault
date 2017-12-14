@@ -23,18 +23,28 @@
     "vault": "./server/index.js"
   },
   "dependencies": {
+    "browserify": "^14.5.0",
     "csv-stringify": "2.0.0",
+    "envify": "^4.1.0",
     "express": "4.16.2",
     "grunt": "1.0.1",
+    "grunt-browserify": "^5.2.0",
     "grunt-cli": "1.2.0",
+    "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-sass": "1.0.0",
+    "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-env": "^0.4.4",
     "jquery": "3.2.1",
     "librelay": "2.0.1",
+    "lodash": "^4.17.4",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
-    "uuid": "3.1.0"
+    "uuid": "3.1.0",
+    "vue": "^2.5.9",
+    "vue-router": "^3.0.1",
+    "vueify": "^9.4.1"
   },
   "devDependencies": {
     "eslint": "4.12.1",

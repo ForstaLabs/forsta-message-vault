@@ -1,9 +1,7 @@
 // vim: et sw=2 ts=2
-/* global module, require */
 
 const fs = require('fs');
 const path = require('path');
-
 
 function assert_exists(file) {
     if (!fs.existsSync(file)) {
@@ -26,6 +24,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-sass');
+  grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-env');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
   } catch(e) {
@@ -35,26 +36,44 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
+    env : {
+      options : {
+      },
+      dev : {
+        NODE_ENV : 'development',
+      },
+      prod : {
+        NODE_ENV : 'production',
+      },
+    },
+
+    browserify: {
+      dist: {
+        files: {
+          'dist/static/js/main.js': ['app/main.js']
+        },
+        options: {
+          transform: [['envify', {"global": true}], 'vueify'],
+        }
+      }
+    },
+
+    uglify: {
+      my_target: {
+        files: {
+          'dist/static/js/main.js': ['dist/static/js/main.js'],
+          'dist/static/js/deps.js': ['dist/static/js/deps.js']
+        }
+      }
+    },
+
     concat: {
       app_deps: {
         src: [
-          "jquery/dist/jquery.js",
+          "jquery/dist/jquery.slim.js",
+          "lodash/core.js",
         ].map(x => add_prefix('node_modules', x)),
         dest: `${static_dist}/js/deps.js`
-      },
-
-      app_main: {
-        src: [
-          'main.js'
-        ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/js/main.js`
-      },
-
-      app_install: {
-        src: [
-          'install.js'
-        ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/js/install.js`
       },
     },
 
@@ -109,7 +128,7 @@ module.exports = function(grunt) {
           'app/**',
           'Gruntfile.js'
         ],
-        tasks: ['concat', 'copy']
+        tasks: ['development', 'copy']
       },
       html: {
         files: [
@@ -121,5 +140,6 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['concat', 'sass', 'copy']);
+  grunt.registerTask('default', ['env:prod', 'browserify', 'concat', 'sass', 'copy', 'uglify']);
+  grunt.registerTask('development', ['env:dev', 'browserify', 'concat', 'sass', 'copy']);
 };
