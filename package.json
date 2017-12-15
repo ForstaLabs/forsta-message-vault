@@ -23,6 +23,7 @@
     "vault": "./server/index.js"
   },
   "dependencies": {
+    "bcrypt": "^1.0.3",
     "browserify": "^14.5.0",
     "csv-stringify": "2.0.0",
     "envify": "^4.1.0",
@@ -37,11 +38,13 @@
     "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-env": "^0.4.4",
     "jquery": "3.2.1",
-    "lodash": "^4.17.4",
+    "jsonwebtoken": "^8.1.0",
+    "jwt-decode": "^2.2.0",
     "librelay": "2.0.3",
+    "lodash": "^4.17.4",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
-    "uuid": "3.1.0",
+    "uuid": "^3.1.0",
     "vue": "^2.5.9",
     "vue-router": "^3.0.1",
     "vueify": "^9.4.1"

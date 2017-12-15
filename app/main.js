@@ -4,12 +4,14 @@ function main() {
     const VueRouter = require('vue-router');
     Vue.use(VueRouter);
 
-    const Top = require('./top.vue');
+    const Root = require('./root.vue');
     const routes = [
-        { path: '/welcome', component: require('./welcome.vue') },
-        { path: '/tag', component: require('./enterTag.vue') },
-        { path: '/code/:tag', component: require('./enterCode.vue') },
-        { path: '/dashboard', component: require('./dashboard.vue') },
+        { path: '/welcome', name: 'welcome', component: require('./welcome.vue') },
+        { path: '/auth/login', name: 'authenticate', component: require('./auth/authenticate.vue') },
+        { path: '/auth/password', name: 'setPassword', component: require('./auth/setPassword.vue') },
+        { path: '/onboard/tag', name: 'enterTag', component: require('./onboard/enterTag.vue') },
+        { path: '/onboard/code/:tag', name: 'enterCode', component: require('./onboard/enterCode.vue') },
+        { path: '/dashboard', name: 'dashboard', component: require('./dashboard/dashboard.vue') },
         { path: '*', redirect: '/welcome' },
     ];
 
@@ -21,7 +23,7 @@ function main() {
         el: '#app',
         router,
         render: function (createElement) {
-            return createElement(Top);
+            return createElement(Root);
         }
     });
 }

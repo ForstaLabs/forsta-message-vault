@@ -2,15 +2,20 @@
 </style>
 
 <template>
-<div class="ui segment container center aligned padded">
-    <div class="ui text container">
-        <h2 class="ui header">
-            <img class="ui image logo" src="/static/images/logo.png"/>
-            <div class="content">Sign In to Forsta</div>
-        </h2>
-    </div>
-    <div class="ui grid basic segment center aligned">
-        <div class="ui eight wide column segment left aligned">
+    <div class="ui two column centered grid">
+        <div class="middle aligned row">
+            <div class="five wide column">
+                <img class="ui tiny floated right image" src="/static/images/logo.png"/>
+            </div>
+            <div class="eleven wide column">
+                <h2 class="ui header">Sign In to Forsta</h2>
+            </div>
+        </div>
+        <div class="ui eleven wide column basic left aligned text segment t0 b1">
+            <p>Please authenticate as your organization's administrator so we 
+                can create a new user in your organization to represent this vault.</p>
+        </div>
+        <div class="ui nine wide column basic segment left aligned t0 b1">
             <form class="ui huge form enter-code" :class="{loading: loading}">
                 <div class="field">
                     <label>Enter Login Code</label>
@@ -20,16 +25,21 @@
                     </div>
                 </div>
                 <button class="ui large primary submit button" type="submit">Submit</button>
-                <router-link to="/tag" class="ui large button right floated code-cancel">Cancel</router-link>
+                <router-link :to="{name: 'enterTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
                 <div class="ui mini error message" />
             </form>
         </div>
+        <div class="ui eleven wide column basic left aligned text segment t0">
+            <p>Your administrative credentials will be immediately discarded and all 
+                further user-related actions taken by and for the vault will involve only 
+                your new Message Vault user.</p>
+        </div>
     </div>
-</div>
 </template>
 
 <script>
-util = require('./util');
+util = require('../util');
+shared = require('../globalState');
 
 function setup() {
     $('form.ui.form.enter-code').form({
@@ -43,7 +53,10 @@ function setup() {
                 }]
             }
         },
-        onSuccess: sendLoginCode.bind(this)
+        onSuccess: (event) => {
+            event.preventDefault();
+            sendLoginCode.call(this);
+        }
     });
 }
 
@@ -51,18 +64,12 @@ function sendLoginCode() {
     var tag = this.$route.params.tag;
     var code = this.code;
     this.loading = true;
-    fetch('/api/onboard/authcode/v1/' + tag, {
-        method: 'post',
-        headers: {
-            'Accept': 'application/json, text/plain */*',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code })
-    })
+    util.fetch.call(this, '/api/onboard/authcode/v1/' + tag, { method: 'post', body: { code }})
     .then(result => {
         this.loading = false;
+        this.global.onboarded = result.ok;
         if (result.ok) {
-            this.$router.push('/dashboard');
+            this.$router.push({ name: 'dashboard' });
             return false;
         } else {
             util.addFormErrors('enter-code', { code: 'Incorrect code, please try again.' });
@@ -79,10 +86,11 @@ function sendLoginCode() {
 module.exports = {
     data: () => ({
         code: '',
-        loading: false
+        loading: false,
+        global: shared.state
     }),
     mounted: function() {
-        setup.bind(this)()
+        setup.call(this)
     },
     methods: {
     }

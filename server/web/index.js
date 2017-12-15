@@ -25,6 +25,7 @@ class WebServer {
         this.app.use('/api/onboard/', (new api.OnboardAPIV1({server: this})).router);
         this.app.use('/api/messages/', (new api.MessagesAPIV1({server: this})).router);
         this.app.use('/api/attachments/', (new api.AttachmentsAPIV1({server: this})).router);
+        this.app.use('/api/auth/', (new api.AuthenticationAPIV1({server: this})).router);
         this.app.use('/static/', express.static(path.join(root, 'static'), {strict: true}));
         this.app.get('/env.js', (req, res) => {
             res.setHeader('Content-Type', 'application/javascript');
