@@ -42,7 +42,7 @@
                     <div class="field">
                         <label>Vault Password</label>
                         <div class="ui left icon input">
-                            <input type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
+                            <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
                             <i class="lock icon" />
                         </div>
                     </div>
@@ -58,6 +58,7 @@
 <script>
 util = require('../util');
 shared = require('../globalState');
+focus = require('vue-focus');
 var jwtDecode = require('jwt-decode');
 
 function init() {
@@ -146,6 +147,9 @@ module.exports = {
         establishSession: function () {
             tryPassword.call(this);
         }
+    },
+    directives: {
+        focus: focus.focus
     }
 }
 </script>

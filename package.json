@@ -46,6 +46,7 @@
     "semantic-ui": "2.2.13",
     "uuid": "^3.1.0",
     "vue": "^2.5.9",
+    "vue-focus": "^2.1.0",
     "vue-router": "^3.0.1",
     "vueify": "^9.4.1"
   },

@@ -20,7 +20,7 @@
                 <div class="field">
                     <label>Org Administrator Login</label>
                     <div class="ui left icon input">
-                        <input type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
+                        <input v-focus.lazy="true" type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
                         <i class="at icon"></i>
                     </div>
                 </div>
@@ -38,6 +38,7 @@
 
 <script>
 util = require('../util');
+focus = require('vue-focus');
 
 function setup() {
     $('form.ui.form.enter-tag').form({
@@ -88,6 +89,9 @@ module.exports = {
         setup.call(this)
     },
     methods: {
+    },
+    directives: {
+        focus: focus.focus
     }
 }
 </script>

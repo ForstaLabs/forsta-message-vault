@@ -14,7 +14,7 @@
                 <div class="field">
                     <label>Password</label>
                     <div class="ui left icon input">
-                        <input type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
+                        <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
                         <i class="at icon"></i>
                     </div>
                 </div>
@@ -35,6 +35,7 @@
 <script>
 util = require('../util');
 shared = require('../globalState');
+focus = require('vue-focus');
 
 function setup() {
     $('form.ui.form.set-password').form({
@@ -108,6 +109,9 @@ module.exports = {
         setup.call(this)
     },
     methods: {
+    },
+    directives: {
+        focus: focus.focus
     }
 }
 </script>

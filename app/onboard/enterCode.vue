@@ -20,7 +20,7 @@
                 <div class="field">
                     <label>Enter Login Code</label>
                     <div class="ui left icon input">
-                        <input type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
+                        <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
                         <i class="lock icon"></i>
                     </div>
                 </div>
@@ -40,6 +40,7 @@
 <script>
 util = require('../util');
 shared = require('../globalState');
+focus = require('vue-focus');
 
 function setup() {
     $('form.ui.form.enter-code').form({
@@ -93,6 +94,9 @@ module.exports = {
         setup.call(this)
     },
     methods: {
+    },
+    directives: {
+        focus: focus.focus
     }
 }
 </script>
