@@ -32,6 +32,9 @@ module.exports = {
     data: () => ({ 
         global: shared.state
     }),
+    methods: {
+        boundExportCSV: exportCSV.bind(this)
+    },
     mounted: function() {
         if (this.global.onboarded === false) {
             this.$router.push({ name: 'welcome' });
