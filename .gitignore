@@ -6,3 +6,4 @@ dist
 .*.pass
 .cscope_db
 *.scssc
+.vscode
