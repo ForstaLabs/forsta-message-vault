@@ -25,13 +25,13 @@ class WebServer {
         this.app.use('/api/onboard/', (new api.OnboardAPIV1({server: this})).router);
         this.app.use('/api/messages/', (new api.MessagesAPIV1({server: this})).router);
         this.app.use('/api/attachments/', (new api.AttachmentsAPIV1({server: this})).router);
+        this.app.use('/api/auth/', (new api.AuthenticationAPIV1({server: this})).router);
         this.app.use('/static/', express.static(path.join(root, 'static'), {strict: true}));
         this.app.get('/env.js', (req, res) => {
             res.setHeader('Content-Type', 'application/javascript');
             res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`);
         });
-        this.app.get('/install', (req, res) => res.sendFile('static/html/install.html', {root}));
-        this.app.get('/', (req, res) => res.sendFile('static/html/main.html', {root}));
+        this.app.get('/*', (req, res) => res.sendFile('static/html/index.html', {root}));
         this.app.use((req, res, next) => {
             res.status(404).json({
                 error: 'bad_request',

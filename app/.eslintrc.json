@@ -9,7 +9,9 @@
     "globals": {
       "F": true,
       "_": true,
-      "$": true
+      "$": true,
+      "require": true,
+      "module": true
     },
     "extends": "eslint:recommended",
     "rules": {

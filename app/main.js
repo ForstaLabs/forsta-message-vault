@@ -1,174 +1,30 @@
-// vim: ts=4:sw=4:expandtab
+addEventListener('load', main);
+function main() {
+    const Vue = require('vue');
+    const VueRouter = require('vue-router');
+    Vue.use(VueRouter);
 
-(function() {
-    'use strict';
+    const Root = require('./root.vue');
+    const routes = [
+        { path: '/welcome', name: 'welcome', component: require('./welcome.vue') },
+        { path: '/auth/login', name: 'authenticate', component: require('./auth/authenticate.vue') },
+        { path: '/auth/password', name: 'setPassword', component: require('./auth/setPassword.vue') },
+        { path: '/onboard/tag', name: 'enterTag', component: require('./onboard/enterTag.vue') },
+        { path: '/onboard/code/:tag', name: 'enterCode', component: require('./onboard/enterCode.vue') },
+        { path: '/dashboard', name: 'dashboard', component: require('./dashboard/dashboard.vue') },
+        { path: '*', redirect: '/welcome' },
+    ];
 
-    addEventListener('load', main);
+    const router = new VueRouter({
+        mode: 'history',
+        routes
+    });
 
-    var state = {
-        pane: 'welcome',
-        tag: null
-    };
-
-    function main() {
-        // page
-        $('div.menu').tab();
-        checkStatus();
-
-        // welcome pane
-        $('button#connect').on('click', () => { setPane('enter-tag'); });
-
-        // enter-tag pane
-        $('form.ui.form.enter-tag').form({
-            fields: {
-                tag: {
-                    identifier: 'tag',
-                    rules: [{
-                        type: 'regExp',
-                        value: /^([\da-z_]([.][\da-z_]|[\da-z_])*):([\da-z_]([.]+[\da-z_]|[\da-z_])*)$/,
-                        prompt: 'please enter full @your.name:your.org'
-                    }]
-                }
-            },
-            onSuccess: requestAuth
-        });
-
-        // enter-code pane
-        $('div.code-cancel').on('click', () => { setPane('enter-tag'); });
-        $('form.ui.form.enter-code').form({
-            fields: {
-                code: {
-                    identifier: 'code',
-                    rules: [{
-                        type: 'regExp',
-                        value: /^\d{6}$/,
-                        prompt: 'please enter the six-digit code you were just sent'
-                    }]
-                }
-            },
-            onSuccess: sendLoginCode
-        });
-
-        // dashboard pane
-        $('button#export').on('click', () => {
-            exportCSV();
-            return false; // preventDefault
-        });
-    }
-
-    function setPane(name) {
-        $.tab('change tab', name);
-        state.pane = name;
-    }
-
-    function formLoading(form, isLoading) {
-        if (isLoading) {
-            $('form.ui.form' + form).addClass('loading');
-        } else {
-            $('form.ui.form' + form).removeClass('loading');
+    new Vue({
+        el: '#app',
+        router,
+        render: function (createElement) {
+            return createElement(Root);
         }
-    }
-
-    function buttonLoading(button, isLoading) {
-        if (isLoading) {
-            $('button' + button).addClass('loading');
-        } else {
-            $('button' + button).removeClass('loading');
-        }
-    }
-
-    function formFieldVal(formClass, fieldName) {
-        return $('form.ui.form.' + formClass).form('get field', fieldName).val();
-    }
-
-    function addFormErrors(formClass, errors) {
-        $('form.ui.form.' + formClass).form('add errors', errors);
-        Object.keys(errors).forEach(key => $('form.ui.form.' + formClass).form('add prompt', key));
-    }
-
-    function checkStatus() {
-        fetch('/api/onboard/status/v1/')
-        .then(result => {
-            state.isRegistered = result.ok;
-            if (state.isRegistered) setPane('dashboard');
-        });
-    }
-
-    function requestAuth() {
-        event.preventDefault();
-        var tag = formFieldVal('enter-tag', 'tag');
-        formLoading('.enter-tag', true);
-        fetch('/api/onboard/authcode/v1/' + tag)
-        .then(result => {
-            formLoading('.enter-tag', false);
-            if (result.ok) {
-                state.tag = tag;
-                setPane('enter-code');
-                return false;
-            } else {
-                addFormErrors('enter-tag', { tag: 'Unrecognized name and/or org.' });
-                return false;
-            }
-        })
-        .catch(err => {
-            console.log('had error', err);
-            formLoading('.enter-tag', false);
-        });
-        return false;
-    }
-
-    function sendLoginCode() {
-        event.preventDefault();
-        var code = formFieldVal('enter-code', 'code');
-        formLoading('.enter-code', true);
-        fetch('/api/onboard/authcode/v1/' + state.tag, {
-            method: 'post',
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ code })
-        })
-        .then(result => {
-            formLoading('.enter-code', false);
-            if (result.ok) {
-                setPane('dashboard');
-                return false;
-            } else {
-                addFormErrors('enter-code', { code: 'Incorrect code.' });
-                return false;
-            }
-        })
-        .catch(err => {
-            console.log('had error', err);
-            formLoading('.enter-code', false);
-        });
-        return false;
-    }
-
-    async function exportCSV() {
-        console.log('exporting csv...');
-        formLoading('.enter-tag', true);
-        let result;
-        try {
-            result = await fetch('/api/messages/v1', {
-                headers: {
-                    'Accept': 'text/csv'
-                }
-            });
-        } catch(err) {
-            buttonLoading('#export', false);
-            console.error('had error', err);
-            return;
-        }
-        buttonLoading('#export', false);
-        if (result.ok) {
-            const blob = await result.blob();
-            const anchor = document.createElement('a');
-            anchor.href = URL.createObjectURL(blob);
-            anchor.download = result.headers.get('content-disposition').match(/ filename="(.*?)"/)[1];
-            anchor.click();
-        }
-    }
-
-})();
+    });
+}

@@ -13,7 +13,7 @@ semantic: $(SEMANTIC)
 grunt: $(GRUNT)
 
 NPATH := $(shell pwd)/node_modules/.bin
-SRC := $(shell find app html images stylesheets -type f)
+SRC := $(shell find app html images stylesheets server -type f)
 
 ########################################################
 # Building & cleaning targets

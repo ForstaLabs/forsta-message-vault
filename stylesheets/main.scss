@@ -1,19 +1,44 @@
-body > .ui.segment:first-child {
-    margin-top: 2em;
+.ui.text.container h1 {
+    font-size: 3rem;
 }
 
-.ui.text.container h1 {
-    font-size: 4rem;
+.ui.text.container h1 .sub.header {
+    font-size: 1.5rem;
 }
+
+.ui.text.container h2 {
+    font-size: 2.5rem;
+}
+
+.ui.text.container h2 .sub.header {
+    font-size: 1.25rem;
+}
+
 
 .ui.divider {
     margin-top: 4em;
 }
 
-.tab.tall {
-    min-height: 80vh;
-}
-
 .hidden {
     display: none!important;
+}
+
+.t0 {
+    padding-top: 0!important;
+    margin-top: 0!important;
+}
+
+.b0 {
+    padding-bottom: 0!important;
+    margin-bottom: 0!important;
+}
+
+.b1 {
+    padding-bottom: .75em!important;
+    margin-bottom: .75em!important;
+}
+
+
+.sub.text {
+    font-size: 85%!important;
 }

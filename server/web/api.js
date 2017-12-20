@@ -2,8 +2,13 @@ const VaultAtlasClient = require('../atlas_client');
 const csvStringify = require('csv-stringify');
 const express = require('express');
 const relay = require('librelay');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const uuidv4 = require('uuid/v4');
 
-const lineContext = () => new Error().stack.split(/\n/)[2].trim();
+const bcryptSaltRounds = 12;
+
+// const lineContext = () => new Error().stack.split(/\n/)[2].trim();
 
 
 class APIHandler {
@@ -11,19 +16,46 @@ class APIHandler {
     constructor({server, requireAuth=true}) {
         this.server = server;
         this.router = express.Router();
-        if (requireAuth) {
-            /* XXX For Greg: insert auth middleware here maybe? */
-            console.warn("IMPLEMENT ME: requireAuth", lineContext());
-        }
     }
 
-    asyncRoute(fn) {
+    asyncRoute(fn, requireAuth=true) {
         /* Add error handling for async exceptions.  Otherwise the server just hangs
          * the request or subclasses have to do this by hand for each async routine. */
-        return (req, res, next) => fn.call(this, req, res, next).catch(e => {
-            console.error('Async Route Error:', e);
-            next();
-        });
+        return (req, res, next) => {
+            if (requireAuth) {
+                const header = req.get('Authorization');
+                const parts = (header || '').split(' ');
+                if (!header || parts.length !== 2 || parts[0].toLowerCase() !== 'jwt') {
+                    console.log('missing authentication');
+                    res.status(403).send({ message: 'forbidden' });
+                } else {
+                    relay.storage.get('authentication', 'jwtsecret')
+                        .then((secret) => {
+                            try {
+                                jwt.verify(parts[1], secret);
+                                console.log('properly authenticated');
+                                fn.call(this, req, res, next).catch(e => {
+                                    console.error('Async Route Error:', e);
+                                    next();
+                                });
+                            } catch (err) {
+                                console.log('bad authentication', err);
+                                res.status(403).send({ message: 'forbidden' });
+                            }
+                        })
+                        .catch(err => {
+                            console.log('storage error checking authentication', err);
+                            res.status(403).send({ message: 'forbidden' });
+                        });
+                }
+            } else {
+                console.log('no authentication needed');
+                fn.call(this, req, res, next).catch(e => {
+                    console.error('Async Route Error:', e);
+                    next();
+                });
+            }
+        };
     }
 
     async toCSV(data) {
@@ -48,14 +80,16 @@ class OnboardAPIV1 extends APIHandler {
 
     constructor(options) {
         super(options);
-        this.router.get('/status/v1', this.asyncRoute(this.onStatusGet));
+        this.router.get('/status/v1', this.asyncRoute(this.onStatusGet, false));
         this.router.get('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodeGet));
         this.router.post('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodePost));
     }
 
     async onStatusGet(req, res, next) {
         /* Registration status (local only, we don't check the remote server(s)) */
+        console.log('checking registration status');
         const registered = !!await relay.storage.getState('vaultToken');
+        console.log('... registration status:', registered);
         if (!registered) {
             res.status(404).json({error: 'not_registered'});
         } else {
@@ -204,8 +238,86 @@ class AttachmentsAPIV1 extends APIHandler {
     }
 }
 
+class AuthenticationAPIV1 extends APIHandler {
+
+    constructor(options) {
+        super(options);
+        this.router.get('/status/v1', this.asyncRoute(this.onGetStatus, false));
+        this.router.post('/login/v1', this.asyncRoute(this.onLogin, false));
+        this.router.post('/password/v1', this.asyncRoute(this.onPost, false));
+        this.router.put('/password/v1', this.asyncRoute(this.onPut));
+    }
+
+    async genToken() {
+        let secret = await relay.storage.get('authentication', 'jwtsecret');
+        if (!secret) {
+            secret = uuidv4();
+            await relay.storage.set('authentication', 'jwtsecret', secret);
+        }
+        return jwt.sign({}, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later: "2 days" */ });
+    }
+
+    async passwordHash(hash) {
+        if (hash) {
+            return await relay.storage.set('authentication', 'pwhash', hash);
+        } else {
+            return await relay.storage.get('authentication', 'pwhash');
+        }
+    }
+
+    async onGetStatus(req, res) {
+        console.log('getting status');
+        const stashedHash = await this.passwordHash();
+        if (stashedHash) {
+            res.status(204).json({ });
+        } else {
+            res.status(404).json({error: 'not_configured'});
+        }
+    }
+
+    async onLogin(req, res) {
+        const password = req.body.password;
+        const stashedHash = await this.passwordHash();
+        if (!stashedHash || bcrypt.compareSync(password, stashedHash)) {
+            // yes, if there is no stashed password hash, we give them a session
+            const token = await this.genToken();
+            res.status(200).json({ token });
+        } else {
+            res.status(401).json({ password: 'incorrect password' });
+        }
+    }
+
+    async onPost(req, res) {
+        const exists = !!await this.passwordHash();
+        if (!exists) {
+            const password = req.body.password;
+            const hash = await bcrypt.hash(password, bcryptSaltRounds);
+            this.passwordHash(hash);
+            const token = await this.genToken();
+            res.status(201).json({ token });
+        } else {
+            res.status(405).json({ password: 'already exists' });
+        }
+    }
+
+    async onPut(req, res) {
+        const exists = !!this.passwordHash();
+        if (exists) {
+            const password = req.body.password;
+            const hash = await bcrypt.hash(password, bcryptSaltRounds);
+            this.passwordHash(hash);
+            const token = await this.genToken();
+            res.status(201).json({ token });
+        } else {
+            res.status(405).json({ password: 'does not exist' });
+        }
+    }
+}
+
+
 module.exports = {
     OnboardAPIV1,
     MessagesAPIV1,
-    AttachmentsAPIV1
+    AttachmentsAPIV1,
+    AuthenticationAPIV1,
 };
