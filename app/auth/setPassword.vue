@@ -15,14 +15,14 @@
                     <label>Password</label>
                     <div class="ui left icon input">
                         <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
-                        <i class="at icon"></i>
+                        <i class="lock icon"></i>
                     </div>
                 </div>
                 <div class="field">
                     <label>Confirm</label>
                     <div class="ui left icon input">
                         <input type="password" v-model='confirm' name="confirm" placeholder="confirm password" autocomplete="off">
-                        <i class="at icon"></i>
+                        <i class="lock icon"></i>
                     </div>
                 </div>
                 <button class="ui large primary submit button" type="submit">Submit</button>
