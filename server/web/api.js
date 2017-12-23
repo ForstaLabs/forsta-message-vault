@@ -153,6 +153,7 @@ class MessagesAPIV1 extends APIHandler {
         this.router.get('/v1', this.asyncRoute(this.onGet));
         this.csvFields = [
             [x => x.id, 'id'],
+            [x => x.ts, 'ts'],
             [x => x.messageId, 'message_id'],
             [x => x.threadId, 'thread_id'],
             [x => x.sender, 'sender_id'],
@@ -184,8 +185,11 @@ class MessagesAPIV1 extends APIHandler {
             index.reverse();
         }
         const keys = index.slice(offset, offset + limit);
-        const messages = await Promise.all(keys.map(x =>
-            relay.storage.get('messages', x.split(',')[1])));
+        const messages = await Promise.all(keys.map(async x => {
+            const [ts, id] = x.split(',');
+            const msg = await relay.storage.get('messages', id);
+            return Object.assign({ts: Number(ts)}, msg);
+        }));
         if (format === 'json') {
             res.status(200).json({
                 meta: {

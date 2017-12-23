@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-const WebServer = require('./web');
 const MessageVault = require('./message_vault');
+const WebServer = require('./web');
 const process = require('process');
+const relay = require('librelay');
 
 
 let _rejectCount = 0;
@@ -16,6 +17,7 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
+    relay.storage.setLabel('vault-1');
     const msgVault = new MessageVault();
     await msgVault.start();
     const webServer = new WebServer(msgVault);
