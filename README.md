@@ -2,8 +2,9 @@ Forsta Vault
 ========
 Decentralized data retention application for the Forsta messaging platform.
 
-[![npm](https://img.shields.io/npm/v/forsta-vault.svg)](https://www.npmjs.com/package/forsta-vault)
-[![npm](https://img.shields.io/npm/l/forsta-vault.svg)](https://github.com/ForstaLabs/vault)
+[![NPM](https://img.shields.io/npm/v/forsta-vault.svg)](https://www.npmjs.com/package/forsta-vault)
+[![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)
+[![License](https://img.shields.io/npm/l/forsta-vault.svg)](https://github.com/ForstaLabs/vault)
 
 
 About

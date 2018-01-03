@@ -77,6 +77,7 @@ class MessageVault {
         const id = uuid4();
         const entry = {
             id,
+            ts,
             messageId: msg.messageId,
             messageType: msg.messageType,
             threadId: msg.threadId,
