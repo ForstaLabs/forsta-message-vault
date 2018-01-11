@@ -35,7 +35,7 @@
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-sass": "1.0.0",
-    "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-env": "^0.4.4",
     "jquery": "3.2.1",
     "jsonwebtoken": "^8.1.0",
