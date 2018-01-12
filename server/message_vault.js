@@ -42,9 +42,7 @@ class MessageVault {
 
     async onKeyChange(ev) {
         console.warn("Auto-accepting new identity key for:", ev.addr);
-        await relay.storage.removeIdentity(ev.addr);
-        await relay.storage.saveIdentity(ev.addr, ev.identityKey);
-        ev.accepted = true;
+        await ev.accept();
     }
 
     onError(e) {
