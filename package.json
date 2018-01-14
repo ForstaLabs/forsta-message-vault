@@ -40,7 +40,7 @@
     "jquery": "3.2.1",
     "jsonwebtoken": "^8.1.0",
     "jwt-decode": "^2.2.0",
-    "librelay": "2.2.0",
+    "librelay": "2.2.1",
     "lodash": "^4.17.4",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
