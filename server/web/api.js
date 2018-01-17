@@ -88,7 +88,7 @@ class OnboardAPIV1 extends APIHandler {
     async onStatusGet(req, res, next) {
         /* Registration status (local only, we don't check the remote server(s)) */
         console.log('checking registration status');
-        const registered = !!await relay.storage.getState('vaultToken');
+        const registered = !!await relay.storage.getState('vaultUserAuthToken');
         console.log('... registration status:', registered);
         if (!registered) {
             res.status(404).json({error: 'not_registered'});
@@ -138,10 +138,6 @@ class OnboardAPIV1 extends APIHandler {
             atlasClient: atlas
         });
         await this.server.msgVault.start();
-        await atlas.fetch(`/v1/user/${atlas.userId}/`, {
-            method: 'PATCH',
-            json: {is_monitor: true}
-        });
         res.status(204).send();
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "forsta-vault",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Forsta Messaging Vault",
   "engines": {
     "node": "8"
@@ -37,10 +37,10 @@
     "grunt-contrib-sass": "1.0.0",
     "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-env": "^0.4.4",
+    "librelay": "2.4.0",
     "jquery": "3.2.1",
     "jsonwebtoken": "^8.1.0",
     "jwt-decode": "^2.2.0",
-    "librelay": "2.2.1",
     "lodash": "^4.17.4",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
