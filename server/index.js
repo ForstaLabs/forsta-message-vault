@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const MessageVault = require('./message_vault');
+const ForstaBot = require('./forsta_bot');
 const WebServer = require('./web');
 const process = require('process');
 const relay = require('librelay');
@@ -18,9 +18,9 @@ process.on('unhandledRejection', ev => {
 
 async function run() {
     relay.storage.setLabel('vault-1');
-    const msgVault = new MessageVault();
-    await msgVault.start();
-    const webServer = new WebServer(msgVault);
+    const bot = new ForstaBot();
+    await bot.start();
+    const webServer = new WebServer(bot);
     await webServer.start();
 }
 

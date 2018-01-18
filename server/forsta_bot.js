@@ -2,23 +2,22 @@
 
 'use strict';
 
-const VaultAtlasClient = require('./atlas_client');
+const BotAtlasClient = require('./atlas_client');
 const cache = require('./cache');
 const relay = require('librelay');
 const uuid4 = require('uuid/v4');
 
 
-class MessageVault {
+class ForstaBot {
 
     async start() {
         const ourId = await relay.storage.getState('addr');
         if (!ourId) {
-            console.warn("Message Vault unregistered");
+            console.warn("bot is not yet registered");
             return;
         }
         console.info("Starting message receiver for:", ourId);
-        this.atlas = await VaultAtlasClient.factory();
-        this.atlas.maintainJWT(false, this.onJWTRefresh.bind(this), this.authenticator.bind(this));
+        this.atlas = await BotAtlasClient.factory();
         this.getUsers = cache.ttl(60, this.atlas.getUsers.bind(this.atlas));
         this.resolveTags = cache.ttl(60, this.atlas.resolveTags.bind(this.atlas));
         this.msgReceiver = await relay.MessageReceiver.factory();
@@ -39,17 +38,6 @@ class MessageVault {
     async restart() {
         this.stop();
         await this.start();
-    }
-
-    async authenticator () {
-        const userAuthToken = await relay.storage.getState('vaultUserAuthToken');
-        const result = VaultAtlasClient.authenticateViaToken(userAuthToken);
-        console.info('Reauthenticated vault user via UserAuthToken');
-        return result;
-    }
-
-    async onJWTRefresh() {
-        console.info('Refreshed JWT for vault user');
     }
 
     async onKeyChange(ev) {
@@ -137,4 +125,4 @@ class MessageVault {
     }
 }
 
-module.exports = MessageVault;
+module.exports = ForstaBot;

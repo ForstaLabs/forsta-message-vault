@@ -12,12 +12,12 @@ const port = process.env.PORT || '4096';
 
 class WebServer {
 
-    constructor(msgVault) {
+    constructor(bot) {
         const jsenv = {};
         for (const key of Object.keys(build)) {
             jsenv[key.toUpperCase()] = build[key];
         }
-        this.msgVault = msgVault;
+        this.bot = bot;
         this.port = port;
         this.app = express();
         this.app.use(morgan('dev')); // logging

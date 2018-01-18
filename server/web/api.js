@@ -1,4 +1,4 @@
-const VaultAtlasClient = require('../atlas_client');
+const BotAtlasClient = require('../atlas_client');
 const csvStringify = require('csv-stringify');
 const express = require('express');
 const relay = require('librelay');
@@ -26,30 +26,28 @@ class APIHandler {
                 const header = req.get('Authorization');
                 const parts = (header || '').split(' ');
                 if (!header || parts.length !== 2 || parts[0].toLowerCase() !== 'jwt') {
-                    console.log('missing authentication');
+                    console.log('missing authentication for this bot server request');
                     res.status(403).send({ message: 'forbidden' });
                 } else {
                     relay.storage.get('authentication', 'jwtsecret')
                         .then((secret) => {
                             try {
                                 jwt.verify(parts[1], secret);
-                                console.log('properly authenticated');
                                 fn.call(this, req, res, next).catch(e => {
                                     console.error('Async Route Error:', e);
                                     next();
                                 });
                             } catch (err) {
-                                console.log('bad authentication', err);
+                                console.log('bad authentication for this bot server request', err);
                                 res.status(403).send({ message: 'forbidden' });
                             }
                         })
                         .catch(err => {
-                            console.log('storage error checking authentication', err);
+                            console.log('storage error while checking authentication for this bot server request', err);
                             res.status(403).send({ message: 'forbidden' });
                         });
                 }
             } else {
-                console.log('no authentication needed');
                 fn.call(this, req, res, next).catch(e => {
                     console.error('Async Route Error:', e);
                     next();
@@ -87,9 +85,7 @@ class OnboardAPIV1 extends APIHandler {
 
     async onStatusGet(req, res, next) {
         /* Registration status (local only, we don't check the remote server(s)) */
-        console.log('checking registration status');
-        const registered = !!await relay.storage.getState('vaultUserAuthToken');
-        console.log('... registration status:', registered);
+        const registered = await BotAtlasClient.onboardComplete();
         if (!registered) {
             res.status(404).json({error: 'not_registered'});
         } else {
@@ -109,7 +105,7 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        res.status(200).json(await VaultAtlasClient.authenticate(tag));
+        res.status(200).json(await BotAtlasClient.requestLoginCode(tag));
     }
 
     async onAuthCodePost(req, res) {
@@ -131,13 +127,9 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        const atlas = await VaultAtlasClient.onboardVault(tag, code);
-        this.server.msgVault.stop();
-        await relay.registerAccount({
-            name: `Vault (Created by: ${tag})`,
-            atlasClient: atlas
-        });
-        await this.server.msgVault.start();
+        const onboarderAuth = await BotAtlasClient.codeLogin(tag, code);
+        await BotAtlasClient.onboard(onboarderAuth, {first_name: 'Vault', last_name: 'Monitor', is_monitor: true});
+        await this.server.bot.start(); // it could not have been running without a successful onboard
         res.status(204).send();
     }
 }
@@ -266,7 +258,7 @@ class AuthenticationAPIV1 extends APIHandler {
     }
 
     async onGetStatus(req, res) {
-        console.log('getting status');
+        console.log('getting bot server authentication status');
         const stashedHash = await this.passwordHash();
         if (stashedHash) {
             res.status(204).json({ });
