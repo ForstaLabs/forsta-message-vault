@@ -18,7 +18,7 @@ class MessageVault {
         }
         console.info("Starting message receiver for:", ourId);
         this.atlas = await VaultAtlasClient.factory();
-        this.atlas.maintainJWT(false, this.onJWTRefresh.bind(this), this.authenticator.bind(this))
+        this.atlas.maintainJWT(false, this.onJWTRefresh.bind(this), this.authenticator.bind(this));
         this.getUsers = cache.ttl(60, this.atlas.getUsers.bind(this.atlas));
         this.resolveTags = cache.ttl(60, this.atlas.resolveTags.bind(this.atlas));
         this.msgReceiver = await relay.MessageReceiver.factory();
@@ -43,9 +43,9 @@ class MessageVault {
 
     async authenticator () {
         const userAuthToken = await relay.storage.getState('vaultUserAuthToken');
-        const result = VaultAtlasClient.authenticateViaToken(userAuthToken)
-        console.info('Reauthenticated vault user via UserAuthToken')
-        return result
+        const result = VaultAtlasClient.authenticateViaToken(userAuthToken);
+        console.info('Reauthenticated vault user via UserAuthToken');
+        return result;
     }
 
     async onJWTRefresh() {
