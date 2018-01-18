@@ -17,25 +17,28 @@ class VaultAtlasClient extends relay.AtlasClient {
                 "first_name": "Message",
                 "last_name": "Vault",
                 "user_type": 'BOT',
-                "is_monitor": false // turn on once we are fully configured.,
+                "is_monitor": true,
             }
         });
         const ident = `@${vaultUser.tag.slug}:${vaultUser.org.slug} <${vaultUser.id}>`;
         console.info("Created vault user:", ident);
-        const vaultToken = await onboardClient.fetch('/v1/authtoken/', {
+        const result = await onboardClient.fetch('/v1/userauthtoken/', {
             method: 'POST',
-            json: {"user_id": vaultUser.id}
+            json: {"userid": vaultUser.id}
         });
-        console.info("Created vault API token");
+        console.info("Created UserAuthToken for vault user");
         await relay.storage.putState('vaultUser', vaultUser.id);
-        await relay.storage.putState('vaultToken', vaultToken.token);
-        return new this({userId: vaultUser.id, token: vaultToken.token});
+        await relay.storage.putState('vaultUserAuthToken', result.token);
+        console.info("Authenticating vault user via UserAuthToken");
+        const { url, jwt } = await this.authenticateViaToken(result.token);
+        return new this({url, jwt});
     }
 
     static async factory() {
-        const userId = await relay.storage.getState('vaultUser');
-        const token = await relay.storage.getState('vaultToken');
-        return new this({userId, token});
+        const userAuthToken = await relay.storage.getState('vaultUserAuthToken');
+        console.info("Authenticating vault user via UserAuthToken");
+        const { url, jwt } = await this.authenticateViaToken(userAuthToken);
+        return new this({url, jwt});
     }
 }
 
