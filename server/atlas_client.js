@@ -4,10 +4,10 @@ const relay = require('librelay');
 
 class BotAtlasClient extends relay.AtlasClient {
 
-    static async requestLoginCode(tag, options) {
+    static async requestAuthenticationCode(tag, options) {
         return this.authenticate(tag, options); // todo: just rename this in AtlasClient
     }
-    static async codeLogin(tag, code, options) {
+    static async authenticateViaCode(tag, code, options) {
         return this.authValidate(tag, code, options); // todo: just rename this in AtlasClient
     }
 
@@ -47,23 +47,12 @@ class BotAtlasClient extends relay.AtlasClient {
     }
 
     static async factory() {
-        const { url, jwt } = await this.tokenLogin();
+        const userAuthToken = await relay.storage.getState('botUserAuthToken');
+        const { url, jwt } = await this.authenticateViaToken(userAuthToken);
         const that = new this({url, jwt});
-        that.maintainJWT(false, this.onJWTRefresh.bind(this), this.tokenLogin.bind(this));
+        that.maintainJWT(false, this.authenticateViaToken.bind(this, userAuthToken));
         return that;
     }
-
-    static async tokenLogin() {
-        const userAuthToken = await relay.storage.getState('botUserAuthToken');
-        const result = this.authenticateViaToken(userAuthToken);
-        console.info('Authenticated bot user with Atlas.');
-        return result;
-    }
-
-    static async onJWTRefresh() {
-        console.info('Refreshed Atlas JWT for bot user.');
-    }
-
 }
 
 module.exports = BotAtlasClient;

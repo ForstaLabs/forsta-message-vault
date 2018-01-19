@@ -105,7 +105,7 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        res.status(200).json(await BotAtlasClient.requestLoginCode(tag));
+        res.status(200).json(await BotAtlasClient.requestAuthenticationCode(tag));
     }
 
     async onAuthCodePost(req, res) {
@@ -127,7 +127,7 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        const onboarderAuth = await BotAtlasClient.codeLogin(tag, code);
+        const onboarderAuth = await BotAtlasClient.authenticateViaCode(tag, code);
         await BotAtlasClient.onboard(onboarderAuth, {first_name: 'Vault', last_name: 'Monitor', is_monitor: true});
         await this.server.bot.start(); // it could not have been running without a successful onboard
         res.status(204).send();
