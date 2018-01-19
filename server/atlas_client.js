@@ -3,14 +3,6 @@ const relay = require('librelay');
 
 
 class BotAtlasClient extends relay.AtlasClient {
-
-    static async requestAuthenticationCode(tag, options) {
-        return this.authenticate(tag, options); // todo: just rename this in AtlasClient
-    }
-    static async authenticateViaCode(tag, code, options) {
-        return this.authValidate(tag, code, options); // todo: just rename this in AtlasClient
-    }
-
     static async onboard(onboarderAuth, createBotUser) {
         let botUser = onboarderAuth.user;
         const creator = `@${botUser.tag.slug}:${botUser.org.slug}`;
