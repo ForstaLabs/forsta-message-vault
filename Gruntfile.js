@@ -50,7 +50,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'dist/static/js/main.js': ['app/main.js']
+          'dist/static/js/main.js': ['client/main.js']
         },
         options: {
           transform: [['envify', {"global": true}], 'vueify'],
@@ -68,7 +68,7 @@ module.exports = function(grunt) {
     },
 
     concat: {
-      app_deps: {
+      client_deps: {
         src: [
           "jquery/dist/jquery.slim.js",
           "lodash/core.js",
@@ -125,7 +125,7 @@ module.exports = function(grunt) {
       },
       code: {
         files: [
-          'app/**',
+          'client/**',
           'Gruntfile.js'
         ],
         tasks: ['development', 'copy']

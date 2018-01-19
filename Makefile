@@ -13,7 +13,7 @@ semantic: $(SEMANTIC)
 grunt: $(GRUNT)
 
 NPATH := $(shell pwd)/node_modules/.bin
-SRC := $(shell find app html images stylesheets server -type f)
+SRC := $(shell find client html images stylesheets server -type f)
 
 ########################################################
 # Building & cleaning targets
@@ -34,7 +34,7 @@ $(SEMANTIC): $(shell find semantic/src -type f)
 
 ifneq ($(NODE_ENV),production)
 $(LINT): $(SRC)
-	$(NPATH)/eslint app server
+	$(NPATH)/eslint client server
 	touch $@
 else
 $(LINT):

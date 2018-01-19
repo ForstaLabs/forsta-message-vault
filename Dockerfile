@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 RUN gem install sass
-WORKDIR /usr/src/app
+WORKDIR /usr/src/client
 COPY package.json ./
 ENV NODE_ENV=production
 COPY . .
