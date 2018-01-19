@@ -39,6 +39,8 @@
 </template>
 
 <script>
+const util = require('../util');
+
 module.exports = {
     data: () => ({ 
         global: shared.state
