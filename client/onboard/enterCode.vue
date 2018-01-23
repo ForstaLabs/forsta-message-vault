@@ -73,7 +73,7 @@ function sendLoginCode() {
             this.$router.push({ name: 'dashboard' });
             return false;
         } else {
-            util.addFormErrors('enter-code', { code: 'Incorrect code, please try again.' });
+            util.addFormErrors('enter-code', { code: util.mergeErrors(result.theJson) });
             return false;
         }
     })

@@ -111,15 +111,13 @@ async function tryPassword() {
     }
     this.loading = false;
     if (result.ok) {
-        result.json().then(data => {
-            const { token } = data;
-            this.global.apiToken = token;
-            const forwardTo = this.$route.query.forwardTo;
-            this.$router.replace(forwardTo || { name: 'welcome' });
-            return false;
-        });
+        const { token } = result.theJson;
+        this.global.apiToken = token;
+        const forwardTo = this.$route.query.forwardTo;
+        this.$router.replace(forwardTo || { name: 'welcome' });
         return false;
     } else {
+        console.log('unhappy result is', result)
         util.addFormErrors('authenticate', { password: 'Incorrect password, please try again.'});
     }
     return false;

@@ -13,7 +13,7 @@ async function exportCSV() {
     let result;
 
     try {
-        result = await util.fetch.call(this, '/api/messages/v1', { headers: { 'Accept': 'text/csv' } });
+        result = await util.fetch.call(this, '/api/messages/v1', { headers: { 'Accept': 'text/csv' } }, true);
     } catch (err) {
         console.error('had error', err);
         return;

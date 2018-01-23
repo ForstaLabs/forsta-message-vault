@@ -69,12 +69,12 @@ function requestAuth() {
             this.$router.push({ name: 'enterCode', params: { tag: this.tag }});
             return false;
         } else {
-            util.addFormErrors('enter-tag', { tag: 'Unrecognized name and/or org.' });
+            util.addFormErrors('enter-tag', { tag: util.mergeErrors(result.theJson) });
             return false;
         }
     })
     .catch(err => {
-        console.log(err);
+        console.log('got an err in requestAuth', err);
         this.loading = false;
     });
     return false;

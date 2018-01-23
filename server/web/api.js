@@ -27,7 +27,7 @@ class APIHandler {
                 const parts = (header || '').split(' ');
                 if (!header || parts.length !== 2 || parts[0].toLowerCase() !== 'jwt') {
                     console.log('missing authentication for this bot server request');
-                    res.status(403).send({ message: 'forbidden' });
+                    res.status(401).send({ message: 'forbidden' });
                 } else {
                     relay.storage.get('authentication', 'jwtsecret')
                         .then((secret) => {
@@ -39,12 +39,12 @@ class APIHandler {
                                 });
                             } catch (err) {
                                 console.log('bad authentication for this bot server request', err);
-                                res.status(403).send({ message: 'forbidden' });
+                                res.status(401).send({ message: 'forbidden' });
                             }
                         })
                         .catch(err => {
                             console.log('storage error while checking authentication for this bot server request', err);
-                            res.status(403).send({ message: 'forbidden' });
+                            res.status(401).send({ message: 'forbidden' });
                         });
                 }
             } else {
@@ -105,7 +105,16 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
+        try {
+            console.log('requesting authentication code');
+            await BotAtlasClient.requestAuthenticationCode(tag);
+        } catch (e) {
+            console.log('got requestAuthenticationCode error', e);
+            res.status(e.code).json(e.response.theJson);
+            return;
+        }
         res.status(200).json(await BotAtlasClient.requestAuthenticationCode(tag));
+        return;
     }
 
     async onAuthCodePost(req, res) {
@@ -127,8 +136,28 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        const onboarderAuth = await BotAtlasClient.authenticateViaCode(tag, code);
-        await BotAtlasClient.onboard(onboarderAuth, {first_name: 'Vault', last_name: 'Monitor', is_monitor: true});
+        let onboarderAuth;
+        try {
+            onboarderAuth = await BotAtlasClient.authenticateViaCode(tag, code);
+        } catch (e) {
+            if (e.code == 429) {
+                res.status(403).json({ "non_field_errors": ["Too many requests, please try again later."] });
+            } else {
+                res.status(e.code).json(e.response.theJson || {non_field_errors: ['Internal error, please try again.']});
+            }
+            return;
+        }
+        try {
+            await BotAtlasClient.onboard(onboarderAuth); // , {first_name: 'Vault', last_name: 'Monitor', is_monitor: true});
+        } catch (e) {
+            if (e.code === 403) {
+                res.status(403).json({non_field_errors: ['Insufficient permission. Need to be an administrator?']});
+            } else  {
+                res.status(e.code || 500).json({non_field_errors: ['Internal error.']});
+            }
+            return;
+        }
+        console.log('happy after onboarding');
         await this.server.bot.start(); // it could not have been running without a successful onboard
         res.status(204).send();
     }
@@ -258,7 +287,6 @@ class AuthenticationAPIV1 extends APIHandler {
     }
 
     async onGetStatus(req, res) {
-        console.log('getting bot server authentication status');
         const stashedHash = await this.passwordHash();
         if (stashedHash) {
             res.status(204).json({ });
