@@ -36,14 +36,14 @@ module.exports = {
         boundExportCSV: exportCSV.bind(this)
     },
     mounted: function() {
-        if (this.global.onboarded === false) {
+        if (this.global.onboardStatus !== 'complete') {
             this.$router.push({ name: 'welcome' });
             return;
         }
         util.fetch.call(this, '/api/onboard/status/v1')
         .then(result => { 
-            this.global.onboarded = result.ok;
-            if (!result.ok) {
+            this.global.onboardStatus = result.theJson.status;
+            if (this.global.onboardStatus !== 'complete') {
                 this.$router.push({ name: 'welcome' });
             }
         });

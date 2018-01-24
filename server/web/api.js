@@ -8,7 +8,9 @@ const uuidv4 = require('uuid/v4');
 
 const bcryptSaltRounds = 12;
 
-// const lineContext = () => new Error().stack.split(/\n/)[2].trim();
+
+const onboardCreateUser = {first_name: 'Vault', last_name: 'Monitor', is_monitor: true}; // for message vaults where a monitor needs to be created
+// const onboardCreateUser = null; // for personal-assistant or help-bot kinds of uses with existing users
 
 
 class APIHandler {
@@ -84,13 +86,10 @@ class OnboardAPIV1 extends APIHandler {
     }
 
     async onStatusGet(req, res, next) {
-        /* Registration status (local only, we don't check the remote server(s)) */
         const registered = await BotAtlasClient.onboardComplete();
-        if (!registered) {
-            res.status(404).json({error: 'not_registered'});
-        } else {
-            res.status(204).send();
-        }
+        res.status(200).json({
+            status: registered ? 'complete' : (onboardCreateUser ? 'authenticate-admin' : 'authenticate-user')
+        });
     }
 
     async onAuthCodeGet(req, res) {
@@ -106,10 +105,8 @@ class OnboardAPIV1 extends APIHandler {
             return;
         }
         try {
-            console.log('requesting authentication code');
             await BotAtlasClient.requestAuthenticationCode(tag);
         } catch (e) {
-            console.log('got requestAuthenticationCode error', e);
             res.status(e.code).json(e.response.theJson);
             return;
         }
@@ -143,12 +140,12 @@ class OnboardAPIV1 extends APIHandler {
             if (e.code == 429) {
                 res.status(403).json({ "non_field_errors": ["Too many requests, please try again later."] });
             } else {
-                res.status(e.code).json(e.response.theJson || {non_field_errors: ['Internal error, please try again.']});
+                res.status(e.code).json(e.json || {non_field_errors: ['Internal error, please try again.']});
             }
             return;
         }
         try {
-            await BotAtlasClient.onboard(onboarderAuth); // , {first_name: 'Vault', last_name: 'Monitor', is_monitor: true});
+            await BotAtlasClient.onboard(onboarderAuth, onboardCreateUser);
         } catch (e) {
             if (e.code === 403) {
                 res.status(403).json({non_field_errors: ['Insufficient permission. Need to be an administrator?']});
@@ -157,7 +154,6 @@ class OnboardAPIV1 extends APIHandler {
             }
             return;
         }
-        console.log('happy after onboarding');
         await this.server.bot.start(); // it could not have been running without a successful onboard
         res.status(204).send();
     }

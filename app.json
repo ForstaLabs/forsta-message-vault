@@ -1,14 +1,14 @@
 {
-    "name": "Forsta Vault",
-    "description": "Forsta Vault lets you safely manage your message retention and security policies from your own data center or cloud provider.",
+    "name": "Forsta Bot",
+    "description": "Forsta Bot lets you safely manage your message processing, retention, and security policies from your own data center or cloud provider.",
     "repository": "https://github.com/ForstaLabs/vault.git",
-    "logo": "https://github.com/ForstaLabs/vault/raw/master/images/logo.png",
+    "logo": "https://github.com/ForstaLabs/vault/raw/master/images/forsta-logo.svg",
     "keywords": ["forsta", "valult", "e-discovery"],
     "website": "https://forsta.io",
     "addons": ["heroku-redis"],
     "env": {
       "RELAY_STORAGE_BACKING": {
-        "description": "Control where Vault settings and data will be stored.  For heroku 'redis' is recommended.",
+        "description": "Control where bot settings and data will be stored.  For heroku 'redis' is recommended.",
         "required": false,
         "value": "redis"
       }

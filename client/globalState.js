@@ -1,7 +1,7 @@
 var jwtDecode = require('jwt-decode');
 
 var state = {
-    onboarded: undefined,
+    onboardStatus: undefined,
     passwordSet: undefined,
     get apiToken() {
         const retval = localStorage.getItem('apiToken') || '';

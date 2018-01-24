@@ -16,7 +16,7 @@ class BotAtlasClient extends relay.AtlasClient {
                 });
                 console.info(`Created new ${botUser.is_monitor ? 'MONITOR' : ''} bot user @${botUser.tag.slug}:${botUser.org.slug} <${botUser.id}>`);
             } catch (e) {
-                console.error('got error during creation of bot user', e);
+                console.error('error during creation of bot user', e);
                 throw e;
             }
         }
@@ -24,7 +24,6 @@ class BotAtlasClient extends relay.AtlasClient {
             method: 'POST',
             json: {"userid": botUser.id}
         });
-        console.log('userauthtoken creation got result of', result);
         console.info(`Created UserAuthToken for bot user @${botUser.tag.slug}:${botUser.org.slug}`);
         await relay.storage.putState('botUser', botUser.id);
         await relay.storage.putState('botUserAuthToken', result.token);
@@ -37,24 +36,16 @@ class BotAtlasClient extends relay.AtlasClient {
                 atlasClient: atlasClient
             });
             await something.done;
-            console.log('happy with registerDevice');
+            console.log('registerDevice success');
         } catch (e) {
-            console.log('got error on registerDevice', e);
-            console.log('proceeding with registerAccount');
-            try {
-                await relay.registerAccount({
-                    name: `Bot (created by ${creator})`,
-                    atlasClient: atlasClient
-                });
-                console.log('happy with registerAccount');
-            } catch (e) {
-                console.log('got an error in registerAccount', e);
-                throw e;
-            }
+            console.log('registerDevice failed, trying registerAccount instead');
+            await relay.registerAccount({
+                name: `Bot (created by ${creator})`,
+                atlasClient: atlasClient
+            });
+            console.log('registerAccount success');
         }
-        console.log('happy');
 
-        console.log('returning atlasClient from onboard', atlasClient);
         return atlasClient;
     }
 

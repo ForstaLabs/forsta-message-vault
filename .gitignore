@@ -7,3 +7,4 @@ dist
 .cscope_db
 *.scssc
 .vscode
+.DS_Store

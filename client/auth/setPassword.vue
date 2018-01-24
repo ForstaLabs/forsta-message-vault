@@ -1,33 +1,30 @@
 
 <template>
-    <div class="ui two column centered grid">
-        <div class="middle aligned row">
-            <div class="five wide column">
-                <img class="ui tiny floated right image" src="/static/images/logo.png"/>
-            </div>
-            <div class="eleven wide column">
-                <h2 class="ui header">Set Vault Password</h2>
-            </div>
+    <div class="ui container center aligned">
+        <div class="ui basic segment huge">
+            <h1 class="ui header"><i class="circular icon lock"></i>Set Site Password</h1>
         </div>
-        <div class="ui nine wide column basic segment left aligned t0">
-            <form class="ui huge form set-password" :class="{loading: loading}">
-                <div class="field">
-                    <label>Password</label>
-                    <div class="ui left icon input">
-                        <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
-                        <i class="lock icon"></i>
+        <div class="ui centered grid">
+            <div class="ui ten wide column left aligned t0">
+                <form class="ui huge form set-password" :class="{loading: loading}">
+                    <div class="field">
+                        <label>Password</label>
+                        <div class="ui left icon input">
+                            <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
+                            <i class="icon lock"></i>
+                        </div>
                     </div>
-                </div>
-                <div class="field">
-                    <label>Confirm</label>
-                    <div class="ui left icon input">
-                        <input type="password" v-model='confirm' name="confirm" placeholder="confirm password" autocomplete="off">
-                        <i class="lock icon"></i>
+                    <div class="field">
+                        <label>Confirm</label>
+                        <div class="ui left icon input">
+                            <input type="password" v-model='confirm' name="confirm" placeholder="confirm password" autocomplete="off">
+                            <i class="icon lock"></i>
+                        </div>
                     </div>
-                </div>
-                <button class="ui large primary submit button" type="submit">Submit</button>
-                <div class="ui mini error message" />
-            </form>
+                    <button class="ui large primary submit button" type="submit">Submit</button>
+                    <div class="ui mini error message" />
+                </form>
+            </div>
         </div>
     </div>
 </template>
@@ -88,12 +85,10 @@ async function setPassword() {
     }
     this.loading = false;
     if (result.ok) {
-        result.json().then(data => {
-            const { token } = data;
-            shared.state.apiToken = token;
-            const forwardTo = this.$route.query.forwardTo;
-            this.$router.push(forwardTo || { name: 'welcome' });
-        });
+        const { token } = result.theJson;
+        shared.state.apiToken = token;
+        const forwardTo = this.$route.query.forwardTo;
+        this.$router.push(forwardTo || { name: 'welcome' });
     } else {
         console.log('internal error, password already set (wrong method to change it)');
     }

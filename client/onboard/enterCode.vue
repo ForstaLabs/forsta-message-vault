@@ -2,37 +2,31 @@
 </style>
 
 <template>
-    <div class="ui two column centered grid">
-        <div class="middle aligned row">
-            <div class="five wide column">
-                <img class="ui tiny floated right image" src="/static/images/logo.png"/>
-            </div>
-            <div class="eleven wide column">
-                <h2 class="ui header">Sign In to Forsta</h2>
-            </div>
+    <div class="ui container center aligned">
+        <div class="ui basic segment huge">
+            <h1 class="ui header">
+                <i class="large circular sign in icon"></i>
+                Enter Login Code
+            </h1>
         </div>
-        <div class="ui eleven wide column basic left aligned text segment t0 b1">
-            <p>Please authenticate as your organization's administrator so we 
-                can create a new user in your organization to represent this vault.</p>
-        </div>
-        <div class="ui nine wide column basic segment left aligned t0 b1">
-            <form class="ui huge form enter-code" :class="{loading: loading}">
-                <div class="field">
-                    <label>Enter Login Code</label>
-                    <div class="ui left icon input">
-                        <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
-                        <i class="lock icon"></i>
+        <div class="ui centered grid">
+            <div class="ui nine wide column basic segment left aligned t0 b1">
+                <form class="ui huge form enter-code" :class="{loading: loading}">
+                    <div class="field">
+                        <label>Forsta Login Code</label>
+                        <div class="ui left icon input">
+                            <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
+                            <i class="lock icon"></i>
+                        </div>
                     </div>
-                </div>
-                <button class="ui large primary submit button" type="submit">Submit</button>
-                <router-link :to="{name: 'enterTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
-                <div class="ui mini error message" />
-            </form>
+                    <button class="ui large primary submit button" type="submit">Submit</button>
+                    <router-link :to="{name: 'enterTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
+                    <div class="ui mini error message" />
+                </form>
+            </div>
         </div>
-        <div class="ui eleven wide column basic left aligned text segment t0">
-            <p>Your administrative credentials will be immediately discarded and all 
-                further user-related actions taken by and for the vault will involve only 
-                your new Message Vault user.</p>
+        <div class="ui basic segment">
+            <p>Please enter the Forsta login code that was sent to you.</p>
         </div>
     </div>
 </template>
@@ -68,8 +62,8 @@ function sendLoginCode() {
     util.fetch.call(this, '/api/onboard/authcode/v1/' + tag, { method: 'post', body: { code }})
     .then(result => {
         this.loading = false;
-        this.global.onboarded = result.ok;
-        if (result.ok) {
+        if (result.ok) this.global.onboardStatus = 'complete';
+        if (this.global.onboardStatus === 'complete') {
             this.$router.push({ name: 'dashboard' });
             return false;
         } else {
