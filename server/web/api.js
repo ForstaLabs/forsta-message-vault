@@ -9,7 +9,7 @@ const uuidv4 = require('uuid/v4');
 const bcryptSaltRounds = 12;
 
 
-const onboardCreateUser = {first_name: 'Vault', last_name: 'Monitor', is_monitor: true}; // for message vaults where a monitor needs to be created
+const onboardCreateUser = {first_name: 'Manners', last_name: 'Monitor', is_monitor: true}; // for message vaults where a monitor needs to be created
 // const onboardCreateUser = null; // for personal-assistant or help-bot kinds of uses with existing users
 
 
@@ -110,7 +110,7 @@ class OnboardAPIV1 extends APIHandler {
             res.status(e.code).json(e.response.theJson);
             return;
         }
-        res.status(200).json(await BotAtlasClient.requestAuthenticationCode(tag));
+        res.status(200).json({status: 'happy'});
         return;
     }
 
@@ -133,9 +133,9 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        let onboarderAuth;
+        let onboarderClient;
         try {
-            onboarderAuth = await BotAtlasClient.authenticateViaCode(tag, code);
+            onboarderClient = await BotAtlasClient.authenticateViaCode(tag, code);
         } catch (e) {
             if (e.code == 429) {
                 res.status(403).json({ "non_field_errors": ["Too many requests, please try again later."] });
@@ -145,7 +145,7 @@ class OnboardAPIV1 extends APIHandler {
             return;
         }
         try {
-            await BotAtlasClient.onboard(onboarderAuth, onboardCreateUser);
+            await BotAtlasClient.onboard(onboarderClient, onboardCreateUser);
         } catch (e) {
             if (e.code === 403) {
                 res.status(403).json({non_field_errors: ['Insufficient permission. Need to be an administrator?']});
@@ -156,102 +156,6 @@ class OnboardAPIV1 extends APIHandler {
         }
         await this.server.bot.start(); // it could not have been running without a successful onboard
         res.status(204).send();
-    }
-}
-
-class MessagesAPIV1 extends APIHandler {
-
-    constructor(options) {
-        super(options);
-        this.router.get('/v1', this.asyncRoute(this.onGet));
-        this.csvFields = [
-            [x => x.id, 'id'],
-            [x => x.ts, 'ts'],
-            [x => x.messageId, 'message_id'],
-            [x => x.threadId, 'thread_id'],
-            [x => x.sender, 'sender_id'],
-            [x => x.senderTag, 'sender_tag'],
-            [x => x.body && x.body['text/plain'], 'body'],
-            [x => x.threadType, 'thread_type'],
-            [x => x.messageType, 'message_type'],
-            [x => x.distribution, 'distribution'],
-            [x => x.distributionPretty, 'distribution_pretty'],
-            [x => x.members.join(), 'members'],
-            [x => x.memberTags.join(), 'member_tags'],
-        ];
-    }
-
-    async onGet(req, res) {
-        const format = req.query.format ||
-                       (req.accepts('json') && 'json') ||
-                       (req.accepts('csv') && 'csv') ||
-                       null;
-        if (!format) {
-            res.status(400).send('Unsupported format or "Accept" header requirement');
-            return;
-        }
-        const limit = parseInt(req.query.limit) || 10000;
-        const offset = parseInt(req.query.offset) || 0;
-        const index = await relay.storage.keys('index-messages-ts');
-        index.sort();
-        if (req.query.order && req.query.order.toLowerCase() === 'desc') {
-            index.reverse();
-        }
-        const keys = index.slice(offset, offset + limit);
-        const messages = await Promise.all(keys.map(async x => {
-            const [ts, id] = x.split(',');
-            const msg = await relay.storage.get('messages', id);
-            return Object.assign({ts: Number(ts)}, msg);
-        }));
-        if (format === 'json') {
-            res.status(200).json({
-                meta: {
-                    total_count: index.length,
-                    limit,
-                    offset
-                },
-                data: messages
-            });
-        } else if (format === 'csv') {
-            const buf = [this.csvFields.map(x => x[1])];
-            for (const msg of messages) {
-                buf.push(this.csvFields.map(x => x[0](msg)));
-            }
-            res.attachment(`messages-${Date.now()}.csv`);
-            res.status(200).send(await this.toCSV(buf));
-        } else {
-            res.status(400).send('Unsupported format: ' + format);
-        }
-    }
-}
-
-class AttachmentsAPIV1 extends APIHandler {
-
-    constructor(options) {
-        super(options);
-        this.router.get('/v1/:id', this.asyncRoute(this.onGet));
-    }
-
-    async onGet(req, res) {
-        const id = req.params.id;
-        const attachment = await relay.storage.get('attachments', id);
-        const msgKey = (await relay.storage.keys('index-attachments-message',
-                                                 new RegExp(`,${id}$`)))[0];
-        if (!msgKey || !attachment) {
-            res.status(404).send();
-            return;
-        }
-        const message = await relay.storage.get('messages', msgKey.split(',')[0]);
-        if (message && message.attachments) {
-            for (const a of message.attachments) {
-                if (a.id === id) {
-                    res.attachment(a.name);
-                    res.header('Content-Type', a.type);
-                    break;
-                }
-            }
-        }
-        res.status(200).send(attachment);
     }
 }
 
@@ -333,7 +237,5 @@ class AuthenticationAPIV1 extends APIHandler {
 
 module.exports = {
     OnboardAPIV1,
-    MessagesAPIV1,
-    AttachmentsAPIV1,
     AuthenticationAPIV1,
 };

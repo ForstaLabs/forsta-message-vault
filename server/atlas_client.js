@@ -2,12 +2,11 @@
 const relay = require('librelay');
 
 class BotAtlasClient extends relay.AtlasClient {
-    static async onboard(onboarderAuth, createBotUser) {
-        let botUser = onboarderAuth.user;
+    static async onboard(onboardClient, createBotUser) {
+        let botUser = await onboardClient.fetch('/v1/user/' + onboardClient.userId + '/');
         const creator = `@${botUser.tag.slug}:${botUser.org.slug}`;
         console.info(`Bot onboarding performed by: ${creator}`);
         await relay.storage.putState('onboardUser', botUser.id);
-        const onboardClient = new this({jwt: onboarderAuth.token});
         if (createBotUser) {
             try {
                 botUser = await onboardClient.fetch('/v1/user/', {
@@ -55,10 +54,9 @@ class BotAtlasClient extends relay.AtlasClient {
 
     static async factory() {
         const userAuthToken = await relay.storage.getState('botUserAuthToken');
-        const { url, jwt } = await this.authenticateViaToken(userAuthToken);
-        const that = new this({url, jwt});
-        that.maintainJWT(false, this.authenticateViaToken.bind(this, userAuthToken));
-        return that;
+        const client = await this.authenticateViaToken(userAuthToken);
+        client.maintainJWT(false, this.authenticateViaToken.bind(this, userAuthToken));
+        return client;
     }
 }
 

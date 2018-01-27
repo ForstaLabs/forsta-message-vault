@@ -5,7 +5,7 @@
 const BotAtlasClient = require('./atlas_client');
 const cache = require('./cache');
 const relay = require('librelay');
-const uuid4 = require('uuid/v4');
+const swearjar = require('swearjar');
 
 
 class ForstaBot {
@@ -24,6 +24,9 @@ class ForstaBot {
         this.msgReceiver.addEventListener('keychange', this.onKeyChange.bind(this));
         this.msgReceiver.addEventListener('message', ev => this.onMessage(ev), null);
         this.msgReceiver.addEventListener('error', this.onError.bind(this));
+
+        this.msgSender = await relay.MessageSender.factory();
+
         await this.msgReceiver.connect();
     }
 
@@ -49,12 +52,7 @@ class ForstaBot {
         console.error('Message Error', e, e.stack);
     }
 
-    fqTag(user) {
-        return `@${user.tag.slug}:${user.org.slug}`;
-    }
-
     async onMessage(ev) {
-        const ts = ev.data.timestamp;
         const message = ev.data.message;
         const msgEnvelope = JSON.parse(message.body);
         let msg;
@@ -68,60 +66,29 @@ class ForstaBot {
             console.error("Received unsupported message:", msgEnvelope);
             return;
         }
+
         const dist = await this.resolveTags(msg.distribution.expression);
-        const memberIds = dist.userids;
-        const members = await this.getUsers(memberIds);
-        const memberTags = members.map(this.fqTag);
-        const id = uuid4();
-        const entry = {
-            id,
-            ts,
-            messageId: msg.messageId,
-            messageType: msg.messageType,
-            threadId: msg.threadId,
-            threadType: msg.threadType,
-            threadTitle: msg.threadTitle,
-            sender: msg.sender.userId,
-            senderTag: this.fqTag((await this.getUsers([msg.sender.userId]))[0]),
-            userAgent: msg.userAgent,
-            members: memberIds,
-            memberTags,
-            distribution: dist.universal,
-            distributionPretty: dist.pretty,
-            expiration: msg.expiration,
-            messageRef: msg.messageRef,
-        };
-        if (msg.data) {
-            const data = msg.data;
-            Object.assign(entry, {
-                attachments: data.attachments,
-                expiration: data.expiration,
-                control: data.control,
+        const senderUser = (await this.getUsers([msg.sender.userId]))[0];
+
+        if (msg.data.body.some(x => swearjar.profane(x.value))) {
+            const reply = this.chide(senderUser.first_name);
+            this.msgSender.send({
+                distribution: dist,
+                threadId: msg.threadId,
+                html: `${ reply }`,
+                text: reply
             });
-            if (msg.data.body) {
-                entry.body = {};
-                for (const x of msg.data.body) {
-                    entry.body[x.type] = x.value;
-                }
-            }
         }
-        if (message.attachments) {
-            entry.attachments = (msg.data && msg.data.attachments) || [];
-            for (let i = 0; i < message.attachments.length; i++) {
-                const a = message.attachments[i];
-                const aId = uuid4();
-                await relay.storage.set('index-attachments-message', [id, aId].join(), aId);
-                await relay.storage.set('attachments', aId, a.data);
-                if (entry.attachments[i]) {
-                    entry.attachments[i].id = aId;
-                } else {
-                    entry.attachments.push({id: aId});
-                }
-            }
-        }
-        await relay.storage.set('index-messages-ts', [ts, id].join(), id);
-        await relay.storage.set('index-messages-threadId-ts', [msg.threadId, ts, id].join(), id);
-        await relay.storage.set('messages', id, entry);
+    }
+
+    chide(name) {
+        const chides = [
+            'You kiss your mother with that mouth, <name>?',
+            "Let's keep it classy, <name>.",
+            'Easy there, <name>.',
+        ];
+
+        return chides[Math.floor(Math.random() * chides.length)].replace('<name>', name);
     }
 }
 

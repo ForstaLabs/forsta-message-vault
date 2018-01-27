@@ -3,37 +3,23 @@
 
 <template>
 <div>
-    <button class="ui big primary button" id='export' @click.stop="boundExportCSV">EXPORT CSV &nbsp;<i class="download icon"></i></button>
+    <div class="ui container center aligned">
+        <div class="ui basic segment huge">
+            <h1 class="ui header">
+                <i class="large circular asterisk loading icon"></i>
+                Manners Monitor Running
+            </h1>
+        </div>
+    </div>
 </div>
 </template>
 
 <script>
-async function exportCSV() {
-    this.loading = true;
-    let result;
-
-    try {
-        result = await util.fetch.call(this, '/api/messages/v1', { headers: { 'Accept': 'text/csv' } }, true);
-    } catch (err) {
-        console.error('had error', err);
-        return;
-    }
-
-    this.loading = false;
-    if (result.ok) {
-        const blob = await result.blob();
-        const anchor = document.createElement('a');
-        anchor.href = URL.createObjectURL(blob);
-        anchor.download = result.headers.get('content-disposition').match(/ filename="(.*?)"/)[1];
-        anchor.click();
-    }
-}
 module.exports = {
     data: () => ({ 
         global: shared.state
     }),
     methods: {
-        boundExportCSV: exportCSV.bind(this)
     },
     mounted: function() {
         if (this.global.onboardStatus !== 'complete') {
