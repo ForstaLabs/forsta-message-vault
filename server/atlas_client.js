@@ -54,14 +54,15 @@ class BotAtlasClient extends relay.AtlasClient {
     const atlasClient = await this.factory();
 
     try {
+      console.log('trying to registerDevice');
       const something = await relay.registerDevice({
         name: `Bot (created by ${creator})`,
         atlasClient: atlasClient
       });
-      await something.done;
+      await something.done();
       console.log("registerDevice success");
     } catch (e) {
-      console.log("registerDevice failed, trying registerAccount instead");
+      console.log("registerDevice didn't work out, trying registerAccount instead");
       await relay.registerAccount({
         name: `Bot (created by ${creator})`,
         atlasClient: atlasClient
