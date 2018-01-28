@@ -1,6 +1,6 @@
 Forsta Messaging Bot
 ========
-Autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
+Secure autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
 
 [![NPM](https://img.shields.io/npm/v/forsta-messaging-bot.svg)](https://www.npmjs.com/package/forsta-messaging-bot)
 [![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)

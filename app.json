@@ -1,9 +1,9 @@
 {
-    "name": "Forsta Bot",
-    "description": "Forsta Bot lets you safely manage your message processing, retention, and security policies from your own data center or cloud provider.",
-    "repository": "https://github.com/ForstaLabs/vault.git",
-    "logo": "https://github.com/ForstaLabs/vault/raw/master/images/forsta-logo.svg",
-    "keywords": ["forsta", "valult", "e-discovery"],
+    "name": "Forsta Messaging Bot",
+    "description": "Secure autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.",
+    "repository": "https://github.com/ForstaLabs/messaging-bot.git",
+    "logo": "https://github.com/ForstaLabs/messaging-bot/raw/master/images/forsta-logo.svg",
+    "keywords": ["forsta", "messaging", "bot", "e-discovery", "security"],
     "website": "https://forsta.io",
     "addons": ["heroku-redis"],
     "env": {
