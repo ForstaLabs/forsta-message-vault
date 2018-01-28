@@ -19,7 +19,7 @@ A Forsta messaging bot can be set up to receive messages sent to a particular us
 organization "monitor" which will receive copies of *all* messaging traffic to, from, 
 or among users in your organization.
 
-The "Why": Decentralized Data Security
+The Why &mdash; Decentralized Data Security
 --------
 
 What is important to Forsta is that **your messaging data** is only accessible to messaging 
