@@ -69,7 +69,7 @@ class ForstaBot {
         const dist = await this.resolveTags(msg.distribution.expression);
         const senderUser = (await this.getUsers([msg.sender.userId]))[0];
 
-        const reply = `Hello, ${senderUser.first_name}!`
+        const reply = `Hello, ${senderUser.first_name}!`;
 
         this.msgSender.send({
             distribution: dist,
