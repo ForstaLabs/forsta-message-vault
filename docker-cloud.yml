@@ -1,5 +1,5 @@
-vault:
-  image: forstalabs/vault
+messaging-bot:
+  image: forstalabs/messaging-bot
   ports:
     - "4096:4096"
   environment:

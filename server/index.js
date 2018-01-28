@@ -17,7 +17,7 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
-    relay.storage.setLabel('vault-1');
+    relay.storage.setLabel('bot-1');
     const bot = new ForstaBot();
     await bot.start();
     const webServer = new WebServer(bot);

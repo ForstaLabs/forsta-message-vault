@@ -9,10 +9,6 @@ const uuidv4 = require('uuid/v4');
 const bcryptSaltRounds = 12;
 
 
-const onboardCreateUser = {first_name: 'Manners', last_name: 'Monitor', is_monitor: true}; // for message vaults where a monitor needs to be created
-// const onboardCreateUser = null; // for personal-assistant or help-bot kinds of uses with existing users
-
-
 class APIHandler {
 
     constructor({server, requireAuth=true}) {
@@ -88,7 +84,7 @@ class OnboardAPIV1 extends APIHandler {
     async onStatusGet(req, res, next) {
         const registered = await BotAtlasClient.onboardComplete();
         res.status(200).json({
-            status: registered ? 'complete' : (onboardCreateUser ? 'authenticate-admin' : 'authenticate-user')
+            status: registered ? 'complete' : (BotAtlasClient.onboardingCreatedUser ? 'authenticate-admin' : 'authenticate-user')
         });
     }
 
@@ -145,7 +141,7 @@ class OnboardAPIV1 extends APIHandler {
             return;
         }
         try {
-            await BotAtlasClient.onboard(onboarderClient, onboardCreateUser);
+            await BotAtlasClient.onboard(onboarderClient);
         } catch (e) {
             if (e.code === 403) {
                 res.status(403).json({non_field_errors: ['Insufficient permission. Need to be an administrator?']});

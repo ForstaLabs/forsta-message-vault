@@ -1,26 +1,26 @@
 {
-  "name": "forsta-vault",
+  "name": "forsta-messaging-bot",
   "version": "0.7.0",
-  "description": "Forsta Messaging Vault",
+  "description": "Forsta Messaging Bot",
   "engines": {
     "node": "8"
   },
-  "repository": "ForstaLabs/vault",
+  "repository": "ForstaLabs/messaging-bot",
   "keywords": [
     "forsta",
     "e-discovery"
   ],
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/ForstaLabs/vault/issues"
+    "url": "https://github.com/ForstaLabs/messaging-bot/issues"
   },
-  "homepage": "https://github.com/ForstaLabs/vault#readme",
+  "homepage": "https://github.com/ForstaLabs/messaging-bot#readme",
   "scripts": {
     "postinstall": "SKIP_PACKAGES=1 make",
     "start": "node server"
   },
   "bin": {
-    "vault": "./server/index.js"
+    "messaging-bot": "./server/index.js"
   },
   "dependencies": {
     "bcrypt": "^1.0.3",
