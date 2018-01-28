@@ -2,7 +2,7 @@
     "name": "Forsta Messaging Bot",
     "description": "Secure autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.",
     "repository": "https://github.com/ForstaLabs/messaging-bot.git",
-    "logo": "https://github.com/ForstaLabs/messaging-bot/raw/master/images/forsta-logo.svg",
+    "logo": "https://raw.githubusercontent.com/ForstaLabs/messaging-bot/master/images/forsta-logo.svg",
     "keywords": ["forsta", "messaging", "bot", "e-discovery", "security"],
     "website": "https://forsta.io",
     "addons": ["heroku-redis"],
