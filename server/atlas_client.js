@@ -3,7 +3,6 @@ const relay = require("librelay");
 class BotAtlasClient extends relay.AtlasClient {
 
   static get onboardingCreatedUser() {
-
     return null; // if setting up to use using an existing user during onboarding
     
     // return {  // if creating a new user during onboarding
@@ -42,7 +41,7 @@ class BotAtlasClient extends relay.AtlasClient {
     }
     const result = await onboardClient.fetch("/v1/userauthtoken/", {
       method: "POST",
-      json: { userid: botUser.id, description: "manners bot authentication" }
+      json: { userid: botUser.id, description: "hello world bot authentication" }
     });
     console.info(
       `Created UserAuthToken for bot user @${botUser.tag.slug}:${

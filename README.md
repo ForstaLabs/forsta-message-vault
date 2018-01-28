@@ -1,6 +1,6 @@
 Forsta Messaging Bot
 ========
-Decentralized message receipt, processing, storage, and transmission on the Forsta messaging platform.
+Autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
 
 [![NPM](https://img.shields.io/npm/v/forsta-messaging-bot.svg)](https://www.npmjs.com/package/forsta-messaging-bot)
 [![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)
@@ -19,13 +19,13 @@ A Forsta messaging bot can be set up to receive messages sent to a particular us
 organization "monitor" which will receive copies of *all* messaging traffic to, from, 
 or among users in your organization.
 
-What is important is that **your messaging data** is only accessible to messaging 
-clients that **you are in control** of, whether the client is an app running on 
-the phone in your pocket, or a bot that is running on a server in your own 
-datacenter or compute cloud of your choice. 
-
-Messaging Bots and Data Security
+The "Why": Decentralized Data Security
 --------
+
+What is important to Forsta is that **your messaging data** is only accessible to messaging 
+clients that **you are in control** of, whether the client is an app running on 
+the phone in your pocket, or a bot that is running on a server in your
+datacenter or the compute cloud of your choice. 
 
 Some organizations need to be able perform forensic e-discovery on past 
 messages. Others may need to be able to automatically monitor for 
@@ -41,12 +41,12 @@ to messages as needed. Even systems that have pluggable architectures
 to facilitate outside development of these sorts of capabilities usually rely on a 
 centralized approach. Unfortunately, the centralized approach provides a 
 tempting, centralized target for outside 
-attackers -- and it also requires that users trust that insiders will not abuse 
+attackers -- and it also requires users to trust that *insiders* won't abuse 
 their access to all messages. Forsta is different.
 
 Forsta does not offer anything that depends on centralized receipt, storage, or 
 processing of users’ messaging data.  Instead, Forsta makes it trivial for 
-others to run messaging “bots” to perform these functions. These bots are just 
+*others* to run messaging “bots” to perform these functions. These bots are just 
 another kind of messaging client, like the messaging clients running in users’ 
 browsers and on their phones. And just like the other messaging clients, Forsta 
 bots send and receive end-to-end encrypted messages to do their work **while 

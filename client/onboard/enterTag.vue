@@ -8,22 +8,25 @@
                 <i class="circular icon add user"></i>
                 Create Catch-All User
             </h1>
-            Please sign in as a Forsta organization <b>administrator</b> <br />
-            to <b>create a new user</b> that will be copied on the organization's traffic.
+            This bot will send and receive messages autonomously <br />
+            as a <b>new</b> Forsta user configured to be a "monitor" <br />
+            so it will receive copies of <b>all</b> organization traffic.<br />
+            <br />
+            Please authenticate as an <b>org administrator</b> to create this new user.
         </div>
         <div v-if="!monitor" class="ui basic segment huge">
             <h1 class="ui header">
                 <i class="large circular icon user"></i>
                 Connect User
             </h1>
-            Please sign in <b>as the Forsta user</b> <br />
-            that will receive and send messages here.
+            This bot will send and receive messages autonomously <br />
+            as a particular Forsta user. Please authenticate as that user.
         </div>
         <div class="ui centered grid">
             <div class="ui nine wide column basic segment left aligned b1">
                 <form class="ui huge form enter-tag" :class="{loading: loading}">
                     <div class="field">
-                        <label>{{monitor ? 'Administrator' : ''}} Login</label>
+                        <label>Forsta {{monitor ? 'Organization Admin' : ''}} Login</label>
                         <div class="ui left icon input">
                             <input v-focus.lazy="true" type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
                             <i class="at icon"></i>

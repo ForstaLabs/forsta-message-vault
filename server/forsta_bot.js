@@ -5,7 +5,6 @@
 const BotAtlasClient = require('./atlas_client');
 const cache = require('./cache');
 const relay = require('librelay');
-const swearjar = require('swearjar');
 
 
 class ForstaBot {
@@ -70,25 +69,14 @@ class ForstaBot {
         const dist = await this.resolveTags(msg.distribution.expression);
         const senderUser = (await this.getUsers([msg.sender.userId]))[0];
 
-        if (msg.data.body.some(x => swearjar.profane(x.value))) {
-            const reply = this.chide(senderUser.first_name);
-            this.msgSender.send({
-                distribution: dist,
-                threadId: msg.threadId,
-                html: `${ reply }`,
-                text: reply
-            });
-        }
-    }
+        const reply = `Hello, ${senderUser.first_name}!`
 
-    chide(name) {
-        const chides = [
-            'You kiss your mother with that mouth, <name>?',
-            "Let's keep it classy, <name>.",
-            'Easy there, <name>.',
-        ];
-
-        return chides[Math.floor(Math.random() * chides.length)].replace('<name>', name);
+        this.msgSender.send({
+            distribution: dist,
+            threadId: msg.threadId,
+            html: `${ reply }`,
+            text: reply
+        });
     }
 }
 

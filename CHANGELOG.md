@@ -1,11 +1,6 @@
 # Change Log
 
-## [0.5.0]
-### Added
-- Include timestamp (ts) column in `GET /api/messages/v1` responses.
-### Changed
-- Namespace the relay storage to avoid conflict with other librelay
-  clients sharing the same backing store.
-
-
-[0.5.0]: https://github.com/ForstaLabs/vault/tree/v0.5.0
+## [0.1.0]
+- Initial common-ancestor bot forked from older vault project
+- Performs onboarding to act as an existing user, as well as admin-creating-monitor onboarding to act as a new "monitor" user
+- Handles bot site authentication with bcrypt-stashed password, providing a jwt for site api access
