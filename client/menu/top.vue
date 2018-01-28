@@ -6,7 +6,7 @@
         <div class="ui container">
             <router-link :to="{name: 'welcome'}" class="header item">
                 <img class="logo" src="/static/images/forsta-logo-invert.svg"/>
-                &nbsp;&nbsp;Forsta Message Bot
+                &nbsp;&nbsp;Forsta Messaging Bot
             </router-link>
             <a v-if="global.apiToken" class="header item float right" @click.prevent="logout">
                 sign out

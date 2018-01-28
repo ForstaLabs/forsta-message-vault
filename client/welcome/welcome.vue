@@ -9,7 +9,7 @@
                 <img class="ui small floated right image" src="/static/images/forsta-logo.svg"/>
             </div>
             <div class="eleven wide column">
-                <h1 class="ui header">Forsta Message Bot
+                <h1 class="ui header">Forsta Messaging Bot
                     <div class="sub header">Secure message processing. Under your control.</div>
                 </h1>
             </div>
