@@ -13,7 +13,7 @@ class BotAtlasClient extends relay.AtlasClient {
   }
 
   static get userAuthTokenDescription() {
-      return 'my bot description';
+      return 'hello world bot';
   }
 
   static async onboard(onboardClient) {
@@ -41,7 +41,7 @@ class BotAtlasClient extends relay.AtlasClient {
     }
     const result = await onboardClient.fetch("/v1/userauthtoken/", {
       method: "POST",
-      json: { userid: botUser.id, description: "hello world bot authentication" }
+      json: { userid: botUser.id, description: this.userAuthTokenDescription }
     });
     console.info(
       `Created UserAuthToken for bot user @${botUser.tag.slug}:${
