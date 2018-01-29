@@ -1,9 +1,9 @@
 {
-    "name": "Forsta Messaging Bot",
-    "description": "Secure autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.",
-    "repository": "https://github.com/ForstaLabs/messaging-bot.git",
-    "logo": "https://raw.githubusercontent.com/ForstaLabs/messaging-bot/master/images/forsta-logo.svg?sanitize=true",
-    "keywords": ["forsta", "messaging", "bot", "e-discovery", "security"],
+    "name": "Forsta Manners Monitor",
+    "description": "An example 'monitor' bot that performs decentralized processing of all message traffic in an organization.",
+    "repository": "https://github.com/ForstaLabs/manners-monitor.git",
+    "logo": "https://raw.githubusercontent.com/ForstaLabs/manners-monitor/master/images/forsta-logo.svg?sanitize=true",
+    "keywords": ["forsta", "messaging", "bot", "nsfw", "vulgarity"],
     "website": "https://forsta.io",
     "addons": ["heroku-redis"],
     "env": {

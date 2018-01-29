@@ -1,5 +1,5 @@
-messaging-bot:
-  image: forstalabs/messaging-bot
+manners-monitor:
+  image: forstalabs/manners-monitor
   ports:
     - "4096:4096"
   environment:

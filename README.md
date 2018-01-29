@@ -1,23 +1,13 @@
-Forsta Messaging Bot
+Forsta Manners Monitor
 ========
-Secure autonomous message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
+Simple example of eecure autonomous monitoring of an entire organization's messaging traffic. 
 
-[![NPM](https://img.shields.io/npm/v/forsta-messaging-bot.svg)](https://www.npmjs.com/package/forsta-messaging-bot)
+This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) codebase, which you can use for secure message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
+
+[![NPM](https://img.shields.io/npm/v/forsta-manners-monitor.svg)](https://www.npmjs.com/package/forsta-manners-monitor)
 [![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)
-[![License](https://img.shields.io/npm/l/forsta-messaging-bot.svg)](https://github.com/ForstaLabs/messaging-bot)
+[![License](https://img.shields.io/npm/l/forsta-manners-monitor.svg)](https://github.com/ForstaLabs/manners-monitor)
 
-
-About
--------
-This repository is a (skeleton) Node.js-based Forsta end-to-end-encrypted messaging client.
-It allows for autonomous receipt, processing, storage, and/or transmission of messaging 
-data to perform some useful task. Please fork it or one of our several projects based 
-off of it!
-
-A Forsta messaging bot can be set up to receive messages sent to a particular user, 
-**or** (if you are an organization administrator) it can be set up as a special 
-organization "monitor" which will receive copies of *all* messaging traffic to, from, 
-or among users in your organization.
 
 The Why &mdash; Decentralized Data Security
 --------
@@ -55,10 +45,10 @@ running in a context controlled by the user**.
 
 Quick Start
 --------
-These deployment buttons can be used to validate that this messaging bot
+These deployment buttons can be used to validate that this manners monitor
 will meet your organizations needs with as little setup pain as possible.  
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/messaging-bot)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/manners-monitor)
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
 
 
@@ -75,24 +65,24 @@ You can choose from our official docker image or NPM package depending on your
 preference.
 
 ### Docker
-    docker run -p4096:4096 forstalabs/messaging-bot
+    docker run -p4096:4096 forstalabs/manners-monitor
 
 Or to run a stack using docker-compose that includes redis for storage...
 
     docker-compose up
 
 ### NPM
-    npm install -g forsta-messaging-bot
-    messaging-bot
+    npm install -g forsta-manners-monitor
+    manners-monitor
 
 
 Developer Install
 --------
-If you want to build upon the Forsta Messaging Bot or just get closer to the code, 
+If you want to build upon the Forsta Manners Monitor or just get closer to the code, 
 you can install and run directly from the source code.
 
-    git clone https://github.com/ForstaLabs/messaging-bot.git
-    cd messaging-bot
+    git clone https://github.com/ForstaLabs/manners-monitor.git
+    cd manners-monitor
     npm install
     npm start
 

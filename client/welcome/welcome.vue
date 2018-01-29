@@ -9,8 +9,9 @@
                 <img class="ui small floated right image" src="/static/images/forsta-logo.svg"/>
             </div>
             <div class="eleven wide column">
-                <h1 class="ui header">Forsta Messaging Bot
-                    <div class="sub header">Secure message processing. Under your control.</div>
+                <h1 class="ui header">Forsta Manners Monitor
+                    <div class="sub header">Secure NSFW-chiding traffic monitor.</div>
+                    <div class="sub header">Under your control.</div>
                 </h1>
             </div>
         </div>
@@ -30,8 +31,8 @@
     <div class="ui divider horizontal">Benefits</div>
     <div class="ui left aligned text container">
         <ul>
-            <li>All messages are sent to and from your message bot via <b>end-to-end encryption</b>.</li>
-            <li>It is trivial to <b>host your bot anywhere</b>: in your datacenter, on AWS, at Heroku, etc.</li>
+            <li>All messages are sent to and from this message bot via <b>end-to-end encryption</b>.</li>
+            <li>It is trivial to <b>host this bot anywhere</b>: in your datacenter, on AWS, at Heroku, etc.</li>
             <li>This code is <b>100% open source</b> so you know how your information is being handled.</li>
         </ul>
     </div>
