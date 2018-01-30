@@ -40,7 +40,7 @@
         <div class="ui basic segment huge">
             <h1 class="ui header">
                 <i class="large circular checkmark icon"></i>
-                Manners Monitor Active
+                Manners Monitor Running
             </h1>
             <div class="column chides pie" style="padding: 0;" />
             <h2>{{totalMessagesSeen}} Messages &mdash; {{totalMessagesFlagged}} NSFW</h2>

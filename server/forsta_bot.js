@@ -74,20 +74,35 @@ class ForstaBot {
 
         await relay.storage.putState('messages-seen', 1 + await relay.storage.getState('messages-seen', 0));
 
+        const distribution = await this.resolveTags(msg.distribution.expression);
+
+        const botId = await relay.storage.getState('addr');
+        const botUser = (await this.getUsers([botId]))[0];
+        const botTag = this.fqTag(botUser);
+        if (msg.data.body.some(x => this.askedForScorecard(x.value, botTag))) {
+            const stats = await ForstaBot.stats();
+            const prelude = `${stats.totalMessagesFlagged} NSFW messages seen:`;
+            const chidees = stats.chidedUsers.sort((a, b) => a.count < b.count).map(u => `${u.count} - ${u.tag} (${u.name})`);
+            const postscript = `(of ${stats.totalMessagesSeen} total messages)`;
+            this.msgSender.send({
+                distribution,
+                threadId: msg.threadId,
+                html: `${prelude}<br />${chidees.join('<br />')}<br />${postscript}`,
+                text: `${prelude}\n${chidees.join('\n')}\n${postscript}\n`,
+            });
+        }
+
         if (msg.data.body.some(x => swearjar.profane(x.value))) {
             const senderId = msg.sender.userId;
             const senderUser = (await this.getUsers([senderId]))[0];
             const senderTag = this.fqTag(senderUser);
             const emptiness = {};
-            console.log('getting from chided-users', senderId, emptiness);
             let chidee = await relay.storage.get('chided-users', senderId, emptiness);
-            console.log('got chidee of', chidee);
             // ensure name and tag are current
             chidee.name = [senderUser.first_name, senderUser.middle_name, senderUser.last_name].map(x => x.trim()).filter(x => !!x).join(' ');
             chidee.tag = senderTag;
             await relay.storage.set('chided-users', senderId, chidee);
 
-            const distribution = await this.resolveTags(msg.distribution.expression);
             const memberIds = distribution.userids;
             const members = await this.getUsers(memberIds);
             const memberTags = members.map(this.fqTag);
@@ -115,6 +130,35 @@ class ForstaBot {
                 text: reply
             });
         }
+    }
+
+    static async stats() {
+        const totalMessagesSeen = await relay.storage.getState('messages-seen', 0);
+        const flagged = await relay.storage.keys('index-sender-message-timestamp');
+        const counts = flagged.reduce((counts, chideIndex) => {
+            const [senderId] = chideIndex.split(',');
+            counts[senderId] = (counts[senderId] || 0) + 1;
+            return counts;
+        }, {});
+
+        let chided = [];
+        for (const senderId in counts) {
+            const sender = await relay.storage.get('chided-users', senderId, { name: 'Unknown(!)', tag: '@unknown:unknown' });
+            sender.count = counts[senderId];
+            chided.push(sender);
+        }
+
+        return { totalMessagesSeen, totalMessagesFlagged: flagged.length, chidedUsers: chided };
+    }
+
+    askedForScorecard(text, myTag) {
+        const [localTag] = myTag.split(':');
+        const lctext = text.toLowerCase();
+
+        const mentioned = lctext.indexOf(localTag) >= 0;
+        const requested = mentioned && ['win', 'leader', 'total', 'score', 'status'].some(x => lctext.indexOf(x) >= 0);
+
+        return requested;
     }
 
     chide(name) {
