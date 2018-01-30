@@ -232,6 +232,7 @@ class AuthenticationAPIV1 extends APIHandler {
 
 
 module.exports = {
+    APIHandler,
     OnboardAPIV1,
     AuthenticationAPIV1,
 };

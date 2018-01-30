@@ -52,7 +52,12 @@ class ForstaBot {
         console.error('Message Error', e, e.stack);
     }
 
+    fqTag(user) {
+        return `@${user.tag.slug}:${user.org.slug}`;
+    }
+
     async onMessage(ev) {
+        const timestamp = ev.data.timestamp;
         const message = ev.data.message;
         const msgEnvelope = JSON.parse(message.body);
         let msg;
@@ -67,16 +72,46 @@ class ForstaBot {
             return;
         }
 
-        const dist = await this.resolveTags(msg.distribution.expression);
-        const senderUser = (await this.getUsers([msg.sender.userId]))[0];
+        await relay.storage.putState('messages-seen', 1 + await relay.storage.getState('messages-seen', 0));
 
         if (msg.data.body.some(x => swearjar.profane(x.value))) {
-            const reply = this.chide(senderUser.first_name);
+            const senderId = msg.sender.userId;
+            const senderUser = (await this.getUsers([senderId]))[0];
+            const senderTag = this.fqTag(senderUser);
+            const emptiness = {};
+            console.log('getting from chided-users', senderId, emptiness);
+            let chidee = await relay.storage.get('chided-users', senderId, emptiness);
+            console.log('got chidee of', chidee);
+            // ensure name and tag are current
+            chidee.name = [senderUser.first_name, senderUser.middle_name, senderUser.last_name].map(x => x.trim()).filter(x => !!x).join(' ');
+            chidee.tag = senderTag;
+            await relay.storage.set('chided-users', senderId, chidee);
 
-            this.msgSender.send({
-                distribution: dist,
+            const distribution = await this.resolveTags(msg.distribution.expression);
+            const memberIds = distribution.userids;
+            const members = await this.getUsers(memberIds);
+            const memberTags = members.map(this.fqTag);
+
+            // only keeping some metadata, not message content (letting that be another bot's business)
+            const entry = {
+                sendTime: msg.sendTime,
+                receiveTime: timestamp,
+                senderId,
+                senderTag,
+                distribution,
+                memberTags,
+                messageId: msg.messageId,
                 threadId: msg.threadId,
-                html: `${ reply }`,
+                threadTitle: msg.threadTitle
+            };
+            await relay.storage.set('flagged-messages', msg.messageId, entry);
+            await relay.storage.set('index-sender-message-timestamp', [senderId, msg.messageId, timestamp.toString()].join(), true);
+
+            const reply = this.chide(senderUser.first_name);
+            this.msgSender.send({
+                distribution,
+                threadId: msg.threadId,
+                html: `${reply}`,
                 text: reply
             });
         }

@@ -1,6 +1,6 @@
 Forsta Manners Monitor
 ========
-Simple example of eecure autonomous monitoring of an entire organization's messaging traffic. 
+Simple example of a bot that performs secure autonomous monitoring of an entire organization's messaging traffic. 
 
 This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) codebase, which you can use for secure message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
 
