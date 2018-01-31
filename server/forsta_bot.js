@@ -81,14 +81,19 @@ class ForstaBot {
         const botTag = this.fqTag(botUser);
         if (msg.data.body.some(x => this.askedForScorecard(x.value, botTag))) {
             const stats = await ForstaBot.stats();
-            const prelude = `${stats.totalMessagesFlagged} NSFW messages seen:`;
-            const chidees = stats.chidedUsers.sort((a, b) => a.count < b.count).map(u => `${u.count} - ${u.tag} (${u.name})`);
-            const postscript = `(of ${stats.totalMessagesSeen} total messages)`;
+            const sorted = stats.chidedUsers.sort((a, b) => a.count < b.count);
+            const chidees = sorted.map(u => `${u.count} - ${u.tag} (${u.name})`);
+            const postscript = `(among ${stats.totalMessagesSeen} total messages scanned)`;
+            const chartTitle = `${stats.totalMessagesFlagged} NSFW Messages`;
+            const chartData = sorted.map(u => `${u.count}`).join(',');
+            const chartLabels = chidees.join('|');
+            const chartColor =('000000' + Math.round(0xffffff * Math.random()).toString(16)).slice(-6);
+            const url = `https://chart.googleapis.com/chart?cht=p&chtt=${chartTitle}&chs=750x350&chco=${chartColor}&chd=t:${chartData}&chl=${chartLabels}`;
             this.msgSender.send({
                 distribution,
                 threadId: msg.threadId,
-                html: `${prelude}<br />${chidees.join('<br />')}<br />${postscript}`,
-                text: `${prelude}\n${chidees.join('\n')}\n${postscript}\n`,
+                html: `${chartTitle}<br />${chidees.join('<br />')}<br />${postscript}<br /><img src=${encodeURI(url)} />`,
+                text: `${chartTitle}\n${chidees.join('\n')}\n${postscript}\n`,
             });
         }
 
