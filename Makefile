@@ -5,6 +5,7 @@ SEMANTIC := semantic/dist/.semantic.build
 GRUNT := dist/.grunt.build
 LINT := .lint.pass
 BUILD := dist/build.json
+DOCKER_DB_NAME := manners_db$(shell pwd | sed 's/\//_/g')
 
 export NO_MINIFY ?= 1
 
@@ -57,6 +58,21 @@ realclean: clean
 build: $(BUILD)
 
 lint: $(LINT)
+
+docker-db-run:
+	if docker inspect $(DOCKER_DB_NAME) >/dev/null 2>&1; then \
+		echo "Starting existing database"; \
+		docker start --attach $(DOCKER_DB_NAME); \
+	else \
+		echo "Creating NEW database"; \
+		docker run -p 5432:5432 --name $(DOCKER_DB_NAME) postgres:10; \
+	fi
+
+docker-db-clean:
+	docker kill $(DOCKER_DB_NAME) 2>/dev/null || exit 0
+	docker rm -f $(DOCKER_DB_NAME) 2>/dev/null || exit 0
+
+
 
 ########################################################
 # Runtime-only targets
