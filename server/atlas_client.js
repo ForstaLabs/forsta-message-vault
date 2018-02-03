@@ -11,7 +11,7 @@ class BotAtlasClient extends relay.AtlasClient {
     }
 
     static get userAuthTokenDescription() {
-        return 'manners monitor bot';
+        return 'message vault bot';
     }
 
     static async onboard(onboardClient) {

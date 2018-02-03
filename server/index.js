@@ -17,7 +17,7 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
-    relay.storage.setLabel('manners-bot');
+    relay.storage.setLabel('message-vault');
     await relay.storage.initialize();
     const bot = new ForstaBot();
     await bot.start();

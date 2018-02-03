@@ -1,11 +1,11 @@
-manners-monitor:
-  image: forstalabs/manners-monitor
+message-vault:
+  image: forstalabs/message-vault
   ports:
     - "4096:4096"
   environment:
-    RELAY_STORAGE_BACKING: redis
-    REDIS_URL: redis://redis
+    RELAY_STORAGE_BACKING: postgres
+    REDIS_URL: postgres://postgres
   links:
-    - redis
-redis:
-  image: redis
+    - postgres
+postgres:
+  image: postgres

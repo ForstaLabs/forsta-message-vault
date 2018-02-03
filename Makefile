@@ -5,7 +5,7 @@ SEMANTIC := semantic/dist/.semantic.build
 GRUNT := dist/.grunt.build
 LINT := .lint.pass
 BUILD := dist/build.json
-DOCKER_DB_NAME := manners_db$(shell pwd | sed 's/\//_/g')
+DOCKER_DB_NAME := vault_db$(shell pwd | sed 's/\//_/g')
 
 export NO_MINIFY ?= 1
 

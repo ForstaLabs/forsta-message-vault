@@ -1,16 +1,16 @@
 {
-    "name": "Forsta Manners Monitor",
-    "description": "An example 'monitor' bot that performs decentralized processing of all message traffic in an organization.",
-    "repository": "https://github.com/ForstaLabs/manners-monitor.git",
-    "logo": "https://raw.githubusercontent.com/ForstaLabs/manners-monitor/master/images/forsta-logo.svg?sanitize=true",
-    "keywords": ["forsta", "messaging", "bot", "nsfw", "vulgarity"],
+    "name": "Forsta Message Vault",
+    "description": "A 'monitor' bot that performs decentralized processing and storage of all message traffic in an organization.",
+    "repository": "https://github.com/ForstaLabs/message-vault.git",
+    "logo": "https://raw.githubusercontent.com/ForstaLabs/message-vault/master/images/forsta-logo.svg?sanitize=true",
+    "keywords": ["forsta", "messaging", "bot", "e-discovery"],
     "website": "https://forsta.io",
-    "addons": ["heroku-redis"],
+    "addons": ["heroku-postgres"],
     "env": {
       "RELAY_STORAGE_BACKING": {
-        "description": "Control where bot settings and data will be stored.  For heroku 'redis' is recommended.",
+        "description": "Control where bot settings and data will be stored.  For heroku 'postgres' is recommended.",
         "required": false,
-        "value": "redis"
+        "value": "postgres"
       }
     },
     "buildpacks": [{

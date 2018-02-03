@@ -9,9 +9,8 @@
                 <img class="ui small floated right image" src="/static/images/forsta-logo.svg"/>
             </div>
             <div class="eleven wide column">
-                <h1 class="ui header">Forsta Manners Monitor
-                    <div class="sub header">Secure NSFW-chiding traffic monitor.</div>
-                    <div class="sub header">Under your control.</div>
+                <h1 class="ui header">Forsta Message Vault
+                    <div class="sub header">Secure data retention. Under your control.</div>
                 </h1>
             </div>
         </div>

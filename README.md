@@ -1,20 +1,28 @@
-Forsta Manners Monitor
+Forsta Message Vault
 ========
-Simple example of a bot that performs secure autonomous monitoring of an entire organization's messaging traffic. 
+This is a bot that performs secure autonomous monitoring of 
+an entire organization's messaging traffic, storing all messages 
+and useful metadata to support basic forensic searching and retrieval 
+of messages via a UI on the bot's website. 
 
-This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) codebase, which you can use for secure message receipt, processing, storage, and/or transmission on the Forsta messaging platform.
+Future plans include supporting vault access via *messages* 
+from authorized users.
 
-[![NPM](https://img.shields.io/npm/v/forsta-manners-monitor.svg)](https://www.npmjs.com/package/forsta-manners-monitor)
+This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) 
+codebase, which you can use for secure message receipt, processing, storage, and/or transmission 
+on the Forsta messaging platform.
+
+[![NPM](https://img.shields.io/npm/v/forsta-message-vault.svg)](https://www.npmjs.com/package/forsta-message-vault)
 [![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)
-[![License](https://img.shields.io/npm/l/forsta-manners-monitor.svg)](https://github.com/ForstaLabs/manners-monitor)
+[![License](https://img.shields.io/npm/l/forsta-message-vault.svg)](https://github.com/ForstaLabs/message-vault)
 
 
 The Why &mdash; Decentralized Data Security
 --------
 
-What is important to Forsta is that **your messaging data** is only accessible to messaging 
-clients that **you are in control** of, whether the client is an app running on 
-the phone in your pocket, or a bot that is running on a server in your
+What is important to Forsta is that **your messaging data** is only accessible to 
+messaging clients that **you are in control** of, whether the client is an app 
+running on the phone in your pocket, or a bot that is running on a server in your
 datacenter or the compute cloud of your choice. 
 
 Some organizations need to be able perform forensic e-discovery on past 
@@ -45,10 +53,10 @@ running in a context controlled by the user**.
 
 Quick Start
 --------
-These deployment buttons can be used to validate that this manners monitor
+These deployment buttons can be used to validate that this message vault
 will meet your organizations needs with as little setup pain as possible.  
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/manners-monitor)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/message-vault)
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
 
 
@@ -65,24 +73,24 @@ You can choose from our official docker image or NPM package depending on your
 preference.
 
 ### Docker
-    docker run -p4096:4096 forstalabs/manners-monitor
+    docker run -p4096:4096 forstalabs/message-vault
 
 Or to run a stack using docker-compose that includes redis for storage...
 
     docker-compose up
 
 ### NPM
-    npm install -g forsta-manners-monitor
-    manners-monitor
+    npm install -g forsta-message-vault
+    message-vault
 
 
 Developer Install
 --------
-If you want to build upon the Forsta Manners Monitor or just get closer to the code, 
+If you want to build upon the Forsta Message Vault or just get closer to the code, 
 you can install and run directly from the source code.
 
-    git clone https://github.com/ForstaLabs/manners-monitor.git
-    cd manners-monitor
+    git clone https://github.com/ForstaLabs/message-vault.git
+    cd message-vault
     npm install
     npm start
 
