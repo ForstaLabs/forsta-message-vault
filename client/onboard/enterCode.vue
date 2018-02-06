@@ -2,31 +2,33 @@
 </style>
 
 <template>
-    <div class="ui container center aligned">
-        <div class="ui basic segment huge">
-            <h1 class="ui header">
-                <i class="large circular sign in icon"></i>
-                Enter Login Code
-            </h1>
-        </div>
-        <div class="ui centered grid">
-            <div class="ui nine wide column basic segment left aligned t0 b1">
-                <form class="ui huge form enter-code" :class="{loading: loading}">
-                    <div class="field">
-                        <label>Forsta Login Code</label>
-                        <div class="ui left icon input">
-                            <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
-                            <i class="lock icon"></i>
-                        </div>
-                    </div>
-                    <button class="ui large primary submit button" type="submit">Submit</button>
-                    <router-link :to="{name: 'enterTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
-                    <div class="ui mini error message" />
-                </form>
+    <div class="ui main text container" style="margin-top: 80px;">
+        <div class="ui container center aligned">
+            <div class="ui basic segment huge">
+                <h1 class="ui header">
+                    <i class="large circular sign in icon"></i>
+                    Enter Login Code
+                </h1>
             </div>
-        </div>
-        <div class="ui basic segment">
-            <p>Please enter the Forsta login code that was sent to you.</p>
+            <div class="ui centered grid">
+                <div class="ui nine wide column basic segment left aligned t0 b1">
+                    <form class="ui huge form enter-code" :class="{loading: loading}">
+                        <div class="field">
+                            <label>Forsta Login Code</label>
+                            <div class="ui left icon input">
+                                <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
+                                <i class="lock icon"></i>
+                            </div>
+                        </div>
+                        <button class="ui large primary submit button" type="submit">Submit</button>
+                        <router-link :to="{name: 'enterTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
+                        <div class="ui mini error message" />
+                    </form>
+                </div>
+            </div>
+            <div class="ui basic segment">
+                <p>Please enter the Forsta login code that was sent to you.</p>
+            </div>
         </div>
     </div>
 </template>

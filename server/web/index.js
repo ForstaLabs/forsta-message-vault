@@ -23,7 +23,7 @@ class WebServer {
         this.app = express();
         this.app.use(morgan('dev')); // logging
         this.app.use(bodyParser.json());
-        this.app.use('/api/vault/', (new vaultApi.MannersAPIv1({server: this})).router);
+        this.app.use('/api/vault/', (new vaultApi.VaultAPIv1({server: this})).router);
         this.app.use('/api/onboard/', (new api.OnboardAPIV1({server: this})).router);
         this.app.use('/api/auth/', (new api.AuthenticationAPIV1({server: this})).router);
         this.app.use('/static/', express.static(path.join(root, 'static'), {strict: true}));

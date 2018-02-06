@@ -1,36 +1,38 @@
 
 <template>
 <div>
-    <div v-show="!global.passwordSet" class="ui container center aligned">
-        <div class="ui basic segment huge">
-            <h1 class="ui header"><i class="circular icon lock"></i>Secure This Website?</h1>
-            We recommend setting a strong password <br />
-            if this website will ever be visible to others.
-        </div>
-        <div class="ui centered grid">
-            <div class="ten wide column middle aligned">
-                <router-link :to="gotoSetPassword" class="ui huge primary submit button">Set Site Password</router-link>
-                <button @click="establishSession" class="ui huge submit button">Not Now</button>
+    <div class="ui main text container" style="margin-top: 80px;">
+        <div v-show="!global.passwordSet" class="ui container center aligned">
+            <div class="ui basic segment huge">
+                <h1 class="ui header"><i class="circular icon lock"></i>Secure This Website?</h1>
+                We recommend setting a strong password <br />
+                if this website will ever be visible to others.
+            </div>
+            <div class="ui centered grid">
+                <div class="ten wide column middle aligned">
+                    <router-link :to="gotoSetPassword" class="ui huge primary submit button">Set Site Password</router-link>
+                    <button @click="establishSession" class="ui huge submit button">Not Now</button>
+                </div>
             </div>
         </div>
-    </div>
-    <div v-show="global.passwordSet" class="ui container center aligned">
-        <div class="ui basic segment huge">
-            <h1 class="ui header"><i class="circular icon lock"></i>Verify Site Access</h1>
-        </div>
-        <div class="ui centered grid">
-            <div class="ui ten wide column left aligned t0">
-                <form class="ui huge form authenticate" :class="{loading: loading}">
-                    <div class="field">
-                        <label>Site Password</label>
-                        <div class="ui left icon input">
-                            <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
-                            <i class="lock icon" />
+        <div v-show="global.passwordSet" class="ui container center aligned">
+            <div class="ui basic segment huge">
+                <h1 class="ui header"><i class="circular icon lock"></i>Verify Site Access</h1>
+            </div>
+            <div class="ui centered grid">
+                <div class="ui ten wide column left aligned t0">
+                    <form class="ui huge form authenticate" :class="{loading: loading}">
+                        <div class="field">
+                            <label>Site Password</label>
+                            <div class="ui left icon input">
+                                <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
+                                <i class="lock icon" />
+                            </div>
                         </div>
-                    </div>
-                    <button class="ui large primary submit button" type="submit">Submit</button>
-                    <div class="ui mini error message" />
-                </form>
+                        <button class="ui large primary submit button" type="submit">Submit</button>
+                        <div class="ui mini error message" />
+                    </form>
+                </div>
             </div>
         </div>
     </div>

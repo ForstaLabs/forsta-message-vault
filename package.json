@@ -43,6 +43,7 @@
     "jwt-decode": "^2.2.0",
     "librelay": "4.0.0",
     "lodash": "^4.17.4",
+    "moment": "^2.20.1",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13",
     "swearjar": "^0.2.0",

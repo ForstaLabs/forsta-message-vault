@@ -4,9 +4,7 @@
 <template>
     <div>
         <top-menu />
-        <div class="ui main text container" style="margin-top: 80px;">
-            <router-view />
-        </div>
+        <router-view />
         <bottom-menu />
     </div>
 </template>

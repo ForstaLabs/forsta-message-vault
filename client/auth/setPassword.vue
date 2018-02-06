@@ -1,29 +1,31 @@
 
 <template>
-    <div class="ui container center aligned">
-        <div class="ui basic segment huge">
-            <h1 class="ui header"><i class="circular icon lock"></i>Set Site Password</h1>
-        </div>
-        <div class="ui centered grid">
-            <div class="ui ten wide column left aligned t0">
-                <form class="ui huge form set-password" :class="{loading: loading}">
-                    <div class="field">
-                        <label>Password</label>
-                        <div class="ui left icon input">
-                            <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
-                            <i class="icon lock"></i>
+    <div class="ui main text container" style="margin-top: 80px;">
+        <div class="ui container center aligned">
+            <div class="ui basic segment huge">
+                <h1 class="ui header"><i class="circular icon lock"></i>Set Site Password</h1>
+            </div>
+            <div class="ui centered grid">
+                <div class="ui ten wide column left aligned t0">
+                    <form class="ui huge form set-password" :class="{loading: loading}">
+                        <div class="field">
+                            <label>Password</label>
+                            <div class="ui left icon input">
+                                <input v-focus.lazy="true" type="password" v-model='password' name="password" placeholder="enter password" autocomplete="off">
+                                <i class="icon lock"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="field">
-                        <label>Confirm</label>
-                        <div class="ui left icon input">
-                            <input type="password" v-model='confirm' name="confirm" placeholder="confirm password" autocomplete="off">
-                            <i class="icon lock"></i>
+                        <div class="field">
+                            <label>Confirm</label>
+                            <div class="ui left icon input">
+                                <input type="password" v-model='confirm' name="confirm" placeholder="confirm password" autocomplete="off">
+                                <i class="icon lock"></i>
+                            </div>
                         </div>
-                    </div>
-                    <button class="ui large primary submit button" type="submit">Submit</button>
-                    <div class="ui mini error message" />
-                </form>
+                        <button class="ui large primary submit button" type="submit">Submit</button>
+                        <div class="ui mini error message" />
+                    </form>
+                </div>
             </div>
         </div>
     </div>
