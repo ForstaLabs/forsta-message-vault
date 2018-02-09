@@ -1,18 +1,31 @@
+
 <style>
-    div.clipped { overflow: hidden; }
+    h1.ruled { 
+        font-size: 28px;
+        padding-bottom: 4px;
+        border-bottom: 1px lightgray solid !important; 
+    }
+    div.message-body { overflow: hidden; font-size: 17px; color: black; }
     div.recipients { margin-left: 1em; }
     a.butspacer { margin-bottom: .25em!important; }
+    a.icobut { margin-left: .5em; }
     a.prev-arrow { float: left; }
     a.next-arrow { float: right; }
+    div.filter-section {
+        padding-bottom: 2.5em;
+    }
+    .clickable { cursor: pointer; }
 
     div.filter {
         position: sticky;
-        top: 141px;
-        margin: 2em;
+        top: 75px;
+        padding: 1.5em;
+        margin-top: -5px;
+        padding-top: 0;
         text-align: center;
     }
     .thelayout {
-        margin-top: 80px;
+        padding-top: 80px;
         display: grid;
         grid-template-columns: 1fr 3fr 2fr;
         grid-template-areas: "gleft gmiddle gright";
@@ -22,105 +35,124 @@
     }
     .themiddle {
         grid-area: gmiddle;
+        min-height: 80vh;
     }
     .theright {
         grid-area: gright;
-        min-height: 50vh;
     }
 
-    table.pager {
+    div.pager {
         width: 100%;
-        font-size: 200%;
-        min-height: 48px;
+        text-align: center;
+        font-size: 130%;
         user-select: none;
     }
-    table.pager td {
-        width: 33%;
-        white-space:nowrap;
+
+    div.zero {
+        width: 100%;
+        text-align: center;
+        padding-top: 20vh;
     }
-    table.pager td.tmid { text-align: center; }
-    table.pager td.tleft { text-align: right; }
-    table.pager td.tright { text-align: left; }
+    div.export {
+        position: fixed;
+        bottom: 1.5em;
+        right: 1.5em;
+    }
 </style>
 
 <template>
 <div class="thelayout">
-    <div class="theright">
-        <div class="filter">
-            <form v-on:submit.prevent="addTextFilter">
-                <div class="ui action fluid input">
-                    <input type="text" v-model="enteredText" placeholder="Add Search Filter...">
-                    <select v-model="selectedTextFilter" class="ui compact selection dropdown">
-                        <option v-for="f in selectableTextFilters" :value="f.key">{{f.description}}</option>
-                    </select>
-                    <button type="submit" class="ui button">Add</button>
-                </div>
-            </form>
-            <br />
-            <div v-for="(v, k) in filters" :key="k" class="ui label">
-                {{v.presentation}} <i class="delete icon" v-on:click="removeFilter(k)"></i> 
-            </div>
-        </div>
-    </div>
-    <div class="theleft">
-    </div>
     <div class="themiddle">
-        <table class="pager">
-            <tr>
-                <td class="tleft">
-                    &nbsp;
-                    <a v-if="offerFirstPage" data-tooltip="first page" data-position="bottom left" v-on:click="firstPage"><i class="large angle double left icon"></i></a>
-                    <a v-if="offerPrevPage" data-tooltip="previous page" data-position="bottom left" v-on:click="prevPage"><i class="large angle left icon"></i></a>
-                </td>
-                <td class="tmid">
-                    {{rangeStart}}{{rangeEnd}}&nbsp;{{fullCount}} results
-                </td>
-                <td class="tright">
-                    <a v-if="offerNextPage" data-tooltip="next page" data-position="bottom left" v-on:click="nextPage"><i class="large angle right icon"></i></a>
-                    <a v-if="offerLastPage" data-tooltip="last page" data-position="bottom left" v-on:click="lastPage"><i class="large angle double right icon"></i></a>
-                    &nbsp;
-                </td>
-            </tr>
-        </table>
+        <div v-if="!messages.length" class="zero">
+            <h1>No Messages Found</h1>
+            <h3>(Are your search filters conflicting or too restrictive?)</h3>
+        </div>
+        <div class="pager">
+            <template v-for="(dot, idx) in pagerDots">
+                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="red circle icon"></i></span>
+                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon"></i></a>
+            </template>
+        </div>
         <div v-for="m in messages" :key="m.messageId" class="ui raised fluid card">
             <div class="content">
                 <div class="right floated time">
-                    <a data-tooltip='add BEFORE filter'><i class="chevron left icon"></i></a>
+                    <a data-tooltip='add UNTIL filter' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
                     <small>{{m.receivedText}}</small>
-                    <a data-tooltip='add AFTER filter'><i class="chevron right icon"></i></a>
+                    <a class="icobut" data-tooltip='add SINCE filter' @click="addTimeFilter(m, 'Since')"><i class="chevron right icon"></i></a>
                 </div>
                 <div class="header">
-                    <a data-tooltip='add THREAD filter' v-on:click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
+                    <a data-tooltip='add THREAD-ID filter' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
                     {{threadTitle(m)}} 
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
                     from
-                    {{m.senderTag}} ({{m.senderName}})
-                    <a data-tooltip='add TO filter' v-on:click="addUserIdFilter(m, 'to')"><i class="reply icon"></i></a>
-                    <a data-tooltip='add FROM filter' v-on:click="addUserIdFilter(m, 'from')"><i class="share icon"></i></a>
+                     {{m.senderName}} ({{m.senderTag}})
+                    <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To')"><i class="selected radio icon"></i></a>
+                    <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From')"><i class="move icon"></i></a>
                 </div>
                 <div class="description">
-                    <a v-on:click="toggleDist(m.messageId)"><i class="caret icon" :class="distCaret(m.messageId)"></i> 
+                    <a @click="toggleDist(m.messageId)"><i class="caret icon" :class="distCaret(m.messageId)"></i> 
                     {{m.recipientTags.length}} recipient{{m.recipientTags.length ? 's':''}}</a>
                 </div>
                 <div v-show="showDist[m.messageId]" class="description">
                     <div v-for="(r,i) in m.recipientTags" :key="r" class="recipients">
-                        to {{r}} ({{m.recipientNames[i]}})
-                        <a data-tooltip='add TO filter' v-on:click="addUserIdFilter(m, 'to', i)"><i class="reply icon"></i></a>
-                        <a data-tooltip='add FROM filter' v-on:click="addUserIdFilter(m, 'from', i)"><i class="share icon"></i></a>
+                        {{r}} ({{m.recipientNames[i]}})
+                        <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To', i)"><i class="selected radio icon"></i></a>
+                        <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From', i)"><i class="move icon"></i></a>
                     </div>
                 </div>
             </div>
             <div class="content">
                 <div class="description">
-                    <div class="clipped" v-html="messageBody(m)"></div>
+                    <div class="message-body" v-html="messageBody(m)"></div>
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
                 <a :href="`/api/vault/attachment/${a}/v1`" v-for="(a,i) of m.attachmentIds" class="butspacer ui compact mini button">
                     <i class="download icon"></i> {{attachmentName(m, i)}}
                 </a>
+            </div>
+        </div>
+        <div class="pager" style="padding-bottom: 1em;">
+            <template v-for="(dot, idx) in pagerDots">
+                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="red circle icon"></i></span>
+                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon"></i></a>
+            </template>
+        </div>
+    </div>
+    <div class="theleft">
+    </div>
+    <div class="theright">
+        <div class="filter">
+            <h1 class="ruled">{{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</h1>
+            <div class="filter-section">
+                Showing
+                <select v-model="pageSize" class="ui compact selection dropdown" @change="offset=0">
+                    <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
+                </select>
+                <select v-model="ascending" class="ui compact selection dropdown">
+                    <option value="yes">Oldest First</option>
+                    <option value="no">Newest First</option>
+                </select>
+            </div>
+            <div class="filter-section">
+                <form v-on:submit.prevent="addTextFilters">
+                    <div class="ui fluid input">
+                        <input type="text" v-model="enteredText" placeholder="Add and Update Filters">
+                    </div>
+                    <small><em>body words | <b>title:</b>words | <b>to:</b>fragment | <b>from:</b>fragment | <b>has:</b>[no] attach[ment[s]]</em></small>
+                </form>
+            </div>
+            <div class="filter-section">
+                <a v-for="(v,k) in filters" @click="removeFilter(k)" class="butspacer ui compact mini blue button">
+                    <i class="remove icon"></i> {{v.presentation}}
+                </a>
+            </div>
+            <div class="filter-section">
+            </div>
+            <div v-if="fullCount" class="export">
+                <button class="ui fluid button" @click="exportData">Export {{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</button>
             </div>
         </div>
     </div>
@@ -131,34 +163,23 @@
 
 moment = require('moment');
 
-const REFRESH_POLL_RATE = 5000;
+const REFRESH_POLL_RATE = 30000;
 
-const TEXT_FILTERS = [
-    { key: 'body', description: 'Body Words' },
-    { key: 'title', description: 'Title Words' },
-    { key: 'to', description: 'To Name' },
-    { key: 'toTag', description: 'To Tag' },
-    { key: 'from', description: 'From Name' },
-    { key: 'fromTag', description: 'From Tag' }
-];
-const DEFAULT_TEXT_FILTER = TEXT_FILTERS[0].key;
-
-const PAGE_SIZES = [5, 10, 20, 50, 100];
-const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
+const PAGE_SIZES = [5, 10, 20, 50, 100, 1000];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
 
 module.exports = {
     data: () => ({ 
         global: shared.state,
         interval: null,
         enteredText: '',
-        selectableTextFilters: TEXT_FILTERS,
-        selectedTextFilter: DEFAULT_TEXT_FILTER,
         filters: {},
         showDist: {},
         selectablePageSizes: PAGE_SIZES,
         pageSize: DEFAULT_PAGE_SIZE,
         fullCount: 0,
         offset: 0,
+        ascending: 'no',
         messages: []
     }),
     computed: {
@@ -166,72 +187,78 @@ module.exports = {
             let q = Object.keys(this.filters).map(k => `${k}=${this.filters[k].value}`);
             q.push(`offset=${this.offset}`);
             q.push(`limit=${this.pageSize}`);
-            return q.join('&');
+            q.push(`ascending=${this.ascending}`);
+            return q.join('&').replace("'","");
         },
-        rangeStart: function() {
-            return (this.offset > 0) ? `${this.offset + 1}-` : '';
-        },
-        rangeEnd: function() {
-            const last = this.messages.length + this.offset;
-            return (this.offset > 0 || last < this.fullCount) ? `${last} of` : '';
-        },
-        offerFirstPage: function() {
-            return this.offset > this.pageSize;
-        },
-        offerPrevPage: function() {
-            return this.offset > 0;
-        },
-        offerNextPage: function() {
-            return this.offset + this.pageSize < this.fullCount;
-        },
-        offerLastPage: function() {
-            return this.offset + this.pageSize < this.fullCount - this.pageSize;
-        },
+        pagerDots: function() {
+            const count = Math.ceil(this.fullCount / this.pageSize);
+            return Array.from(new Array(count), (_, idx) => {
+                const isActive = Math.round(this.offset / this.pageSize) === idx;
+                const first = this.pageSize * idx + 1;
+                const last = Math.min(first + this.pageSize - 1, this.fullCount);
+                return {
+                    isActive,
+                    tooltip: `show${isActive ? 'ing' : ''} ${first}${first != last ? '-' + last : ''}`,
+                    go: () => { this.offset = first - 1; }
+                }
+            });
+        }
     },
     watch: {
         queryString: function(val) {
             this.getMessages();
-        }
+            window.scrollTo(0, 0);
+        },
     },
     methods: {
-        firstPage: function() {
-            this.offset = 0;
-            console.log('firstPage', this.offset);
-        },
-        prevPage: function() {
-            this.offset = Math.max(0, this.offset - this.pageSize);
-            console.log('prevPage', this.offset);
-        },
-        nextPage: function() {
-            this.offset = Math.min(this.fullCount - this.pageSize, this.offset + this.pageSize);
-            console.log('nextPage', this.offset);
-        },
-        lastPage: function() {
-            this.offset = Math.max(0, this.fullCount - this.pageSize);
-            console.log('lastPage', this.offset);
-        },
-        addTextFilter: function() {
-            const filt = this.selectableTextFilters.find(x => x.key === this.selectedTextFilter);
-            const text = this.enteredText.trim();
-            if (!filt || !text) return;
-            console.log(`adding ${filt.description} filter for "${text}"`);
-            this.$set(this.filters, filt.key, { value: text, presentation: `${filt.description}: ${text}` });
+        addTextFilters: function() {
+            let text = this.enteredText.trim();
+            let match = text.match(/(^|\W+)has:\s*(no\s+)?attach(ment(s)?)?(\W+|$)/i);
+            if (match) {
+                console.log('attach match', match);
+                text = text.replace(match[0], ' ').trim();
+                this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2]||'').toUpperCase()} Attachments` });
+            }
+            match = text.match(/(^|\W+)to:\s*(\w+)(\W+|$)/i);
+            if (match) {
+                text = text.replace(match[0], ' ').trim();
+                this.$set(this.filters, 'to', { value: match[2], presentation: `To ${match[2]}` });
+            }
+            match = text.match(/(^|\W+)from:\s*(\w+)(\W+|$)/i);
+            if (match) {
+                text = text.replace(match[0], ' ').trim();
+                this.$set(this.filters, 'from', { value: match[2], presentation: `From ${match[2]}` });
+            }
+            match = text.match(/(^|\W+)title:\s*(.*)$/i);
+            if (match) {
+                text = text.replace(match[0], ' ').trim();
+                this.$set(this.filters, 'title', { value: match[2], presentation: `Title: ${match[2]}` });
+            }
+            if (text) {
+                this.$set(this.filters, 'body', { value: text, presentation: `Body: ${text}` });
+            }
+
             this.enteredText = '';
             this.offset = 0;
+            console.log('done');
         },
         addThreadFilter: function(m) {
-            this.$set(this.filters, 'threadId', { value: m.threadId, presentation: 'Thread by ID' });
+            this.$set(this.filters, 'threadId', { value: m.threadId, presentation: 'Thread ID' });
             this.offset = 0;
         },
         addUserIdFilter: function(m, direction, idx=-1) {
             const id = (idx < 0) ? m.senderId : m.recipientIds[idx];
             const who = (idx < 0) ? `${m.senderTag} (${m.senderName})` : `${m.recipientTags[idx]} (${m.recipientNames[idx]})`;
-            const key = direction + 'Id';
+            const key = direction.toLowerCase() + 'Id';
             this.$set(this.filters, key, { value: id, presentation: `${direction} ${who}` });
             this.offset = 0;
         },
+        addTimeFilter: function(m, direction) {
+            const val = m.receivedMoment.format('YYYY-MM-DD HH:mm:ss.SSS');
+            this.$set(this.filters, direction.toLowerCase(), { value: val, presentation: `${direction} ${m.receivedMoment.format('lll') }`});
+            this.offset = 0;
+        },
         removeFilter: function(k) {
-            console.log(`removing ${k} from filters`);
             this.$delete(this.filters, k);
             this.offset = 0;
         },
@@ -251,8 +278,8 @@ module.exports = {
             .then(result => {
                 console.log('received messages:', result.theJson.messages);
                 this.messages = result.theJson.messages.forEach(m => {
-                    m.received = moment(m.received);
-                    m.receivedText = m.received.format('llll');
+                    m.receivedMoment = moment(m.received);
+                    m.receivedText = m.receivedMoment.format('llll');
                 });
                 this.messages = result.theJson.messages;
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
@@ -266,7 +293,7 @@ module.exports = {
         },
         threadTitle: function(m) {
             const message = m.payload.find(x => x.version === 1);
-            return message.threadTitle || '<title not defined>';
+            return message.threadTitle || '<thread title not defined>';
         },
         attachmentName: function(m, idx) {
             const message = m.payload.find(x => x.version === 1);
@@ -280,6 +307,9 @@ module.exports = {
             const lum = (val % 5) * 10 + 20;
 
             return { color: `hsl(${hue}, 100%, ${lum}%)` };
+        },
+        exportData: function() {
+            alert('TBD');
         }
     },
     mounted: function() {

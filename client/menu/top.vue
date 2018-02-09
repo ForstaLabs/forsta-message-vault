@@ -2,7 +2,7 @@
 </style>
 
 <template>
-    <div class="ui fixed inverted menu">
+    <div class="ui fixed inverted menu" style="z-index: 1;">
         <div class="ui container">
             <router-link :to="{name: 'welcome'}" class="header item">
                 <img class="logo" src="/static/images/forsta-logo-invert.svg"/>

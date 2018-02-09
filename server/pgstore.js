@@ -53,7 +53,7 @@ class PGStore {
                 ts_main,
                 ts_title
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, to_tsvector($13), to_tsvector($14)
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, to_tsvector($13), to_tsvector($14)
             )`;
 
         this.queryAddAttachment = `
@@ -129,7 +129,7 @@ class PGStore {
     async getMessages({ 
             limit, offset, 
             orderby='received', ascending='no', 
-            before, after, 
+            until, since, 
             body, title,
             attachments,
             threadId,
@@ -142,8 +142,8 @@ class PGStore {
         const _offset = offset ? `OFFSET ${offset}` : '';
 
         let predicates = [];
-        if (before) predicates.push(`received <= '${before}'`);
-        if (after) predicates.push(`received >= '${after}'`);
+        if (until) predicates.push(`received <= '${until}'::timestamp`);
+        if (since) predicates.push(`received >= '${since}'::timestamp`);
         if (body) predicates.push(`ts_main @@ plainto_tsquery('${body}')`);
         if (title) predicates.push(`ts_title @@ plainto_tsquery('${title}')`);
         if (threadId) predicates.push(`thread_id = '${threadId}'`);
@@ -153,7 +153,8 @@ class PGStore {
         if (to) predicates.push(`recipient_names ILIKE '%${to}%'`);
         if (toTag) predicates.push(`recipient_tags ILIKE '%${toTag}%'`);
         if (toId) predicates.push(`recipient_ids @> ARRAY['${toId}'::uuid]`);
-        if (attachments) predicates.push(`array_upper(attachment_ids, 1) IS ${attachments === 'no' ? 'NOT' : ''} NULL`);
+        if (attachments === 'yes') predicates.push('array_length(attachment_ids, 1) > 0');
+        if (attachments === 'no') predicates.push(`attachment_ids = '{}'`);
         const _where = (predicates.length) ? `WHERE ${predicates.join(' AND ')}` : '';
 
         const _orderby = orderby ? `ORDER BY ${orderby} ${ascending === 'yes' ? 'ASC' : 'DESC'}` : '';
