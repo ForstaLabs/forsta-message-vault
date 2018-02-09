@@ -4,7 +4,7 @@ message-vault:
     - "4096:4096"
   environment:
     RELAY_STORAGE_BACKING: postgres
-    REDIS_URL: postgres://postgres
+    DATABASE_URL: postgres://postgres
   links:
     - postgres
 postgres:

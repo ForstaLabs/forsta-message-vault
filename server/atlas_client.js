@@ -4,8 +4,8 @@ class BotAtlasClient extends relay.AtlasClient {
 
     static get onboardingCreatedUser() {
         return {
-            first_name: "Manners",
-            last_name: "Monitor",
+            first_name: "Message",
+            last_name: "Vault",
             is_monitor: true
         };
     }

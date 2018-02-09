@@ -5,10 +5,10 @@
     "logo": "https://raw.githubusercontent.com/ForstaLabs/message-vault/master/images/forsta-logo.svg?sanitize=true",
     "keywords": ["forsta", "messaging", "bot", "e-discovery"],
     "website": "https://forsta.io",
-    "addons": ["heroku-postgres"],
+    "addons": ["heroku-postgresql"],
     "env": {
       "RELAY_STORAGE_BACKING": {
-        "description": "Control where bot settings and data will be stored.  For heroku 'postgres' is recommended.",
+        "description": "Control where bot settings and data will be stored.  For heroku 'postgresql' is recommended.",
         "required": false,
         "value": "postgres"
       }
