@@ -109,7 +109,6 @@ class ForstaBot {
             distribution: JSON.stringify(distribution),
             messageId,
             threadId,
-            threadTitle,
             senderName,
             senderId,
             senderTag,

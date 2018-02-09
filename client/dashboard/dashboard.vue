@@ -91,7 +91,7 @@
                 </div>
                 <div class="header">
                     <a data-tooltip='add THREAD filter' v-on:click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
-                    {{m.threadTitle || '&lt;title not defined&gt;'}} 
+                    {{threadTitle(m)}} 
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
@@ -263,6 +263,10 @@ module.exports = {
             const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
             const tmpHtml = message.data && message.data.body.find(x => x.type === 'text/html');
             return (tmpHtml && tmpHtml.value) || `<p style="white-space: pre-line">${(tmpText && tmpText.value) || ''}</p>`;
+        },
+        threadTitle: function(m) {
+            const message = m.payload.find(x => x.version === 1);
+            return message.threadTitle || '<title not defined>';
         },
         attachmentName: function(m, idx) {
             const message = m.payload.find(x => x.version === 1);

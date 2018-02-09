@@ -14,7 +14,6 @@ class PGStore {
 
                 message_id       uuid PRIMARY KEY,
                 thread_id        uuid,
-                thread_title     text,
                 sender_name      text,
                 sender_id        uuid,
                 sender_tag       text,
@@ -44,7 +43,6 @@ class PGStore {
                 distribution,
                 message_id,
                 thread_id,
-                thread_title,
                 sender_name,
                 sender_id,
                 sender_tag,
@@ -55,7 +53,7 @@ class PGStore {
                 ts_main,
                 ts_title
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, to_tsvector($14), to_tsvector($15)
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, to_tsvector($13), to_tsvector($14)
             )`;
 
         this.queryAddAttachment = `
@@ -95,7 +93,6 @@ class PGStore {
             distribution,
             messageId,
             threadId,
-            threadTitle,
             senderName,
             senderId,
             senderTag,
@@ -113,7 +110,6 @@ class PGStore {
             distribution,
             messageId,
             threadId,
-            threadTitle,
             senderName,
             senderId,
             senderTag,
@@ -174,7 +170,6 @@ class PGStore {
                 distribution: row.distribution,
                 messageId: row.message_id,
                 threadId: row.thread_id,
-                threadTitle: row.thread_title,
                 senderName: row.sender_name,
                 senderId: row.sender_id,
                 senderTag: row.sender_tag,
