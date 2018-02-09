@@ -68,6 +68,7 @@ class ForstaBot {
     fqName(user) { 
         return [user.first_name, user.middle_name, user.last_name].map(s => (s || '').trim()).filter(s => !!s).join(' ');
     }
+    fqLabel(user) { return `${this.fqTag(user)} (${this.fqName(user)})`; }
 
     async onMessage(ev) {
         const received = new Date(ev.data.timestamp);
@@ -80,13 +81,11 @@ class ForstaBot {
 
         const senderId = message.sender.userId;
         const sender = (await this.getUsers([senderId]))[0];
-        const senderTag = this.fqTag(sender);
-        const senderName = this.fqName(sender);
+        const senderLabel = this.fqLabel(sender);
         const distribution = await this.resolveTags(message.distribution.expression);
         const recipientIds = distribution.userids;
         const recipients = await this.getUsers(recipientIds);
-        const recipientNames = recipients.map(this.fqName);
-        const recipientTags = recipients.map(this.fqTag);
+        const recipientLabels = recipients.map(user => this.fqLabel(user));
 
         const messageId = message.messageId;
         const threadId = message.threadId;
@@ -109,12 +108,10 @@ class ForstaBot {
             distribution: JSON.stringify(distribution),
             messageId,
             threadId,
-            senderName,
             senderId,
-            senderTag,
-            recipientNames,
+            senderLabel,
             recipientIds,
-            recipientTags,
+            recipientLabels,
             attachmentIds,
             tsMain: messageText,
             tsTitle: threadTitle

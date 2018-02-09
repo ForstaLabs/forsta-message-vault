@@ -95,20 +95,19 @@
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
-                    from
-                     {{m.senderName}} ({{m.senderTag}})
+                    from {{m.senderLabel}}
                     <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To')"><i class="selected radio icon"></i></a>
                     <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From')"><i class="move icon"></i></a>
                 </div>
                 <div class="description">
                     <a @click="toggleDist(m.messageId)"><i class="caret icon" :class="distCaret(m.messageId)"></i> 
-                    {{m.recipientTags.length}} recipient{{m.recipientTags.length ? 's':''}}</a>
+                    {{m.recipientLabels.length}} recipient{{m.recipientLabels.length ? 's':''}}</a>
                 </div>
                 <div v-show="showDist[m.messageId]" class="description">
-                    <div v-for="(r,i) in m.recipientTags" :key="r" class="recipients">
-                        {{r}} ({{m.recipientNames[i]}})
-                        <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To', i)"><i class="selected radio icon"></i></a>
-                        <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From', i)"><i class="move icon"></i></a>
+                    <div v-for="(label,idx) in m.recipientLabels" :key="idx" class="recipients">
+                        {{label}}
+                        <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To', idx)"><i class="selected radio icon"></i></a>
+                        <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From', idx)"><i class="move icon"></i></a>
                     </div>
                 </div>
             </div>
@@ -278,7 +277,7 @@ module.exports = {
         },
         addUserIdFilter: function(m, direction, idx=-1) {
             const id = (idx < 0) ? m.senderId : m.recipientIds[idx];
-            const who = (idx < 0) ? `${m.senderTag} (${m.senderName})` : `${m.recipientTags[idx]} (${m.recipientNames[idx]})`;
+            const who = (idx < 0) ? m.senderLabel : m.recipientLabels;
             const key = direction.toLowerCase() + 'Id';
             this.$set(this.filters, key, { value: id, presentation: `${direction} ${who}` });
             this.offset = 0;

@@ -8,18 +8,17 @@ class PGStore {
         });
         this.queryCreateMessageTableIfNeeded = `
             CREATE TABLE IF NOT EXISTS ${this.prefix}_message (
-                payload         jsonb,
-                received        timestamp,
-                distribution    jsonb,
+                payload          jsonb,
+                received         timestamp,
+                distribution     jsonb,
 
                 message_id       uuid PRIMARY KEY,
                 thread_id        uuid,
-                sender_name      text,
+
                 sender_id        uuid,
-                sender_tag       text,
-                recipient_names  text,
+                sender_label     text,
                 recipient_ids    uuid[],
-                recipient_tags   text,
+                recipient_labels text,
 
                 attachment_ids   uuid[],
 
@@ -29,11 +28,11 @@ class PGStore {
 
         this.queryCreateAttachmentTableIfNeeded = `
             CREATE TABLE IF NOT EXISTS ${this.prefix}_attachment (
-                id        uuid PRIMARY KEY,
-                data      bytea,
-                type      text,
-                name      text,
-                message_id uuid REFERENCES ${this.prefix}_message
+                id           uuid PRIMARY KEY,
+                data         bytea,
+                type         text,
+                name         text,
+                message_id   uuid REFERENCES ${this.prefix}_message
             );`;
 
         this.queryAddMessage = `
@@ -43,17 +42,15 @@ class PGStore {
                 distribution,
                 message_id,
                 thread_id,
-                sender_name,
                 sender_id,
-                sender_tag,
-                recipient_names,
+                sender_label,
                 recipient_ids,
-                recipient_tags,
+                recipient_labels,
                 attachment_ids,
                 ts_main,
                 ts_title
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, to_tsvector($13), to_tsvector($14)
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_tsvector($11), to_tsvector($12)
             )`;
 
         this.queryAddAttachment = `
@@ -93,12 +90,10 @@ class PGStore {
             distribution,
             messageId,
             threadId,
-            senderName,
             senderId,
-            senderTag,
-            recipientNames,
+            senderLabel,
             recipientIds,
-            recipientTags,
+            recipientLabels,
             attachmentIds,
             tsMain,
             tsTitle
@@ -110,12 +105,10 @@ class PGStore {
             distribution,
             messageId,
             threadId,
-            senderName,
             senderId,
-            senderTag,
-            recipientNames && recipientNames.join('<*>'),
+            senderLabel,
             recipientIds,
-            recipientTags && recipientTags.join(','),
+            recipientLabels && recipientLabels.join('<=.*-=>'),
             attachmentIds,
             tsMain,
             tsTitle
@@ -133,8 +126,8 @@ class PGStore {
             body, title,
             attachments,
             threadId,
-            from, fromTag, fromId,
-            to, toTag, toId }) {
+            from, fromId,
+            to, toId }) {
         console.warn('TODO: Need to parameterize getMessage to make it safe!');
         const _selectfrom = `SELECT *, count(*) OVER() AS full_count FROM ${this.prefix}_message`;
 
@@ -147,11 +140,9 @@ class PGStore {
         if (body) predicates.push(`ts_main @@ plainto_tsquery('${body}')`);
         if (title) predicates.push(`ts_title @@ plainto_tsquery('${title}')`);
         if (threadId) predicates.push(`thread_id = '${threadId}'`);
-        if (from) predicates.push(`sender_name ILIKE '%${from}%'`);
-        if (fromTag) predicates.push(`sender_tag ILIKE '%${fromTag}%'`);
+        if (from) predicates.push(`sender_label ILIKE '%${from}%'`);
         if (fromId) predicates.push(`sender_id = '${fromId}'`);
-        if (to) predicates.push(`recipient_names ILIKE '%${to}%'`);
-        if (toTag) predicates.push(`recipient_tags ILIKE '%${toTag}%'`);
+        if (to) predicates.push(`recipient_labels ILIKE '%${to}%'`);
         if (toId) predicates.push(`recipient_ids @> ARRAY['${toId}'::uuid]`);
         if (attachments === 'yes') predicates.push('array_length(attachment_ids, 1) > 0');
         if (attachments === 'no') predicates.push(`attachment_ids = '{}'`);
@@ -171,12 +162,10 @@ class PGStore {
                 distribution: row.distribution,
                 messageId: row.message_id,
                 threadId: row.thread_id,
-                senderName: row.sender_name,
+                senderLabel: row.sender_label,
                 senderId: row.sender_id,
-                senderTag: row.sender_tag,
-                recipientNames: row.recipient_names.split('<*>'),
+                recipientLabels: row.recipient_labels.split('<=.*-=>'),
                 recipientIds: row.recipient_ids,
-                recipientTags: row.recipient_tags.split(','),
                 attachmentIds: row.attachment_ids,
                 fullCount: row.full_count
             };
