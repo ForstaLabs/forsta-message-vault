@@ -5,7 +5,7 @@
         padding-bottom: 4px;
         border-bottom: 1px lightgray solid !important; 
     }
-    div.message-body { overflow: hidden; font-size: 17px; color: black; }
+    div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
     div.recipients { margin-left: 1em; }
     a.butspacer { margin-bottom: .25em!important; }
     a.icobut { margin-left: .5em; }
@@ -15,10 +15,19 @@
         padding-bottom: 2.5em;
     }
     .clickable { cursor: pointer; }
+    .nowrap { white-space: nowrap; }
 
     div.filter {
         position: sticky;
         top: 75px;
+        padding: 1.5em;
+        margin-top: -5px;
+        padding-top: 0;
+        text-align: center;
+    }
+    div.obscurer {
+        position: sticky;
+        top: 125px;
         padding: 1.5em;
         margin-top: -5px;
         padding-top: 0;
@@ -82,7 +91,7 @@
                 </div>
                 <div class="header">
                     <a data-tooltip='add THREAD-ID filter' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
-                    {{threadTitle(m)}} 
+                    <span :style="obscurable" @click="flipscure">{{threadTitle(m)}}</span>
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
@@ -105,7 +114,7 @@
             </div>
             <div class="content">
                 <div class="description">
-                    <div class="message-body" v-html="messageBody(m)"></div>
+                    <div @click="flipscure" class="message-body" :style="obscurable" v-html="messageBody(m)"></div>
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
@@ -122,11 +131,17 @@
         </div>
     </div>
     <div class="theleft">
+        <div class="obscurer" @click="flipscure">
+            <div class="clickable ui toggle checkbox">
+                <input type="checkbox" v-model="obscured">
+                <label>Obscure</label>
+            </div>
+        </div>
     </div>
     <div class="theright">
         <div class="filter">
             <h1 class="ruled">{{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</h1>
-            <div class="filter-section">
+            <div class="filter-section nowrap">
                 Showing
                 <select v-model="pageSize" class="ui compact selection dropdown" @change="offset=0">
                     <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
@@ -141,7 +156,7 @@
                     <div class="ui fluid input">
                         <input type="text" v-model="enteredText" placeholder="Add and Update Filters">
                     </div>
-                    <small><em>body words | <b>title:</b>words | <b>to:</b>fragment | <b>from:</b>fragment | <b>has:</b>[no] attach[ment[s]]</em></small>
+                    <small><em><span class="nowrap">body words</span> | <span class="nowrap"><b>title:</b>words</span> | <span class="nowrap"><b>to:</b>fragment</span> | <span class="nowrap"><b>from:</b>fragment</span> | <span class="nowrap"><b>has:</b>[no] attach[ment[s]]</span></em></small>
                 </form>
             </div>
             <div class="filter-section">
@@ -171,6 +186,7 @@ const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
 module.exports = {
     data: () => ({ 
         global: shared.state,
+        obscured: true,
         interval: null,
         enteredText: '',
         filters: {},
@@ -183,6 +199,17 @@ module.exports = {
         messages: []
     }),
     computed: {
+        obstring: function() {
+            return this.obscured ? `style="color: transparent; cursor: pointer; text-shadow: rgba(0, 0, 0, 0.95) 0px 0px 10px;"` : ''
+        },
+        obscurable: function() {
+            return this.obscured ? {
+                'color': 'transparent',
+                'cursor': 'pointer',
+                'user-select': 'none',
+                'text-shadow': 'rgba(0, 0, 0, 0.95) 0px 0px 10px'
+            } : {};
+        },
         queryString: function() {
             let q = Object.keys(this.filters).map(k => `${k}=${this.filters[k].value}`);
             q.push(`offset=${this.offset}`);
@@ -211,6 +238,9 @@ module.exports = {
         },
     },
     methods: {
+        flipscure: function() {
+            this.obscured = !this.obscured;
+        },
         addTextFilters: function() {
             let text = this.enteredText.trim();
             let match = text.match(/(^|\W+)has:\s*(no\s+)?attach(ment(s)?)?(\W+|$)/i);
@@ -289,7 +319,7 @@ module.exports = {
             const message = m.payload.find(x => x.version === 1);
             const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
             const tmpHtml = message.data && message.data.body.find(x => x.type === 'text/html');
-            return (tmpHtml && tmpHtml.value) || `<p style="white-space: pre-line">${(tmpText && tmpText.value) || ''}</p>`;
+            return (tmpHtml && tmpHtml.value) || `<p style="white-space: pre-line"><span ${this.obstring}>${(tmpText && tmpText.value) || ''}</span></p>`;
         },
         threadTitle: function(m) {
             const message = m.payload.find(x => x.version === 1);
