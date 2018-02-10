@@ -6,6 +6,19 @@
         border-bottom: 1px lightgray solid !important; 
     }
     div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
+    div.message-body .plain-text { white-space: pre-line; }
+
+    span.thread-title.obscured, div.message-body.obscured { 
+        color: transparent;
+        text-shadow: rgba(0, 0, 0, 0.8) 0px 0px 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    div.message-body.obscured a { color: transparent; }
+    div.message-body.obscured img, div.message-body.obscured video {
+        filter: blur(10px) grayscale(60%) contrast(50%) opacity(33%);
+    }
+
     div.recipients { margin-left: 1em; }
     a.butspacer { margin-bottom: .25em!important; }
     a.icobut { margin-left: .5em; }
@@ -91,7 +104,7 @@
                 </div>
                 <div class="header">
                     <a data-tooltip='add THREAD-ID filter' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
-                    <span :style="obscurable" @click="flipscure">{{threadTitle(m)}}</span>
+                    <span class="thread-title" :class="{obscured: obscured}" @click="flipscure">{{threadTitle(m)}}</span>
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
@@ -113,7 +126,7 @@
             </div>
             <div class="content">
                 <div class="description">
-                    <div @click="flipscure" class="message-body" :style="obscurable" v-html="messageBody(m)"></div>
+                    <div @click="flipscure" class="message-body" :class="{obscured: obscured}" v-html="messageBody(m)"></div>
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
@@ -130,7 +143,7 @@
         </div>
     </div>
     <div class="theleft">
-        <div class="obscurer" @click="flipscure">
+        <div class="obscurer" @click="flipscure" v-if="messages.length">
             <div class="clickable ui toggle checkbox">
                 <input type="checkbox" v-model="obscured">
                 <label>Obscure</label>
@@ -159,7 +172,7 @@
                 </form>
             </div>
             <div class="filter-section">
-                <a v-for="(v,k) in filters" @click="removeFilter(k)" class="butspacer ui compact mini blue button">
+                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact blue button">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
             </div>
@@ -177,7 +190,7 @@
 
 moment = require('moment');
 
-const REFRESH_POLL_RATE = 30000;
+const REFRESH_POLL_RATE = 15000;
 
 const PAGE_SIZES = [5, 10, 20, 50, 100, 1000];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
@@ -198,17 +211,6 @@ module.exports = {
         messages: []
     }),
     computed: {
-        obstring: function() {
-            return this.obscured ? `style="color: transparent; cursor: pointer; text-shadow: rgba(0, 0, 0, 0.95) 0px 0px 10px;"` : ''
-        },
-        obscurable: function() {
-            return this.obscured ? {
-                'color': 'transparent',
-                'cursor': 'pointer',
-                'user-select': 'none',
-                'text-shadow': 'rgba(0, 0, 0, 0.95) 0px 0px 10px'
-            } : {};
-        },
         queryString: function() {
             let q = Object.keys(this.filters).map(k => `${k}=${this.filters[k].value}`);
             q.push(`offset=${this.offset}`);
@@ -244,7 +246,6 @@ module.exports = {
             let text = this.enteredText.trim();
             let match = text.match(/(^|\W+)has:\s*(no\s+)?attach(ment(s)?)?(\W+|$)/i);
             if (match) {
-                console.log('attach match', match);
                 text = text.replace(match[0], ' ').trim();
                 this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2]||'').toUpperCase()} Attachments` });
             }
@@ -269,7 +270,6 @@ module.exports = {
 
             this.enteredText = '';
             this.offset = 0;
-            console.log('done');
         },
         addThreadFilter: function(m) {
             this.$set(this.filters, 'threadId', { value: m.threadId, presentation: 'Thread ID' });
@@ -302,10 +302,8 @@ module.exports = {
         },
         getMessages: function() {
             const q = this.queryString;
-            console.log('messages query:', q);
             util.fetch.call(this, '/api/vault/messages/v1?' + q)
             .then(result => {
-                console.log('received messages:', result.theJson.messages);
                 this.messages = result.theJson.messages.forEach(m => {
                     m.receivedMoment = moment(m.received);
                     m.receivedText = m.receivedMoment.format('llll');
@@ -317,8 +315,11 @@ module.exports = {
         messageBody: function(m) {
             const message = m.payload.find(x => x.version === 1);
             const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
+            const text = (tmpText && tmpText.value) || '';
             const tmpHtml = message.data && message.data.body.find(x => x.type === 'text/html');
-            return (tmpHtml && tmpHtml.value) || `<p style="white-space: pre-line"><span ${this.obstring}>${(tmpText && tmpText.value) || ''}</span></p>`;
+            let html = (tmpHtml && tmpHtml.value) || '';
+            if (this.obscured) html = html.replace('autoplay', 'xautoplay');
+            return html || `<p class="plain-text">${text}</p>`;
         },
         threadTitle: function(m) {
             const message = m.payload.find(x => x.version === 1);
