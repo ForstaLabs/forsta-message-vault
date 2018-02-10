@@ -277,7 +277,7 @@ module.exports = {
         },
         addUserIdFilter: function(m, direction, idx=-1) {
             const id = (idx < 0) ? m.senderId : m.recipientIds[idx];
-            const who = (idx < 0) ? m.senderLabel : m.recipientLabels;
+            const who = (idx < 0) ? m.senderLabel : m.recipientLabels[idx];
             const key = direction.toLowerCase() + 'Id';
             this.$set(this.filters, key, { value: id, presentation: `${direction} ${who}` });
             this.offset = 0;

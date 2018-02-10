@@ -1,5 +1,8 @@
 const { Client } = require("pg");
 
+
+const ARRAY_SEPARATOR = '<=.*-=>';
+
 class PGStore {
     constructor(label) {
         this.prefix = label.toLowerCase().replace(/[^a-z0-9_]/g, "_");
@@ -108,7 +111,7 @@ class PGStore {
             senderId,
             senderLabel,
             recipientIds,
-            recipientLabels && recipientLabels.join('<=.*-=>'),
+            recipientLabels && recipientLabels.join(ARRAY_SEPARATOR),
             attachmentIds,
             tsMain,
             tsTitle
@@ -164,7 +167,7 @@ class PGStore {
                 threadId: row.thread_id,
                 senderLabel: row.sender_label,
                 senderId: row.sender_id,
-                recipientLabels: row.recipient_labels.split('<=.*-=>'),
+                recipientLabels: row.recipient_labels.split(ARRAY_SEPARATOR),
                 recipientIds: row.recipient_ids,
                 attachmentIds: row.attachment_ids,
                 fullCount: row.full_count
