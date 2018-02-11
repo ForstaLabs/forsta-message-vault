@@ -12,7 +12,7 @@ class PGStore {
         this.queryCreateMessageTableIfNeeded = `
             CREATE TABLE IF NOT EXISTS ${this.prefix}_message (
                 payload          jsonb,
-                received         timestamp,
+                received         timestamp with time zone,
                 distribution     jsonb,
 
                 message_id       uuid PRIMARY KEY,
@@ -138,8 +138,8 @@ class PGStore {
         const _offset = offset ? `OFFSET ${offset}` : '';
 
         let predicates = [];
-        if (until) predicates.push(`received <= '${until}'::timestamp`);
-        if (since) predicates.push(`received >= '${since}'::timestamp`);
+        if (until) predicates.push(`received <= '${until}'::timestamp with time zone`);
+        if (since) predicates.push(`received >= '${since}'::timestamp with time zone`);
         if (body) predicates.push(`ts_main @@ plainto_tsquery('${body}')`);
         if (title) predicates.push(`ts_title @@ plainto_tsquery('${title}')`);
         if (threadId) predicates.push(`thread_id = '${threadId}'`);

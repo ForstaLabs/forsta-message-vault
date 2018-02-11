@@ -3,7 +3,11 @@
     h1.ruled { 
         font-size: 28px;
         padding-bottom: 4px;
-        border-bottom: 1px lightgray solid !important; 
+        border-bottom: 1px lightgray solid!important;
+    }
+    .topruled {
+        padding-top: .5em;
+        border-top: 1px lightgray solid!important;
     }
     div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
     div.message-body .plain-text { white-space: pre-line; }
@@ -69,6 +73,9 @@
         font-size: 130%;
         user-select: none;
     }
+    div.pager .active-page {
+        color: #FF8888;
+    }
 
     div.zero {
         width: 100%;
@@ -91,26 +98,26 @@
         </div>
         <div class="pager">
             <template v-for="(dot, idx) in pagerDots">
-                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="red circle icon"></i></span>
-                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon"></i></a>
+                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="active-page circle icon"></i></span>
+                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon clickable"></i></a>
             </template>
         </div>
         <div v-for="m in messages" :key="m.messageId" class="ui raised fluid card">
             <div class="content">
                 <div class="right floated time">
-                    <a data-tooltip='add UNTIL filter' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
+                    <a data-tooltip='filter UNTIL this time' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
                     <small>{{m.receivedText}}</small>
-                    <a class="icobut" data-tooltip='add SINCE filter' @click="addTimeFilter(m, 'Since')"><i class="chevron right icon"></i></a>
+                    <a class="icobut" data-tooltip='filter SINCE this time' @click="addTimeFilter(m, 'Since')"><i class="chevron right icon"></i></a>
                 </div>
                 <div class="header">
-                    <a data-tooltip='add THREAD-ID filter' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
+                    <a data-tooltip='filter for this THREAD ID' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
                     <span class="thread-title" :class="{obscured: obscured}" @click="flipscure">{{threadTitle(m)}}</span>
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
                     from {{m.senderLabel}}
-                    <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To')"><i class="selected radio icon"></i></a>
-                    <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From')"><i class="move icon"></i></a>
+                    <a class="icobut" data-tooltip='filter TO this user ID' @click="addUserIdFilter(m, 'To')"><i class="selected radio icon"></i></a>
+                    <a data-tooltip='filter FROM this user ID' @click="addUserIdFilter(m, 'From')"><i class="move icon"></i></a>
                 </div>
                 <div class="description">
                     <a @click="toggleDist(m.messageId)"><i class="caret icon" :class="distCaret(m.messageId)"></i> 
@@ -119,8 +126,8 @@
                 <div v-show="showDist[m.messageId]" class="description">
                     <div v-for="(label,idx) in m.recipientLabels" :key="idx" class="recipients">
                         {{label}}
-                        <a class="icobut" data-tooltip='add TO-ID filter' @click="addUserIdFilter(m, 'To', idx)"><i class="selected radio icon"></i></a>
-                        <a data-tooltip='add FROM-ID filter' @click="addUserIdFilter(m, 'From', idx)"><i class="move icon"></i></a>
+                        <a class="icobut" data-tooltip='filter TO this user ID' @click="addUserIdFilter(m, 'To', idx)"><i class="selected radio icon"></i></a>
+                        <a data-tooltip='filter FROM this user ID' @click="addUserIdFilter(m, 'From', idx)"><i class="move icon"></i></a>
                     </div>
                 </div>
             </div>
@@ -137,8 +144,8 @@
         </div>
         <div class="pager" style="padding-bottom: 1em;">
             <template v-for="(dot, idx) in pagerDots">
-                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="red circle icon"></i></span>
-                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon"></i></a>
+                <span v-if="dot.isActive" :key="idx" :data-tooltip="dot.tooltip"><i class="active-page circle icon"></i></span>
+                <a v-else :key="idx" :data-tooltip="dot.tooltip" @click="dot.go"><i class="circle icon clickable"></i></a>
             </template>
         </div>
     </div>
@@ -153,25 +160,30 @@
     <div class="theright">
         <div class="filter">
             <h1 class="ruled">{{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</h1>
-            <div class="filter-section nowrap">
-                Showing
-                <select v-model="pageSize" class="ui compact selection dropdown" @change="offset=0">
-                    <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
-                </select>
-                <select v-model="ascending" class="ui compact selection dropdown">
-                    <option value="yes">Oldest First</option>
-                    <option value="no">Newest First</option>
-                </select>
+            <div class="filter-section ui form">
+                <form class="ui form">
+                <div class="fields">
+                    <select v-model="pageSize" class="ui selection dropdown" @change="offset=0">
+                        <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
+                    </select>
+                    <select v-model="ascending" class="ui selection dropdown">
+                        <option value="yes">Oldest First</option>
+                        <option value="no">Newest First</option>
+                    </select>
+                </div>
+                </form>
             </div>
             <div class="filter-section">
-                <form v-on:submit.prevent="addTextFilters">
-                    <div class="ui fluid input">
-                        <input type="text" v-model="enteredText" placeholder="Add and Update Filters">
+                <h3>Add Text Filters</h3>
+                <form v-on:submit.prevent="addTextFilters" class="ui form">
+                    <div class="fields" style="margin-bottom:0;">
+                        <input class="ui input" type="text" v-model="enteredText" placeholder="Add and Update Text Filters">
                     </div>
                     <small><em><span class="nowrap">body words</span> | <span class="nowrap"><b>title:</b>words</span> | <span class="nowrap"><b>to:</b>fragment</span> | <span class="nowrap"><b>from:</b>fragment</span> | <span class="nowrap"><b>has:</b>[no] attach[ment[s]]</span></em></small>
                 </form>
             </div>
-            <div class="filter-section">
+            <div class="filter-section" v-if="Object.keys(filters).length">
+                <h3>Current Filters</h3>
                 <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact blue button">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
@@ -276,14 +288,14 @@ module.exports = {
             this.offset = 0;
         },
         addUserIdFilter: function(m, direction, idx=-1) {
+            const key = direction.toLowerCase() + 'Id';
             const id = (idx < 0) ? m.senderId : m.recipientIds[idx];
             const who = (idx < 0) ? m.senderLabel : m.recipientLabels[idx];
-            const key = direction.toLowerCase() + 'Id';
             this.$set(this.filters, key, { value: id, presentation: `${direction} ${who}` });
             this.offset = 0;
         },
         addTimeFilter: function(m, direction) {
-            const val = m.receivedMoment.format('YYYY-MM-DD HH:mm:ss.SSS');
+            const val = m.receivedMoment.format('YYYY-MM-DD HH:mm:ss.SSSZ');
             this.$set(this.filters, direction.toLowerCase(), { value: val, presentation: `${direction} ${m.receivedMoment.format('lll') }`});
             this.offset = 0;
         },
