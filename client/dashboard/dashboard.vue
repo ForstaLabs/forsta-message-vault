@@ -215,6 +215,16 @@ const REFRESH_POLL_RATE = 15000;
 const PAGE_SIZES = [5, 10, 20, 50, 100, 1000];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
 
+function extract(text, regex, action) {
+    let stripped = text;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        stripped = stripped.replace(match[0], ' ').trim();
+        action(match);
+    }
+    return stripped;
+}
+
 module.exports = {
     data: () => ({ 
         global: shared.state,
@@ -263,26 +273,19 @@ module.exports = {
         flipscure: function() { this.obscured = !this.obscured; },
         addTextFilters: function() {
             let text = this.enteredText.trim();
-            let match = text.match(/(^|\W+)has:\s*(no\s+)?attach(ment(s)?)?(\W+|$)/i);
-            if (match) {
-                text = text.replace(match[0], ' ').trim();
-                this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2]||'').toUpperCase()} Attachments` });
-            }
-            match = text.match(/(^|\W+)to:\s*(\w+)(\W+|$)/i);
-            if (match) {
-                text = text.replace(match[0], ' ').trim();
-                this.$set(this.filters, 'to', { value: match[2], presentation: `To ${match[2]}` });
-            }
-            match = text.match(/(^|\W+)from:\s*(\w+)(\W+|$)/i);
-            if (match) {
-                text = text.replace(match[0], ' ').trim();
-                this.$set(this.filters, 'from', { value: match[2], presentation: `From ${match[2]}` });
-            }
-            match = text.match(/(^|\W+)title:\s*(.*)$/i);
-            if (match) {
-                text = text.replace(match[0], ' ').trim();
-                this.$set(this.filters, 'title', { value: match[2], presentation: `Title: ${match[2]}` });
-            }
+
+            const attaches = /(^|\W)has:\s*(no\s+)?attach(ment(s)?)?(\W|$)/ig;
+            text = extract(text, attaches, match => this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Attachments` }));
+
+            const tos = /(^|\W)to:\s*([.:@\w]+)/ig;
+            text = extract(text, tos, match => this.$set(this.filters, 'to', { value: match[2], presentation: `To "${match[2]}"` }));
+
+            const froms = /(^|\W)from:\s*([.:@\w]+)/ig;
+            text = extract(text, froms, match => this.$set(this.filters, 'from', { value: match[2], presentation: `From "${match[2]}"` }));
+
+            const titles = /(^|\W)title:\s*(.*)$/ig;
+            text = extract(text, titles, match => this.$set(this.filters, 'title', { value: match[2], presentation: `Title: ${match[2]}` }));
+
             if (text) {
                 this.$set(this.filters, 'body', { value: text, presentation: `Body: ${text}` });
             }
