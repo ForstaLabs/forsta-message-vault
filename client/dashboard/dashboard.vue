@@ -11,6 +11,10 @@
     }
     div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
     div.message-body .plain-text { white-space: pre-line; }
+    div.message-body img, div.message-body video {
+        max-width:33vw;
+        max-height:25vh;
+    }
 
     span.thread-title.obscured, div.message-body.obscured { 
         color: transparent;
@@ -42,7 +46,7 @@
         padding-top: 0;
         text-align: center;
     }
-    div.obscurer {
+    div.obscure-control {
         position: sticky;
         top: 125px;
         padding: 1.5em;
@@ -53,7 +57,7 @@
     .thelayout {
         padding-top: 80px;
         display: grid;
-        grid-template-columns: 1fr 3fr 2fr;
+        grid-template-columns: 150px 1fr 350px;
         grid-template-areas: "gleft gmiddle gright";
     }
     .theleft {
@@ -133,7 +137,11 @@
             </div>
             <div class="content">
                 <div class="description">
-                    <div @click="flipscure" class="message-body" :class="{obscured: obscured}" v-html="messageBody(m)"></div>
+                    <a @click="toggleBody(m.messageId)"><i class="caret icon" :class="bodyCaret(m.messageId)"></i> 
+                    body</a>
+                </div>
+                <div class="description">
+                    <div v-if="bodyVisible(m.messageId)" @click="flipscure" class="message-body" :class="{obscured: obscured}" v-html="messageBody(m)"></div>
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
@@ -150,7 +158,7 @@
         </div>
     </div>
     <div class="theleft">
-        <div class="obscurer" @click="flipscure" v-if="messages.length">
+        <div class="obscure-control" @click="flipscure" v-if="messages.length">
             <div class="clickable ui toggle checkbox">
                 <input type="checkbox" v-model="obscured">
                 <label>Obscure</label>
@@ -166,7 +174,7 @@
                     <select v-model="pageSize" class="ui selection dropdown" @change="offset=0">
                         <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
                     </select>
-                    <select v-model="ascending" class="ui selection dropdown">
+                    <select v-model="ascending" class="ui fluid selection dropdown">
                         <option value="yes">Oldest First</option>
                         <option value="no">Newest First</option>
                     </select>
@@ -215,6 +223,7 @@ module.exports = {
         enteredText: '',
         filters: {},
         showDist: {},
+        hideBody: {},
         selectablePageSizes: PAGE_SIZES,
         pageSize: DEFAULT_PAGE_SIZE,
         fullCount: 0,
@@ -251,9 +260,7 @@ module.exports = {
         },
     },
     methods: {
-        flipscure: function() {
-            this.obscured = !this.obscured;
-        },
+        flipscure: function() { this.obscured = !this.obscured; },
         addTextFilters: function() {
             let text = this.enteredText.trim();
             let match = text.match(/(^|\W+)has:\s*(no\s+)?attach(ment(s)?)?(\W+|$)/i);
@@ -312,6 +319,18 @@ module.exports = {
                 right: !this.showDist[id]
             }
         },
+        toggleBody: function(id) {
+            this.$set(this.hideBody, id, !this.hideBody[id])
+        },
+        bodyCaret: function(id) {
+            return {
+                right: !!this.hideBody[id],
+                down: !this.hideBody[id]
+            }
+        },
+        bodyVisible: function(id) {
+            return !this.hideBody[id];
+        },
         getMessages: function() {
             const q = this.queryString;
             util.fetch.call(this, '/api/vault/messages/v1?' + q)
@@ -319,6 +338,9 @@ module.exports = {
                 this.messages = result.theJson.messages.forEach(m => {
                     m.receivedMoment = moment(m.received);
                     m.receivedText = m.receivedMoment.format('llll');
+                    if (m.recipientIds.length <= 5 && !(m.messageId in this.showDist)) {
+                        this.$set(this.showDist, m.messageId, true);
+                    }
                 });
                 this.messages = result.theJson.messages;
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
