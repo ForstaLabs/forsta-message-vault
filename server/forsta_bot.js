@@ -83,8 +83,8 @@ class ForstaBot {
         const sender = (await this.getUsers([senderId]))[0];
         const senderLabel = this.fqLabel(sender);
         const distribution = await this.resolveTags(message.distribution.expression);
-        const recipientIds = distribution.userids;
-        const recipients = await this.getUsers(recipientIds);
+        const recipients = await this.getUsers(distribution.userids);
+        const recipientIds = recipients.map(user => user.id);
         const recipientLabels = recipients.map(user => this.fqLabel(user));
 
         const messageId = message.messageId;
