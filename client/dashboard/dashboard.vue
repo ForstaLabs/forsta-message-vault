@@ -37,6 +37,7 @@
     }
     .clickable { cursor: pointer; }
     .nowrap { white-space: nowrap; }
+    select.rightify { text-align-last: right; }
 
     div.filter {
         position: sticky;
@@ -57,7 +58,7 @@
     .thelayout {
         padding-top: 80px;
         display: grid;
-        grid-template-columns: 150px 1fr 350px;
+        grid-template-columns: 150px 1fr 425px;
         grid-template-areas: "gleft gmiddle gright";
     }
     .theleft {
@@ -108,7 +109,7 @@
         </div>
         <div v-for="m in messages" :key="m.messageId" class="ui raised fluid card">
             <div class="content">
-                <div class="right floated time">
+                <div class="right floated time nowrap">
                     <a data-tooltip='filter UNTIL this time' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
                     <small>{{m.receivedText}}</small>
                     <a class="icobut" data-tooltip='filter SINCE this time' @click="addTimeFilter(m, 'Since')"><i class="chevron right icon"></i></a>
@@ -145,7 +146,7 @@
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
-                <a :href="`/api/vault/attachment/${a}/v1`" v-for="(a,i) of m.attachmentIds" class="butspacer ui compact mini button">
+                <a @click="getAttachment(m, i)" v-for="(_, i) of m.attachmentIds" data-tooltip="click to download" class="butspacer ui compact mini button">
                     <i class="download icon"></i> {{attachmentName(m, i)}}
                 </a>
             </div>
@@ -171,10 +172,10 @@
             <div class="filter-section ui form">
                 <form class="ui form">
                 <div class="fields">
-                    <select v-model="pageSize" class="ui selection dropdown" @change="offset=0">
-                        <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Messages per Page'}}</option>
+                    <select v-model="pageSize" class="ui selection dropdown rightify" @change="offset=0">
+                        <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Results / Page&nbsp;'}}</option>
                     </select>
-                    <select v-model="ascending" class="ui fluid selection dropdown">
+                    <select v-model="ascending" class="ui selection dropdown">
                         <option value="yes">Oldest First</option>
                         <option value="no">Newest First</option>
                     </select>
@@ -187,7 +188,7 @@
                     <div class="fields" style="margin-bottom:0;">
                         <input class="ui input" type="text" v-model="enteredText" placeholder="Add and Update Text Filters">
                     </div>
-                    <small><em><span class="nowrap">body words</span> | <span class="nowrap"><b>title:</b>words</span> | <span class="nowrap"><b>to:</b>fragment</span> | <span class="nowrap"><b>from:</b>fragment</span> | <span class="nowrap"><b>has:</b>[no] attach[ment[s]]</span></em></small>
+                    <small><em><span class="nowrap">body words</span> | <span class="nowrap"><b>title:</b> words</span> | <span class="nowrap"><b>to:</b> fragment</span> | <span class="nowrap"><b>from: </b>fragment</span> | <span class="nowrap"><b>has: </b>[no] attach[ment[s]]</span></em></small>
                 </form>
             </div>
             <div class="filter-section" v-if="Object.keys(filters).length">
@@ -199,7 +200,7 @@
             <div class="filter-section">
             </div>
             <div v-if="fullCount" class="export">
-                <button class="ui fluid button" @click="exportData">Export {{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</button>
+                <button class="ui fluid primary button" :class="{loading: exporting}" @click="getExport">Export {{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</button>
             </div>
         </div>
     </div>
@@ -208,12 +209,63 @@
 
 <script>
 
-moment = require('moment');
+const moment = require('moment');
+const util = require('../util');
 
 const REFRESH_POLL_RATE = 15000;
 
 const PAGE_SIZES = [5, 10, 20, 50, 100, 1000];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
+
+async function getExport(queryString, acceptType) {
+    let result;
+    try {
+        result = await util.fetch.call(this, '/api/vault/export/v1?' + queryString, { headers: { 'Accept': acceptType } });
+    } catch (err) {
+        console.error('had error', err);
+        return;
+    }
+
+    if (result.ok) {
+        const blob = await result.blob();
+        const anchor = document.createElement('a');
+        const burl = window.URL.createObjectURL(blob);
+        anchor.href = burl;
+        anchor.style = "display: none";  
+        anchor.download = result.headers.get('content-disposition').match(/ filename="(.*?)"/)[1];
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(() => {
+            document.body.removeChild(anchor);
+            window.URL.revokeObjectURL(burl);
+        }, 500);
+    }
+}
+
+async function getAttachment(id, acceptType) {
+    let result;
+    try {
+        result = await util.fetch.call(this, `/api/vault/attachment/${id}/v1`, { headers: { 'Accept': acceptType } });
+    } catch (err) {
+        console.error('had error', err);
+        return;
+    }
+
+    if (result.ok) {
+        const blob = await result.blob();
+        const anchor = document.createElement('a');
+        const burl = window.URL.createObjectURL(blob);
+        anchor.href = burl;
+        anchor.style = "display: none";  
+        anchor.download = result.headers.get('content-disposition').match(/ filename="(.*?)"/)[1];
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(() => {
+            document.body.removeChild(anchor);
+            window.URL.revokeObjectURL(burl);
+        }, 500);
+    }
+}
 
 function extract(text, regex, action) {
     let stripped = text;
@@ -239,6 +291,7 @@ module.exports = {
         fullCount: 0,
         offset: 0,
         ascending: 'no',
+        exporting: false,
         messages: []
     }),
     computed: {
@@ -247,6 +300,7 @@ module.exports = {
             q.push(`offset=${this.offset}`);
             q.push(`limit=${this.pageSize}`);
             q.push(`ascending=${this.ascending}`);
+            q.push(`tzoffset=${(new Date()).getTimezoneOffset()}`);
             return q.join('&').replace("'","");
         },
         pagerDots: function() {
@@ -349,6 +403,17 @@ module.exports = {
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
             });
         },
+        getExport: function() {
+            this.exporting = true;
+            const q = this.queryString;
+            getExport(q, 'application/zip').then(() => { this.exporting = false; });
+        },
+        getAttachment: function(m, idx) {
+            const message = m.payload.find(x => x.version === 1);
+            const attachment = message && message.data && message.data.attachments[idx];
+            const id = m.attachmentIds[idx];
+            getAttachment(m.attachmentIds[idx], attachment.type);
+        },
         messageBody: function(m) {
             const message = m.payload.find(x => x.version === 1);
             const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
@@ -368,15 +433,11 @@ module.exports = {
             return attachment && attachment.name;
         },
         threadColor: function(id) {
-            // map id to a darkish color from a clumpy, visually-differentiable collection
+            // map id to a randomish darkish color from a clumpy, visually-differentiable collection
             const val = parseInt(id.replace('-', ''), 16);
             const hue = (val % 90) * 4;
             const lum = (val % 5) * 10 + 20;
-
             return { color: `hsl(${hue}, 100%, ${lum}%)` };
-        },
-        exportData: function() {
-            alert('TBD');
         }
     },
     mounted: function() {

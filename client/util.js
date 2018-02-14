@@ -39,11 +39,9 @@ async function _fetch(url, { method='get', headers={}, body={} }={}, noBodyAwait
     const resp = await fetch(url, parms);
     if (noBodyAwaits) return resp;
 
-    const text = await resp.text();
     if ((resp.headers.get('content-type') || '').startsWith('application/json')) {
+        const text = await resp.text();
         resp.theJson = JSON.parse(text.trim() || '{}');
-    } else {
-        resp.theText = text;
     }
     if (resp.status === 401) {
         console.log('401 from bot api, so we will visit bot authentication...');
