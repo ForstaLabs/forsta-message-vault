@@ -3,10 +3,7 @@ const csvStringify = require('csv-stringify');
 const express = require('express');
 const relay = require('librelay');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const uuidv4 = require('uuid/v4');
-
-const bcryptSaltRounds = 12;
 
 
 class APIHandler {
@@ -159,10 +156,10 @@ class AuthenticationAPIV1 extends APIHandler {
 
     constructor(options) {
         super(options);
-        this.router.get('/status/v1', this.asyncRoute(this.onGetStatus, false));
-        this.router.post('/login/v1', this.asyncRoute(this.onLogin, false));
-        this.router.post('/password/v1', this.asyncRoute(this.onPost, false));
-        this.router.put('/password/v1', this.asyncRoute(this.onPut));
+        this.router.get('/login/v1/:tag', this.asyncRoute(this.onRequestLoginCode, false));
+        this.router.post('/login/v1', this.asyncRoute(this.onValidateLoginCode, false));
+        // this.router.get('/admins/v1', this.asyncRoute(this.onGetAdministrators));
+        // this.router.put('/admins/v1', this.asyncRoute(this.onPutAdministrators));
     }
 
     async genToken() {
@@ -174,58 +171,36 @@ class AuthenticationAPIV1 extends APIHandler {
         return jwt.sign({}, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later: "2 days" */ });
     }
 
-    async passwordHash(hash) {
-        if (hash) {
-            return await relay.storage.set('authentication', 'pwhash', hash);
-        } else {
-            return await relay.storage.get('authentication', 'pwhash');
+    async onRequestLoginCode(req, res) {
+        const tag = req.params.tag;
+        if (!tag) {
+            res.status(412).json({
+                error: 'missing_arg',
+                message: 'Missing URL param: tag'
+            });
+            return;
         }
+        try {
+            const id = await this.server.bot.sendAuthCode(tag);
+            res.status(200).json({ id });
+        } catch (e) {
+            res.status(e.statusCode).json(e.info);
+            return;
+        }
+        return;
     }
 
-    async onGetStatus(req, res) {
-        const stashedHash = await this.passwordHash();
-        if (stashedHash) {
-            res.status(204).json({ });
-        } else {
-            res.status(404).json({error: 'not_configured'});
-        }
-    }
+    async onValidateLoginCode(req, res) {
+        const userId = req.body.id;
+        const code = req.body.code;
 
-    async onLogin(req, res) {
-        const password = req.body.password;
-        const stashedHash = await this.passwordHash();
-        if (!stashedHash || bcrypt.compareSync(password, stashedHash)) {
-            // yes, if there is no stashed password hash, we give them a session
+        try {
+            await this.server.bot.validateAuthCode(userId, code);
             const token = await this.genToken();
             res.status(200).json({ token });
-        } else {
-            res.status(401).json({ password: 'incorrect password' });
-        }
-    }
-
-    async onPost(req, res) {
-        const exists = !!await this.passwordHash();
-        if (!exists) {
-            const password = req.body.password;
-            const hash = await bcrypt.hash(password, bcryptSaltRounds);
-            this.passwordHash(hash);
-            const token = await this.genToken();
-            res.status(201).json({ token });
-        } else {
-            res.status(405).json({ password: 'already exists' });
-        }
-    }
-
-    async onPut(req, res) {
-        const exists = !!this.passwordHash();
-        if (exists) {
-            const password = req.body.password;
-            const hash = await bcrypt.hash(password, bcryptSaltRounds);
-            this.passwordHash(hash);
-            const token = await this.genToken();
-            res.status(201).json({ token });
-        } else {
-            res.status(405).json({ password: 'does not exist' });
+        } catch (e) {
+            res.status(e.statusCode).json(e.info);
+            return;
         }
     }
 }

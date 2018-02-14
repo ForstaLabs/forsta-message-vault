@@ -19,7 +19,7 @@
         <div class="ui two column centered grid">
             <div class="middle aligned row">
                 <div class="five wide column centered">
-                    <router-link :to="{name: 'authenticate', query: { forwardTo: '/onboard/tag' }}"
+                    <router-link :to="{name: 'loginTag'}"
                                 class="ui huge primary button">
                     CONNECT <i class="right arrow icon"></i>
                     </router-link>
@@ -47,7 +47,7 @@ module.exports = {
         global: shared.state
     }),
     mounted: function() {
-        const authDash = { name: 'authenticate', query: { forwardTo: '/dashboard' }};
+        const authDash = { name: 'loginTag', query: { forwardTo: '/dashboard' }};
         if (this.global.onboardStatus === 'complete') {
             this.$router.push(authDash);
             return;

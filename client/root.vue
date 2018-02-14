@@ -30,7 +30,7 @@ module.exports = {
         globalApiToken: function (next, prev) {
             if (!next && prev) {
                 console.log('reauthenticating for', this.$route.path)
-                this.$router.push({ name: 'authenticate', query: { forwardTo: this.$route.path }});
+                this.$router.push({ name: 'loginTag', query: { forwardTo: this.$route.path }});
             }
         }
     },

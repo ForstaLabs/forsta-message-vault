@@ -8,6 +8,10 @@ const relay = require("librelay");
 const PGStore = require("./pgstore");
 const uuid4 = require("uuid/v4");
 
+async function sleep(ms) { 
+    return await new Promise(resolve => setTimeout(resolve, ms)); 
+}
+
 class ForstaBot {
     async start() {
         const ourId = await relay.storage.getState('addr');
@@ -15,6 +19,7 @@ class ForstaBot {
             console.warn('bot is not yet registered');
             return;
         }
+        await this.migrate();
         console.info('Starting message receiver for:', ourId);
         this.pgStore = new PGStore('message_vault');
         await this.pgStore.initialize();
@@ -39,6 +44,17 @@ class ForstaBot {
         this.msgSender = await relay.MessageSender.factory();
 
         await this.msgReceiver.connect();
+    }
+
+    async migrate() {
+        const adminIds = await relay.storage.get('authentication', 'adminIds');
+        if (!adminIds) {
+            // need to convert from a password-auth sort of bot to the new auth-code system
+            const onboardUser = await relay.storage.getState("onboardUser");
+            if (!onboardUser) return; // should never happen, but just in case..
+            await relay.storage.set('authentication', 'adminIds', [onboardUser]);
+            await relay.storage.remove('authentication', 'pwhash');
+        }
     }
 
     async stop() {
@@ -126,6 +142,90 @@ class ForstaBot {
                 messageId: messageId
             });
         }
+    }
+
+    async getSoloAuthThreadId() {
+        let id = await relay.storage.get('authentication', 'soloThreadId');
+        if (!id) {
+            id = uuid4();
+            relay.storage.set('authentication', 'soloThreadId', id);
+        }
+
+        return id;
+    }
+
+    async getGroupAuthThreadId() {
+        let id = await relay.storage.get('authentication', 'groupThreadId');
+        if (!id) {
+            id = uuid4();
+            relay.storage.set('authentication', 'groupThreadId', id);
+        }
+
+        return id;
+    }
+
+    genAuthCode(expirationMinutes) {
+        const code = ('000000' + Math.floor(Math.random() * 1000000)).slice(-6);
+        const expires = new Date();
+        expires.setMinutes(expires.getMinutes() + expirationMinutes);
+        return { code, expires };
+    }
+
+    removeExpiredAuthCodes(pending) {
+        const now = new Date();
+
+        Object.keys(pending).forEach(uid => {
+            pending[uid].expires = new Date(pending[uid].expires); // todo: fix store encoding...
+            if (pending[uid].expires < now) {
+                delete pending[uid];
+            }
+        });
+
+        return pending;
+    }
+
+    async sendAuthCode(tag) {
+        tag = (tag && tag[0] === '@') ? tag : '@' + tag;
+        const resolved = await this.resolveTags(tag);
+        if (resolved.userids.length === 1 && resolved.warnings.length === 0) {
+            const uid = resolved.userids[0];
+            const adminIds = await relay.storage.get('authentication', 'adminIds');
+            if (!adminIds.includes(uid)) {
+                throw { statusCode: 403, info: { tag: ['not an approved administrator'] } }; 
+            }
+
+            const auth = this.genAuthCode(1);
+            this.msgSender.send({
+                distribution: resolved,
+                threadId: await this.getSoloAuthThreadId(),
+                text: `${auth.code} is your authentication code, valid for one minute`
+            });
+            const pending = await relay.storage.get('authentication', 'pending', {});
+            pending[uid] = auth;
+            await relay.storage.set('authentication', 'pending', pending);
+            
+            return resolved.userids[0];
+        } else {
+            throw { statusCode: 400, info: { tag: ['not a recognized tag, please try again'] } }; 
+        }
+    }
+
+    async validateAuthCode(userId, code) {
+        let pending = await relay.storage.get('authentication', 'pending', {});
+        pending = this.removeExpiredAuthCodes(pending);
+        const auth = pending[userId];
+        if (!auth) {
+            throw { statusCode: 403, info: { code: ['no authentication pending, please start over'] } }; 
+        }
+        if (auth.code != code) {
+            await sleep(500); // throttle guessers
+            throw { statusCode: 403, info: { code: ['incorrect code, please try again'] } }; 
+        }
+
+        delete pending[userId];
+        relay.storage.set('authentication', 'pending', pending);
+
+        return true;
     }
 }
 

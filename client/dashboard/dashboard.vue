@@ -115,7 +115,7 @@
                     <a class="icobut" data-tooltip='filter SINCE this time' @click="addTimeFilter(m, 'Since')"><i class="chevron right icon"></i></a>
                 </div>
                 <div class="header">
-                    <a data-tooltip='filter for this THREAD ID' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
+                    <a data-tooltip='filter for this thread ID' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
                     <span class="thread-title" :class="{obscured: obscured}" @click="flipscure">{{threadTitle(m)}}</span>
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
@@ -454,7 +454,7 @@ module.exports = {
         });
 
         if (!this.global.apiToken) {
-            this.$router.push({ name: 'authenticate', query: { forwardTo: this.$router.path }});
+            this.$router.push({ name: 'loginTag', query: { forwardTo: this.$router.path }});
             return;
         }
 

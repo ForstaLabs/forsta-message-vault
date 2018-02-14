@@ -45,7 +45,7 @@ async function _fetch(url, { method='get', headers={}, body={} }={}, noBodyAwait
     }
     if (resp.status === 401) {
         console.log('401 from bot api, so we will visit bot authentication...');
-        this.$router.push({ name: 'authenticate', query: { forwardTo: this.$route.fullPath }});
+        this.$router.push({ name: 'loginTag', query: { forwardTo: this.$route.fullPath }});
         // throw Error('not authenticated with bot server -- looping through authentication');
     }
     return resp;

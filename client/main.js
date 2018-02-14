@@ -7,10 +7,10 @@ function main() {
     const Root = require('./root.vue');
     const routes = [
         { path: '/welcome', name: 'welcome', component: require('./welcome/welcome.vue') },
-        { path: '/auth/login', name: 'authenticate', component: require('./auth/authenticate.vue') },
-        { path: '/auth/password', name: 'setPassword', component: require('./auth/setPassword.vue') },
-        { path: '/onboard/tag', name: 'enterTag', component: require('./onboard/enterTag.vue') },
-        { path: '/onboard/code/:tag', name: 'enterCode', component: require('./onboard/enterCode.vue') },
+        { path: '/auth/tag', name: 'loginTag', component: require('./auth/loginTag.vue') },
+        { path: '/auth/code', name: 'loginCode', component: require('./auth/loginCode.vue') },
+        { path: '/onboard/tag', name: 'onboardTag', component: require('./onboard/enterTag.vue') },
+        { path: '/onboard/code/:tag', name: 'onboardCode', component: require('./onboard/enterCode.vue') },
         { path: '/dashboard', name: 'dashboard', component: require('./dashboard/dashboard.vue') },
         { path: '*', redirect: '/welcome' },
     ];

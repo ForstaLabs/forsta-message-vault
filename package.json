@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "adm-zip": "^0.4.7",
-    "bcrypt": "^1.0.3",
     "browserify": "^14.5.0",
     "csv-stringify": "2.0.0",
     "envify": "^4.1.0",
