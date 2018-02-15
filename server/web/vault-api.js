@@ -30,6 +30,7 @@ class VaultAPIv1 extends APIHandler {
     }
 
     async onGetExport(req, res, next) {
+        const perm644 = parseInt('0644', 8);
         delete req.query['offset'];
         delete req.query['limit'];
 
@@ -42,18 +43,18 @@ class VaultAPIv1 extends APIHandler {
         res.attachment(`${topdir}.zip`);
 
         const csvdoc = await exputil.csvDoc({rows, tzoffset});
-        zip.addFile(`${topdir}/messages-csv.csv`, new Buffer(csvdoc), "CSV for selected messages");
+        zip.addFile(`${topdir}/messages-csv.csv`, new Buffer(csvdoc), 'CSV for selected messages', perm644);
 
         const htmldoc = exputil.htmlDoc({query: req.query, exportDate: exputil.offsetTimeStr(moment(), tzoffset), rows, tzoffset});
-        zip.addFile(`${topdir}/messages-html.html`, new Buffer(htmldoc), "HTML for selected messages");
+        zip.addFile(`${topdir}/messages-html.html`, new Buffer(htmldoc), 'HTML for selected messages', perm644);
 
         const jsondoc = exputil.jsonDoc({query: req.query, exportDate: exputil.offsetTimeStr(moment(), tzoffset), rows, tzoffset});
-        zip.addFile(`${topdir}/messages-json.json`, new Buffer(jsondoc), "JSON for selected messages");
+        zip.addFile(`${topdir}/messages-json.json`, new Buffer(jsondoc), 'JSON for selected messages', perm644);
 
         for (const row of rows) {
             const attachments = await this.fetchAttachments(row);
             for (const a of attachments) {
-                zip.addFile(`${topdir}/attachments/${row.messageId}/${a.id}/${a.attachment.name}`, a.attachment.data, "attachment");
+                zip.addFile(`${topdir}/attachments/${row.messageId}/${a.id}/${a.attachment.name}`, a.attachment.data, 'message attachment', perm644);
             }
         }
 
