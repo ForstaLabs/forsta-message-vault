@@ -4,30 +4,17 @@
 <template>
     <div class="ui main text container" style="margin-top: 80px;">
         <div class="ui container center aligned">
-            <div v-if="monitor" class="ui basic segment huge">
+            <div class="ui basic segment huge">
                 <h1 class="ui header">
-                    <i class="circular icon add user"></i>
-                    Create Catch-All User
+                    <i class="circular icon user"></i>
+                    Message Vault Login
                 </h1>
-                This bot will send and receive messages autonomously <br />
-                as a <b>new</b> Forsta user configured to be a "monitor" <br />
-                so it will receive copies of <b>all</b> organization traffic.<br />
-                <br />
-                Please authenticate as an <b>org administrator</b> to create this new user.
-            </div>
-            <div v-if="!monitor" class="ui basic segment huge">
-                <h1 class="ui header">
-                    <i class="large circular icon user"></i>
-                    Connect User
-                </h1>
-                This bot will send and receive messages autonomously <br />
-                as a particular Forsta user. Please authenticate as that user.
             </div>
             <div class="ui centered grid">
-                <div class="ui nine wide column basic segment left aligned b1">
+                <div class="ui nine wide column basic segment left aligned t0 b1">
                     <form class="ui huge form enter-tag" :class="{loading: loading}">
                         <div class="field">
-                            <label>Forsta {{monitor ? 'Organization Admin' : ''}} Login</label>
+                            <label>Authorized User</label>
                             <div class="ui left icon input">
                                 <input v-focus.lazy="true" type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
                                 <i class="at icon"></i>
@@ -38,9 +25,8 @@
                     </form>
                 </div>
             </div>
-            <div v-if="monitor" class="ui basic segment">
-                <p>Your administrator credentials will be immediately discarded<br />
-                and all further actions taken by this bot will be as the new user.</p>
+            <div class="ui basic segment">
+                <p>Please enter your Forsta address so this site can send you a login code.</p>
             </div>
         </div>
     </div>
@@ -50,15 +36,31 @@
 util = require('../util');
 focus = require('vue-focus');
 shared = require('../globalState');
+jwtDecode = require('jwt-decode');
 
 function setup() {
+    const apiToken = this.global.apiToken;
+    const forwardTo = this.$route.query.forwardTo;
+    if (apiToken && forwardTo) {
+        const decoded = jwtDecode(apiToken);
+        const expires = new Date(decoded.exp * 1000);
+        const now = new Date();
+
+        if (now < expires) {
+            this.$router.replace(forwardTo);
+            return;
+        }
+    }
+
     util.fetch.call(this, '/api/onboard/status/v1')
     .then(result => { 
         this.global.onboardStatus = result.theJson.status;
-        if (this.global.onboardStatus === 'complete') {
-            this.$router.push(authDash);
+        if (this.global.onboardStatus !== 'complete') {
+            this.$router.push({ name: 'welcome' });
         }
     });
+
+    this.tag = this.global.loginTag;
 
     $('form.ui.form.enter-tag').form({
         fields: {
@@ -66,7 +68,7 @@ function setup() {
                 identifier: 'tag',
                 rules: [{
                     type: 'regExp',
-                    value: /^([\da-z_]([.][\da-z_]|[\da-z_])*):([\da-z_]([.]+[\da-z_]|[\da-z_])*)$/,
+                    value: /^([\da-z_]([.][\da-z_]|[\da-z_])*)(:([\da-z_]([.]+[\da-z_]|[\da-z_])*))?$/,
                     prompt: 'please enter full @your.name:your.org'
                 }]
             }
@@ -81,11 +83,14 @@ function setup() {
 function requestAuth() {
     var tag = this.tag;
     this.loading = true;
-    util.fetch.call(this, '/api/onboard/authcode/v1/' + tag)
+    util.fetch.call(this, '/api/auth/login/v1/' + tag)
     .then(result => {
         this.loading = false;
         if (result.ok) {
-            this.$router.push({ name: 'onboardCode', params: { tag: this.tag }});
+            const { id } = result.theJson;
+            this.global.userId = id;
+            this.global.loginTag = tag;
+            this.$router.push({ name: 'loginCode', query: this.$route.query });
             return false;
         } else {
             util.addFormErrors('enter-tag', { tag: util.mergeErrors(result.theJson) });
@@ -106,13 +111,6 @@ module.exports = {
         loading: false
     }),
     computed: {
-        monitor: function () { return this.global.onboardStatus === 'authenticate-admin'; },
-        gotoSetPassword: function () {
-            return {
-                name: 'setPassword',
-                query: { forwardTo: this.$route.query.forwardTo }
-            };
-        }
     },
     mounted: function () {
         setup.call(this)

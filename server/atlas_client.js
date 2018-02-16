@@ -20,6 +20,7 @@ class BotAtlasClient extends relay.AtlasClient {
         );
         const creator = `@${botUser.tag.slug}:${botUser.org.slug}`;
         console.info(`Bot onboarding performed by: ${creator}`);
+        await relay.storage.set('authentication', 'adminIds', [botUser.id]);
         await relay.storage.putState("onboardUser", botUser.id);
         if (this.onboardingCreatedUser) {
             try {

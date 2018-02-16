@@ -45,15 +45,31 @@ async function _fetch(url, { method='get', headers={}, body={} }={}, noBodyAwait
     }
     if (resp.status === 401) {
         console.log('401 from bot api, so we will visit bot authentication...');
-        this.$router.push({ name: 'authenticate', query: { forwardTo: this.$route.fullPath }});
+        this.$router.push({ name: 'loginTag', query: { forwardTo: this.$route.fullPath }});
         // throw Error('not authenticated with bot server -- looping through authentication');
     }
     return resp;
+}
+
+function checkPrerequisites() {
+    _fetch.call(this, '/api/onboard/status/v1')
+    .then(result => { 
+        this.global.onboardStatus = result.theJson.status;
+        if (this.global.onboardStatus !== 'complete') {
+            this.$router.push({ name: 'welcome' });
+        }
+    });
+
+    if (!this.global.apiToken) {
+        this.$router.push({ name: 'loginTag', query: { forwardTo: this.$router.path }});
+        return;
+    }
 }
 
 module.exports = {
     addFormErrors,
     mergeErrors,
     RequestError,
-    fetch: _fetch
+    fetch: _fetch,
+    checkPrerequisites
 };
