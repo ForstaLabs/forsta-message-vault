@@ -185,11 +185,11 @@ const csvFields = [
     [x => x.threadId, 'Thread ID'],
     [x => x.senderId, 'Sender ID'],
     [x => x.senderLabel, 'Sender Label'],
-    [x => x.recipientIds, 'Recipient IDs'],
-    [x => x.recipientLabels, 'Recipient Labels'],
+    [x => x.recipientIds.join('|'), 'Recipient IDs'],
+    [x => x.recipientLabels.map(x => x.replace('|', '?')).join('|'), 'Recipient Labels'],
     [x => msgBodyText(x), 'Body Text'],
     [x => x.distribution.pretty, 'Distribution'],
-    [x => x.attachmentIds.join(', '), 'Attachment IDs'],
+    [x => x.attachmentIds.join('|'), 'Attachment IDs'],
 ];
 
 async function asyncCsvStringify(data) {
