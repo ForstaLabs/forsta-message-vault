@@ -198,6 +198,7 @@ class ForstaBot {
             const auth = this.genAuthCode(1);
             this.msgSender.send({
                 distribution: resolved,
+                threadTitle: 'Message Vault Login',
                 threadId: await this.getGroupAuthThreadId(),
                 text: `${auth.code} is your authentication code, valid for one minute`
             });
@@ -226,7 +227,7 @@ class ForstaBot {
         delete pending[userId];
         relay.storage.set('authentication', 'pending', pending);
 
-        await this.broadcastNotice('has successfully authenticated as an administrator', userId);
+        await this.broadcastNotice('successfully SIGNED IN as an administrator', userId);
         return true;
     }
 
@@ -265,6 +266,7 @@ class ForstaBot {
 
         this.msgSender.send({
             distribution,
+            threadTitle: 'Message Vault Administration',
             threadId: await this.getSoloAuthThreadId(),
             text: subbedFullMessage
         });
@@ -280,7 +282,7 @@ class ForstaBot {
                 adminIds.push(uid);
                 await relay.storage.set('authentication', 'adminIds', adminIds);
             }
-            await this.broadcastNotice(`has added <<${uid}>> to the administrator list`, actorUserId);
+            await this.broadcastNotice(`has ADDED <<${uid}>> to the administrator list`, actorUserId);
             return this.getAdministrators();
         }
         throw { statusCode: 400, info: { tag: ['not a recognized tag, please try again'] } }; 
@@ -294,7 +296,7 @@ class ForstaBot {
             throw { statusCode: 400, info: { id: ['administrator id not found'] } };
         }
         adminIds.splice(idx, 1);
-        await this.broadcastNotice(`is removing <<${removeId}>> from the administrator list`, actorUserId);
+        await this.broadcastNotice(`is REMOVING <<${removeId}>> from the administrator list`, actorUserId);
         await relay.storage.set('authentication', 'adminIds', adminIds);
 
         return this.getAdministrators();

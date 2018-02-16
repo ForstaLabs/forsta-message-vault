@@ -1,6 +1,6 @@
 {
   "name": "forsta-message-vault",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Forsta Message Vault",
   "engines": {
     "node": "8"
@@ -41,7 +41,7 @@
     "jquery": "3.2.1",
     "jsonwebtoken": "^8.1.0",
     "jwt-decode": "^2.2.0",
-    "librelay": "4.0.0",
+    "librelay": "4.0.1",
     "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "morgan": "1.9.0",
