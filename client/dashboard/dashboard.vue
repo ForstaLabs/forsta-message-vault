@@ -79,7 +79,7 @@
         user-select: none;
     }
     div.pager .active-page {
-        color: #FF8888;
+        color: #FF6666;
     }
 
     div.zero {
@@ -193,7 +193,7 @@
             </div>
             <div class="filter-section" v-if="Object.keys(filters).length">
                 <h3>Current Filters</h3>
-                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact blue button">
+                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
             </div>
@@ -392,14 +392,14 @@ module.exports = {
             const q = this.queryString;
             util.fetch.call(this, '/api/vault/messages/v1?' + q)
             .then(result => {
-                this.messages = result.theJson.messages.forEach(m => {
+                this.messages = result.theJson.messages;
+                this.messages.forEach(m => {
                     m.receivedMoment = moment(m.received);
                     m.receivedText = m.receivedMoment.format('llll');
                     if (m.recipientIds.length <= 5 && !(m.messageId in this.showDist)) {
                         this.$set(this.showDist, m.messageId, true);
                     }
                 });
-                this.messages = result.theJson.messages;
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
             });
         },
@@ -441,22 +441,7 @@ module.exports = {
         }
     },
     mounted: function() {
-        if (this.global.onboardStatus !== 'complete') {
-            this.$router.push({ name: 'welcome' });
-            return;
-        }
-        util.fetch.call(this, '/api/onboard/status/v1')
-        .then(result => { 
-            this.global.onboardStatus = result.theJson.status;
-            if (this.global.onboardStatus !== 'complete') {
-                this.$router.push({ name: 'welcome' });
-            }
-        });
-
-        if (!this.global.apiToken) {
-            this.$router.push({ name: 'loginTag', query: { forwardTo: this.$router.path }});
-            return;
-        }
+        util.checkPrerequisites.call(this);
 
         this.getMessages();
         this.interval = setInterval(() => this.getMessages(), REFRESH_POLL_RATE); 

@@ -27,8 +27,8 @@ class APIHandler {
                     relay.storage.get('authentication', 'jwtsecret')
                         .then((secret) => {
                             try {
-                                jwt.verify(parts[1], secret);
-                                fn.call(this, req, res, next).catch(e => {
+                                const jwtInfo = jwt.verify(parts[1], secret);
+                                fn.call(this, req, res, next, jwtInfo.userId).catch(e => {
                                     console.error('Async Route Error:', e);
                                     next();
                                 });
@@ -158,17 +158,17 @@ class AuthenticationAPIV1 extends APIHandler {
         super(options);
         this.router.get('/login/v1/:tag', this.asyncRoute(this.onRequestLoginCode, false));
         this.router.post('/login/v1', this.asyncRoute(this.onValidateLoginCode, false));
-        // this.router.get('/admins/v1', this.asyncRoute(this.onGetAdministrators));
-        // this.router.put('/admins/v1', this.asyncRoute(this.onPutAdministrators));
+        this.router.get('/admins/v1', this.asyncRoute(this.onGetAdministrators));
+        this.router.post('/admins/v1', this.asyncRoute(this.onUpdateAdministrators));
     }
 
-    async genToken() {
+    async genToken(userId) {
         let secret = await relay.storage.get('authentication', 'jwtsecret');
         if (!secret) {
             secret = uuidv4();
             await relay.storage.set('authentication', 'jwtsecret', secret);
         }
-        return jwt.sign({}, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later: "2 days" */ });
+        return jwt.sign({ userId }, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later: "2 days" */ });
     }
 
     async onRequestLoginCode(req, res) {
@@ -183,11 +183,11 @@ class AuthenticationAPIV1 extends APIHandler {
         try {
             const id = await this.server.bot.sendAuthCode(tag);
             res.status(200).json({ id });
+            return;
         } catch (e) {
-            res.status(e.statusCode).json(e.info);
+            res.status(e.statusCode || 500).json(e.info || { message: 'internal error'});
             return;
         }
-        return;
     }
 
     async onValidateLoginCode(req, res) {
@@ -196,10 +196,45 @@ class AuthenticationAPIV1 extends APIHandler {
 
         try {
             await this.server.bot.validateAuthCode(userId, code);
-            const token = await this.genToken();
+            const token = await this.genToken(userId);
             res.status(200).json({ token });
+            return;
         } catch (e) {
-            res.status(e.statusCode).json(e.info);
+            res.status(e.statusCode || 500).json(e.info || { message: 'internal error'});
+            return;
+        }
+    }
+
+    async onGetAdministrators(req, res) {
+        try {
+            const admins = await this.server.bot.getAdministrators();
+            res.status(200).json({ administrators: admins });
+            return;
+        } catch (e) {
+            console.log('problem in get administrators', e);
+            res.status(e.statusCode || 500).json(e.info || { message: 'internal error'});
+            return;
+        }
+    }
+
+    async onUpdateAdministrators(req, res, next, userId) {
+        const op = req.body.op;
+        const id = req.body.id;
+        const tag = req.body.tag;
+
+        if (!(op === 'add' && tag || op === 'remove' && id)) {
+            res.status(400).json({ non_field_errors: ['must either add tag or remove id'] });
+        }
+
+        try {
+            const admins = (op === 'add')
+                ? await this.server.bot.addAdministrator({addTag: tag, actorUserId: userId})
+                : await this.server.bot.removeAdministrator({removeId: id, actorUserId: userId});
+            res.status(200).json({ administrators: admins });
+            return;
+        } catch (e) {
+            console.log('problem in update administrators', e);
+            res.status(e.statusCode || 500).json(e.info || { message: 'internal error'});
             return;
         }
     }

@@ -86,6 +86,7 @@ class ForstaBot {
     }
     fqLabel(user) { return `${this.fqTag(user)} (${this.fqName(user)})`; }
 
+
     async onMessage(ev) {
         const received = new Date(ev.data.timestamp);
         const envelope = JSON.parse(ev.data.message.body);
@@ -197,7 +198,7 @@ class ForstaBot {
             const auth = this.genAuthCode(1);
             this.msgSender.send({
                 distribution: resolved,
-                threadId: await this.getSoloAuthThreadId(),
+                threadId: await this.getGroupAuthThreadId(),
                 text: `${auth.code} is your authentication code, valid for one minute`
             });
             const pending = await relay.storage.get('authentication', 'pending', {});
@@ -225,7 +226,78 @@ class ForstaBot {
         delete pending[userId];
         relay.storage.set('authentication', 'pending', pending);
 
+        await this.broadcastNotice('has successfully authenticated as an administrator', userId);
         return true;
+    }
+
+    async getAdministrators() {
+        const adminIds = await relay.storage.get('authentication', 'adminIds', []);
+        const adminUsers = await this.getUsers(adminIds);
+        const admins = adminUsers.map(u => {
+            return {
+                id: u.id,
+                label: this.fqLabel(u)
+            };
+        });
+        return admins;
+    }
+
+    async broadcastNotice(action, actorUserId) {
+        const adminIds = await relay.storage.get('authentication', 'adminIds', []);
+        let added = false;
+        if (!adminIds.includes(actorUserId)) {
+            adminIds.push(actorUserId);
+            added = true;
+        }
+        const adminUsers = await this.getUsers(adminIds);
+        const actor = adminUsers.find(u => u.id === actorUserId);
+        const actorLabel = actor ? this.fqLabel(actor) : '<unknown>';
+        const expression = adminUsers.map(u => this.fqTag(u)).join(' + ');
+        const distribution = await this.resolveTags(expression);
+
+        const adminList = adminUsers.filter(u => !(added && u.id === actorUserId)).map(u => this.fqLabel(u)).join('\n');
+
+        const fullMessage = `Note: ${actorLabel} ${action}.\n\nCurrent administrators are:\n${adminList}`;
+        const subbedFullMessage = fullMessage.replace(/<<([^>]*)>>/g, (_, id) => {
+            const user = adminUsers.find(x => x.id === id);
+            return this.fqLabel(user);
+        });
+
+        this.msgSender.send({
+            distribution,
+            threadId: await this.getSoloAuthThreadId(),
+            text: subbedFullMessage
+        });
+    }
+
+    async addAdministrator({addTag, actorUserId}) {
+        const tag = (addTag && addTag[0] === '@') ? addTag : '@' + addTag;
+        const resolved = await this.resolveTags(tag);
+        if (resolved.userids.length === 1 && resolved.warnings.length === 0) {
+            const uid = resolved.userids[0];
+            const adminIds = await relay.storage.get('authentication', 'adminIds');
+            if (!adminIds.includes(uid)) {
+                adminIds.push(uid);
+                await relay.storage.set('authentication', 'adminIds', adminIds);
+            }
+            await this.broadcastNotice(`has added <<${uid}>> to the administrator list`, actorUserId);
+            return this.getAdministrators();
+        }
+        throw { statusCode: 400, info: { tag: ['not a recognized tag, please try again'] } }; 
+    }
+
+    async removeAdministrator({removeId, actorUserId}) {
+        const adminIds = await relay.storage.get('authentication', 'adminIds', []);
+        const idx = adminIds.indexOf(removeId);
+
+        if (idx < 0) {
+            throw { statusCode: 400, info: { id: ['administrator id not found'] } };
+        }
+        adminIds.splice(idx, 1);
+        await this.broadcastNotice(`is removing <<${removeId}>> from the administrator list`, actorUserId);
+        await relay.storage.set('authentication', 'adminIds', adminIds);
+
+        return this.getAdministrators();
     }
 }
 

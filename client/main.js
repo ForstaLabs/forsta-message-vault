@@ -12,6 +12,7 @@ function main() {
         { path: '/onboard/tag', name: 'onboardTag', component: require('./onboard/enterTag.vue') },
         { path: '/onboard/code/:tag', name: 'onboardCode', component: require('./onboard/enterCode.vue') },
         { path: '/dashboard', name: 'dashboard', component: require('./dashboard/dashboard.vue') },
+        { path: '/settings', name: 'settings', component: require('./settings/settings.vue') },
         { path: '*', redirect: '/welcome' },
     ];
 
