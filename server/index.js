@@ -17,6 +17,12 @@ process.on('unhandledRejection', ev => {
 
 
 async function run() {
+    if (process.env.RELAY_STORAGE_BACKING !== 'postgres') {
+        const msg = 'Message Vault reqires a postgres backing store -- have you set RELAY_STORAGE_BACKING in your environment?';
+        console.error(msg);
+        throw Error(msg);
+    }
+
     relay.storage.setLabel('message-vault');
     await relay.storage.initialize();
     const bot = new ForstaBot();
