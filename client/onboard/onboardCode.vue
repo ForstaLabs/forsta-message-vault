@@ -64,8 +64,10 @@ function sendLoginCode() {
     util.fetch.call(this, '/api/onboard/authcode/v1/' + tag, { method: 'post', body: { code }})
     .then(result => {
         this.loading = false;
-        if (result.ok) this.global.onboardStatus = 'complete';
-        if (this.global.onboardStatus === 'complete') {
+        if (result.ok) {
+            const { token } = result.theJson;
+            this.global.apiToken = token;
+            this.global.onboardStatus = 'complete';
             this.$router.push({ name: 'dashboard' });
             return false;
         } else {

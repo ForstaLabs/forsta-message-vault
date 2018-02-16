@@ -6,6 +6,15 @@ const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
 
 
+async function genToken(userId) {
+    let secret = await relay.storage.get('authentication', 'jwtsecret');
+    if (!secret) {
+        secret = uuidv4();
+        await relay.storage.set('authentication', 'jwtsecret', secret);
+    }
+    return jwt.sign({ userId }, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later maybe: "2 days" */ });
+}
+
 class APIHandler {
 
     constructor({server, requireAuth=true}) {
@@ -74,8 +83,8 @@ class OnboardAPIV1 extends APIHandler {
     constructor(options) {
         super(options);
         this.router.get('/status/v1', this.asyncRoute(this.onStatusGet, false));
-        this.router.get('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodeGet));
-        this.router.post('/authcode/v1/:tag', this.asyncRoute(this.onAuthCodePost));
+        this.router.get('/authcode/v1/:tag', this.asyncRoute(this.onRequestAtlasLoginCode, false));
+        this.router.post('/authcode/v1/:tag', this.asyncRoute(this.onCompleteAtlasLoginAndOnboard, false));
     }
 
     async onStatusGet(req, res, next) {
@@ -85,7 +94,7 @@ class OnboardAPIV1 extends APIHandler {
         });
     }
 
-    async onAuthCodeGet(req, res) {
+    async onRequestAtlasLoginCode(req, res) {
         /* Request authcode for an Atlas admin user.  This request should be followed
          * by an API call to the sibling POST method using a payload of the SMS auth
          * code sent to the user's SMS device. */
@@ -100,14 +109,14 @@ class OnboardAPIV1 extends APIHandler {
         try {
             await BotAtlasClient.requestAuthenticationCode(tag);
         } catch (e) {
-            res.status(e.code).json(e.response.theJson);
+            res.status(e.code).json(e.json);
             return;
         }
         res.status(200).json({status: 'happy'});
         return;
     }
 
-    async onAuthCodePost(req, res) {
+    async onCompleteAtlasLoginAndOnboard(req, res) {
         /* Complete registration using the SMS auth code that the user should have received
          * following a call to `onAuthCodeGet`. */
         const tag = req.params.tag;
@@ -148,7 +157,9 @@ class OnboardAPIV1 extends APIHandler {
             return;
         }
         await this.server.bot.start(); // it could not have been running without a successful onboard
-        res.status(204).send();
+
+        const token = await genToken(await relay.storage.getState("onboardUser"));
+        res.status(200).json({ token });
     }
 }
 
@@ -157,18 +168,9 @@ class AuthenticationAPIV1 extends APIHandler {
     constructor(options) {
         super(options);
         this.router.get('/login/v1/:tag', this.asyncRoute(this.onRequestLoginCode, false));
-        this.router.post('/login/v1', this.asyncRoute(this.onValidateLoginCode, false));
+        this.router.post('/login/v1', this.asyncRoute(this.onCompleteLogin, false));
         this.router.get('/admins/v1', this.asyncRoute(this.onGetAdministrators));
         this.router.post('/admins/v1', this.asyncRoute(this.onUpdateAdministrators));
-    }
-
-    async genToken(userId) {
-        let secret = await relay.storage.get('authentication', 'jwtsecret');
-        if (!secret) {
-            secret = uuidv4();
-            await relay.storage.set('authentication', 'jwtsecret', secret);
-        }
-        return jwt.sign({ userId }, secret, { algorithm: "HS512", expiresIn: 2*60*60 /* later: "2 days" */ });
     }
 
     async onRequestLoginCode(req, res) {
@@ -190,13 +192,13 @@ class AuthenticationAPIV1 extends APIHandler {
         }
     }
 
-    async onValidateLoginCode(req, res) {
+    async onCompleteLogin(req, res) {
         const userId = req.body.id;
         const code = req.body.code;
 
         try {
             await this.server.bot.validateAuthCode(userId, code);
-            const token = await this.genToken(userId);
+            const token = await genToken(userId);
             res.status(200).json({ token });
             return;
         } catch (e) {

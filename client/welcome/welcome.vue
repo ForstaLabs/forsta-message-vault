@@ -19,7 +19,7 @@
         <div class="ui two column centered grid">
             <div class="middle aligned row">
                 <div class="five wide column centered">
-                    <router-link :to="{name: 'loginTag'}"
+                    <router-link :to="{name: 'onboardTag'}"
                                 class="ui huge primary button">
                     CONNECT <i class="right arrow icon"></i>
                     </router-link>
