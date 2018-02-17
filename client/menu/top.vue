@@ -12,7 +12,7 @@
                     <div class="menu left">
                     <div class="item" @click="logout">sign out</div>
                     <div class="item" @click="settings">settings</div>
-                    <div class="item" @click="dashboard">dashboard</div>
+                    <div class="item" @click="messages">messages</div>
                     </div>
                 </div>
             </div>
@@ -35,8 +35,8 @@ module.exports = {
         settings: function () {
             this.$router.push({ name: 'settings' });
         },
-        dashboard: function () {
-            this.$router.push({ name: 'dashboard' });
+        messages: function () {
+            this.$router.push({ name: 'messages' });
         }
     }
 }

@@ -47,7 +47,7 @@ module.exports = {
         global: shared.state
     }),
     mounted: function() {
-        const authDash = { name: 'loginTag', query: { forwardTo: '/dashboard' }};
+        const authDash = { name: 'loginTag', query: { forwardTo: '/messages' }};
         if (this.global.onboardStatus === 'complete') {
             this.$router.push(authDash);
             return;

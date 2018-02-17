@@ -9,11 +9,20 @@
         padding-top: .5em;
         border-top: 1px lightgray solid!important;
     }
-    div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
+    div.message-body {
+        padding: 5px;
+        overflow: hidden;
+        font-size: 17px;
+        color: black; 
+    }
     div.message-body .plain-text { white-space: pre-line; }
     div.message-body img, div.message-body video {
-        max-width:33vw;
-        max-height:25vh;
+        max-width: 33vw;
+        max-height: 33vh;
+    }
+    div.message-body a {
+        display: inline-block;
+        max-width: 40vw;
     }
 
     span.thread-title.obscured, div.message-body.obscured { 

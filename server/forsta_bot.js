@@ -7,6 +7,10 @@ const cache = require("./cache");
 const relay = require("librelay");
 const PGStore = require("./pgstore");
 const uuid4 = require("uuid/v4");
+const moment = require("moment");
+const words = require("./authwords");
+
+const AUTH_FAIL_THRESHOLD = 10;
 
 async function sleep(ms) { 
     return await new Promise(resolve => setTimeout(resolve, ms)); 
@@ -108,7 +112,8 @@ class ForstaBot {
         const threadId = message.threadId;
 
         const threadTitle = message.threadTitle;
-        const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
+        const tmpBody = message.data && message.data.body;
+        const tmpText = tmpBody && tmpBody.find(x => x.type === 'text/plain');
         const messageText = (tmpText && tmpText.value) || '';
 
         const attachmentData = ev.data.message.attachments || [];
@@ -145,6 +150,23 @@ class ForstaBot {
         }
     }
 
+    async incrementAuthFailCount() {
+        let fails = await relay.storage.get('authentication', 'fails', {count: 0, since: new Date()});
+        fails.count++;
+
+        if (fails.count >= AUTH_FAIL_THRESHOLD) {
+            await this.broadcastNotice({
+                note: `SECURITY ALERT!\n\n${fails.count} failed login attempts (last successful login was ${moment(fails.since).fromNow()})`
+            });
+        }
+
+        await relay.storage.set('authentication', 'fails', fails);
+    }
+
+    async resetAuthFailCount() {
+        await relay.storage.set('authentication', 'fails', {count: 0, since: new Date()});
+    }
+
     async getSoloAuthThreadId() {
         let id = await relay.storage.get('authentication', 'soloThreadId');
         if (!id) {
@@ -166,7 +188,7 @@ class ForstaBot {
     }
 
     genAuthCode(expirationMinutes) {
-        const code = ('000000' + Math.floor(Math.random() * 1000000)).slice(-6);
+        const code = `${words.adjective()} ${words.noun()}`;
         const expires = new Date();
         expires.setMinutes(expires.getMinutes() + expirationMinutes);
         return { code, expires };
@@ -176,7 +198,7 @@ class ForstaBot {
         const now = new Date();
 
         Object.keys(pending).forEach(uid => {
-            pending[uid].expires = new Date(pending[uid].expires); // todo: fix store encoding...
+            pending[uid].expires = new Date(pending[uid].expires);
             if (pending[uid].expires < now) {
                 delete pending[uid];
             }
@@ -192,15 +214,15 @@ class ForstaBot {
             const uid = resolved.userids[0];
             const adminIds = await relay.storage.get('authentication', 'adminIds');
             if (!adminIds.includes(uid)) {
-                throw { statusCode: 403, info: { tag: ['not an approved administrator'] } }; 
+                throw { statusCode: 403, info: { tag: ['not an authorized user'] } }; 
             }
 
             const auth = this.genAuthCode(1);
             this.msgSender.send({
                 distribution: resolved,
-                threadTitle: 'Message Vault Login',
+                threadTitle: 'Vault Login',
                 threadId: await this.getGroupAuthThreadId(),
-                text: `${auth.code} is your authentication code, valid for one minute`
+                text: `login codewords: ${auth.code}\n(valid for one minute)`
             });
             const pending = await relay.storage.get('authentication', 'pending', {});
             pending[uid] = auth;
@@ -220,14 +242,16 @@ class ForstaBot {
             throw { statusCode: 403, info: { code: ['no authentication pending, please start over'] } }; 
         }
         if (auth.code != code) {
+            this.incrementAuthFailCount();
             await sleep(500); // throttle guessers
-            throw { statusCode: 403, info: { code: ['incorrect code, please try again'] } }; 
+            throw { statusCode: 403, info: { code: ['incorrect codewords, please try again'] } }; 
         }
 
         delete pending[userId];
         relay.storage.set('authentication', 'pending', pending);
 
-        await this.broadcastNotice('successfully SIGNED IN as an administrator', userId);
+        await this.broadcastNotice({note: 'LOGIN', actorUserId: userId, listAll: false});
+        await this.resetAuthFailCount();
         return true;
     }
 
@@ -243,10 +267,10 @@ class ForstaBot {
         return admins;
     }
 
-    async broadcastNotice(action, actorUserId) {
+    async broadcastNotice({note, actorUserId, listAll=true}) {
         const adminIds = await relay.storage.get('authentication', 'adminIds', []);
         let added = false;
-        if (!adminIds.includes(actorUserId)) {
+        if (actorUserId && !adminIds.includes(actorUserId)) {
             adminIds.push(actorUserId);
             added = true;
         }
@@ -258,17 +282,19 @@ class ForstaBot {
 
         const adminList = adminUsers.filter(u => !(added && u.id === actorUserId)).map(u => this.fqLabel(u)).join('\n');
 
-        const fullMessage = `Note: ${actorLabel} ${action}.\n\nCurrent administrators are:\n${adminList}`;
-        const subbedFullMessage = fullMessage.replace(/<<([^>]*)>>/g, (_, id) => {
+        let fullMessage = note;
+        fullMessage += actorUserId ? `\n\nPerformed by ${actorLabel}` : '';
+        fullMessage += listAll ? `\n\nCurrent authorized users:\n${adminList}` : '';
+        fullMessage = fullMessage.replace(/<<([^>]*)>>/g, (_, id) => {
             const user = adminUsers.find(x => x.id === id);
             return this.fqLabel(user);
         });
 
         this.msgSender.send({
             distribution,
-            threadTitle: 'Message Vault Administration',
+            threadTitle: 'Vault Alerts',
             threadId: await this.getSoloAuthThreadId(),
-            text: subbedFullMessage
+            text: fullMessage
         });
     }
 
@@ -282,7 +308,7 @@ class ForstaBot {
                 adminIds.push(uid);
                 await relay.storage.set('authentication', 'adminIds', adminIds);
             }
-            await this.broadcastNotice(`has ADDED <<${uid}>> to the administrator list`, actorUserId);
+            await this.broadcastNotice({note: `ADDED <<${uid}>> to authorized users`, actorUserId});
             return this.getAdministrators();
         }
         throw { statusCode: 400, info: { tag: ['not a recognized tag, please try again'] } }; 
@@ -296,7 +322,7 @@ class ForstaBot {
             throw { statusCode: 400, info: { id: ['administrator id not found'] } };
         }
         adminIds.splice(idx, 1);
-        await this.broadcastNotice(`is REMOVING <<${removeId}>> from the administrator list`, actorUserId);
+        await this.broadcastNotice({note: `REMOVING <<${removeId}>> from authorized users`, actorUserId});
         await relay.storage.set('authentication', 'adminIds', adminIds);
 
         return this.getAdministrators();

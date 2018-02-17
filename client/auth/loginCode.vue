@@ -14,9 +14,9 @@
                 <div class="ui nine wide column basic segment left aligned t0 b1">
                     <form class="ui huge form enter-code" :class="{loading: loading}">
                         <div class="field">
-                            <label>Login Code</label>
+                            <label>Login Code Words</label>
                             <div class="ui left icon input">
-                                <input v-focus.lazy="true" type="text" name="code" placeholder="000000" autocomplete="off" v-model='code'>
+                                <input v-focus.lazy="true" type="text" name="code" placeholder="enter words" autocomplete="off" v-model='code'>
                                 <i class="lock icon"></i>
                             </div>
                         </div>
@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div class="ui basic segment">
-                <p>Please enter the site login code that was sent to you.</p>
+                <p>Please check your Forsta app for the login codewords you were just sent.</p>
             </div>
         </div>
     </div>
@@ -57,9 +57,8 @@ function setup() {
             code: {
                 identifier: 'code',
                 rules: [{
-                    type: 'regExp',
-                    value: /^\d{6}$/,
-                    prompt: 'please enter the six-digit code you were just sent'
+                    type: 'empty',
+                    prompt: 'please enter the codewords you were just sent'
                 }]
             }
         },
@@ -71,11 +70,12 @@ function setup() {
 }
 
 async function tryAuthCode() {
-    var password = this.password;
+    var code = (this.code || '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+    this.code = code;
     this.loading = true;
     let result;
     try {
-        result = await util.fetch.call(this, '/api/auth/login/v1', { method: 'post', body: { id: this.global.userId, code: this.code }})
+        result = await util.fetch.call(this, '/api/auth/login/v1', { method: 'post', body: { id: this.global.userId, code }})
     } catch (err) {
         console.error(err);
         return false;

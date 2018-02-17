@@ -3,17 +3,17 @@ Forsta Message Vault
 This is a bot that performs secure autonomous monitoring of 
 an entire organization's messaging traffic, storing all messages 
 and useful metadata to support basic forensic searching and retrieval 
-of messages via a UI on the bot's website. 
-
-Future plans include supporting vault access via *messages* 
-from authorized users.
+via a web-based UI. 
 
 This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) 
 codebase, which you can use for secure message receipt, processing, storage, and/or transmission 
 on the Forsta messaging platform.
 
+Please see the [CHANGELOG](https://github.com/ForstaLabs/message-vault/blob/master/CHANGELOG.md)
+for the current set of features!
+
 [![NPM](https://img.shields.io/npm/v/forsta-message-vault.svg)](https://www.npmjs.com/package/forsta-message-vault)
-[![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/vault/blob/master/CHANGELOG.md)
+[![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/message-vault/blob/master/CHANGELOG.md)
 [![License](https://img.shields.io/npm/l/forsta-message-vault.svg)](https://github.com/ForstaLabs/message-vault)
 
 
@@ -75,7 +75,7 @@ preference.
 ### Docker
     docker run -p4096:4096 forstalabs/message-vault
 
-Or to run a stack using docker-compose that includes redis for storage...
+Or to run a stack using docker-compose that includes postgres for storage:
 
     docker-compose up
 
@@ -86,14 +86,21 @@ Or to run a stack using docker-compose that includes redis for storage...
 
 Developer Install
 --------
-If you want to build upon the Forsta Message Vault or just get closer to the code, 
-you can install and run directly from the source code.
+If you want to extend the Forsta Message Vault or just get closer to the code, 
+you can install and run directly from the source code:
 
     git clone https://github.com/ForstaLabs/message-vault.git
     cd message-vault
-    npm install
+    make
     npm start
 
+You will also need to have an instance of Postgres available. Before running
+the server, be sure to set the following environment variables:
+
+    RELAY_STORAGE_BACKING=postgres
+    DATABASE_URL=postgres://postgres@localhost/postgres
+
+(That database URL is for the default docker postgres you'll get if you do a `make docker-db-run`.)
 
 Usage
 --------
@@ -110,7 +117,7 @@ numeric port, e.g. `8000`.
 
 Storage is managed through Forsta
 [librelay](https://github.com/ForstaLabs/librelay-node) which currently
-supports local filesystem and Redis.  For more information about setting
+supports local filesystem, Redis, and Postgresql.  For more information about setting
 up custom storage see: https://github.com/ForstaLabs/librelay-node#storage.
 
 
