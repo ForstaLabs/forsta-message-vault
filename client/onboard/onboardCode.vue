@@ -68,7 +68,7 @@ function sendLoginCode() {
             const { token } = result.theJson;
             this.global.apiToken = token;
             this.global.onboardStatus = 'complete';
-            this.$router.push({ name: 'dashboard' });
+            this.$router.push({ name: 'messages' });
             return false;
         } else {
             util.addFormErrors('enter-code', { code: util.mergeErrors(result.theJson) });

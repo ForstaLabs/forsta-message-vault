@@ -1,6 +1,42 @@
 # Change Log
 
+## [0.2.0]
+- **Postgres storage** of messaging data (this also meant upgraded the underlying 
+  `libsignal` library to use postgres as a backing store).
+- **Message filter query API** to let the client to retrieve subsets of messages 
+  by any combination of: 
+  filter | notes
+  -------|--------
+  `body` | body words match in a language-aware tsquery
+  `title` | thread title words match in a language-aware tsquery
+  `threadId` | thread IDs are stable, while titles can change
+  `from` | label for sender includes this fragment
+  `fromId` | user IDs are stable while labels can change
+  `to` | labels for recipients includes this fragment
+  `toId` | user IDs are stable while labels can change
+  `until` | "received" timestamp <= provided time
+  `since` | "received" timestamp >= provided time
+  `attachments` | yes/no/unspecified, defaults to unspecified
+  `offset` | defaults to 0
+  `limit` | defaults to ALL
+  `orderby` | defaults to "received" timestamp
+  `ascending` | yes/no, defaults to no
+- **Message browsing page** to let users home in on the desired subset of messages 
+  using the above filters. Fun feature: it starts out with title/body content 
+  *visually obscured* so the user isn't assaulted with the unfiltered content of
+  the entire organization's traffic upon arrival.
+- **File export** that delivers browsed messages from the current set of filters in
+  a `.zip` file containing all relevant attachments, a `.html` file (with links 
+  into the attachments), a `.json` file with the complete raw data, and a `.csv` 
+  file with a useful subset of that data.
+- **New authentication system** to replace the simple password-based site/api auth.
+  Now (approved) vault users are sent adjective-verb login codewords via Forsta messages.
+- **Settings page** where users can add and remove approved site users (automatic
+  notification of all changes and sign-ins are sent to all approved users).
+
 ## [0.1.0]
 - Initial common-ancestor bot forked from older vault project
-- Performs onboarding to act as an existing user, as well as admin-creating-monitor onboarding to act as a new "monitor" user
-- Handles bot site authentication with bcrypt-stashed password, providing a jwt for site api access
+- Performs onboarding to act as an existing user, as well as admin-creating-monitor 
+  onboarding to act as a new "monitor" user.
+- Handles bot site authentication with a bcrypt-stashed password, providing a jwt 
+  for site api access.

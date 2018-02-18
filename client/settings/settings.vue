@@ -16,17 +16,17 @@ div.listgap {
             </div>
             <div class="ui centered grid">
                 <div class="ui nine wide column basic segment left aligned b1" :class="{loading: loading}" style="margin-top:-1em;">
-                    <h3 style="margin-bottom: 3px;">Site Administrators</h3>
+                    <h3 style="margin-bottom: 3px;">Authorized Site Users</h3>
                     <div class="ui list listgap">
                         <div v-for="a in admins" :key="a.id" class="item">
-                            <a v-if="admins.length > 1" @click="removeAdmin(a.id)" data-tooltip="remove this administrator"><i class="large remove circle icon"></i></a> 
-                            <span v-else data-tooltip="cannot remove last administrator"><i style="color: lightgray;" class="large remove circle icon"></i></span> 
+                            <a v-if="admins.length > 1" @click="removeAdmin(a.id)" data-tooltip="remove this authorized user"><i class="large remove circle icon"></i></a> 
+                            <span v-else data-tooltip="cannot remove last authorized user"><i style="color: lightgray;" class="large remove circle icon"></i></span> 
                             {{a.label}}
                         </div>
                     </div>
                     <form class="ui large form enter-tag" @submit.prevent="addAdmin">
                         <div class="field" :class="{error:!!tagError}">
-                            <div data-tooltip="add an administrator" class="ui left icon action input">
+                            <div data-tooltip="add an authrorized user" class="ui left icon action input">
                                 <i class="at icon"></i>
                                 <input type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
                                 <button class="ui icon button" :disabled="!tag" :class="{primary:!!tag}"><i class="plus icon"></i></button>
