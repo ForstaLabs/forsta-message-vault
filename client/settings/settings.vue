@@ -26,7 +26,7 @@ div.listgap {
                     </div>
                     <form class="ui large form enter-tag" @submit.prevent="addAdmin">
                         <div class="field" :class="{error:!!tagError}">
-                            <div data-tooltip="add an authrorized user" class="ui left icon action input">
+                            <div data-tooltip="add an authorized user" class="ui left icon action input">
                                 <i class="at icon"></i>
                                 <input type="text" v-model='tag' name="tag" placeholder="user:org" autocomplete="off">
                                 <button class="ui icon button" :disabled="!tag" :class="{primary:!!tag}"><i class="plus icon"></i></button>
