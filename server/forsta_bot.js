@@ -222,7 +222,7 @@ class ForstaBot {
                 distribution: resolved,
                 threadTitle: 'Vault Login',
                 threadId: await this.getGroupAuthThreadId(),
-                text: `login codewords: ${auth.code}\n(valid for one minute)`
+                text: `codewords: ${auth.code}\n(valid for one minute)`
             });
             const pending = await relay.storage.get('authentication', 'pending', {});
             pending[uid] = auth;
