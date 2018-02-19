@@ -1,11 +1,1 @@
-message-vault:
-  image: forstalabs/message-vault
-  ports:
-    - "4096:4096"
-  environment:
-    RELAY_STORAGE_BACKING: postgres
-    DATABASE_URL: postgres://postgres@postgres/postgres
-  links:
-    - postgres
-postgres:
-  image: postgres
+./docker-compose.yml
