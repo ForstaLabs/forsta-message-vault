@@ -73,9 +73,7 @@ You can choose from our official docker image or NPM package depending on your
 preference.
 
 ### Docker
-    docker run -p4096:4096 forstalabs/message-vault
-
-Or to run a stack using docker-compose that includes postgres for storage, just get the [`docker-compose.yml`](./docker-compose.yml) file from the top level of this repository and
+To run a stack using docker-compose that includes postgres for storage, just get the [`docker-compose.yml`](./docker-compose.yml) file from the top level of this repository and
 
     docker-compose up
 
