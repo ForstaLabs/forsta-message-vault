@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.4.0]
+- **Insecure API override** for *specialized, unusual, probably ill-advised 
+  (you've been warned :^)* circumstances. This is useful when your message vault is 
+  running in a controlled context that establishes appropriate security and you need 
+  to permit unauthenticated access to the vault's APIs. (The vault UI will still operate as
+  usual, but any attribution of actions to an actor will be missing, which currently 
+  means that adding or removing an authorized user will happen but in an unattributed way.)
+
+  Just set the environment variable `API_AUTH_OVERRIDE=insecure`
+
 ## [0.2.0]
 - **Postgres storage** of messaging data (this also meant upgraded the underlying 
   `libsignal` library to use postgres as a backing store).

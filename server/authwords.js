@@ -1,6 +1,7 @@
 
 const ADJECTIVES = `
 bare
+bent
 big
 blind
 blue
@@ -10,7 +11,6 @@ bumpy
 calm
 clean
 cold
-cool
 crooked
 curly
 cute
@@ -170,6 +170,7 @@ scar
 scope
 shark
 shell
+shoe
 shore
 skate
 skin
@@ -191,7 +192,6 @@ stove
 sword
 thorn
 throne
-trade
 treat
 troll
 trout
