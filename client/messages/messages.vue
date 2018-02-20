@@ -425,9 +425,9 @@ module.exports = {
         },
         messageBody: function(m) {
             const message = m.payload.find(x => x.version === 1);
-            const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
+            const tmpText = message.data && message.data.body && message.data.body.find(x => x.type === 'text/plain');
             const text = (tmpText && tmpText.value) || '';
-            const tmpHtml = message.data && message.data.body.find(x => x.type === 'text/html');
+            const tmpHtml = message.data && message.data.body && message.data.body.find(x => x.type === 'text/html');
             let html = (tmpHtml && tmpHtml.value) || '';
             if (this.obscured) html = html.replace('autoplay', 'xautoplay');
             return html || `<p class="plain-text">${text}</p>`;

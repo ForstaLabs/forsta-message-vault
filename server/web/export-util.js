@@ -149,16 +149,16 @@ function attachmentName(record, idx) {
 
 function msgBodyText(record) {
     const message = record.payload.find(x => x.version === 1);
-    const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
+    const tmpText = message.data && message.data.body && message.data.body.find(x => x.type === 'text/plain');
     const text = (tmpText && tmpText.value) || '';
     return text;
 }
 
 function msgBodyHtml(record) {
     const message = record.payload.find(x => x.version === 1);
-    const tmpText = message.data && message.data.body.find(x => x.type === 'text/plain');
+    const tmpText = message.data && message.data.body && message.data.body.find(x => x.type === 'text/plain');
     const text = (tmpText && tmpText.value) || '';
-    const tmpHtml = message.data && message.data.body.find(x => x.type === 'text/html');
+    const tmpHtml = message.data && message.data.body && message.data.body.find(x => x.type === 'text/html');
     const html = (tmpHtml && tmpHtml.value) || '';
     return html || `<p class="plain-text">${text}</p>`;
 }
