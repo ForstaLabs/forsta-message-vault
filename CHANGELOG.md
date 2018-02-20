@@ -1,5 +1,8 @@
 # Change Log
 
+- **Force SSL on Heroku** by setting `HEROKU_FORCE_SSL=yes` in the environment. 
+  (The heroku-ssl-redirect module itself also looks for `NODE_ENV=production`.)
+
 ## [0.4.0]
 - **Insecure API override** for *specialized, unusual, probably ill-advised 
   (you've been warned :^)* circumstances. This is useful when your message vault is 
