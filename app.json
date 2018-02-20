@@ -1,6 +1,6 @@
 {
     "name": "Forsta Message Vault",
-    "description": "A 'monitor' bot that performs decentralized processing and storage of all message traffic in an organization.",
+    "description": "A Forsta 'monitor' bot that stores of all message traffic in an organization for forensic e-discovery.",
     "repository": "https://github.com/ForstaLabs/message-vault.git",
     "logo": "https://raw.githubusercontent.com/ForstaLabs/message-vault/master/images/forsta-logo.svg?sanitize=true",
     "keywords": ["forsta", "messaging", "bot", "e-discovery"],
@@ -11,6 +11,11 @@
         "description": "Control where bot settings and data will be stored.  For heroku 'postgresql' is recommended.",
         "required": false,
         "value": "postgres"
+      },
+      "HEROKU_FORCE_SSL": {
+        "description": "Require that all communications with the message vault be via SSL.",
+        "required": true,
+        "value": "yes"
       }
     },
     "buildpacks": [{
