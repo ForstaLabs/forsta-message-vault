@@ -41,13 +41,13 @@ jwtDecode = require('jwt-decode');
 function setup() {
     const apiToken = this.global.apiToken;
     const forwardTo = this.$route.query.forwardTo;
-    if (apiToken && forwardTo) {
+    if (apiToken) {
         const decoded = jwtDecode(apiToken);
         const expires = new Date(decoded.exp * 1000);
         const now = new Date();
 
         if (now < expires) {
-            this.$router.replace(forwardTo);
+            this.$router.replace(forwardTo ? forwardTo : { name: 'welcome' });
             return;
         }
     }

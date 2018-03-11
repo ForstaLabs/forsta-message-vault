@@ -223,8 +223,8 @@ const util = require('../util');
 
 const REFRESH_POLL_RATE = 15000;
 
-const PAGE_SIZES = [5, 10, 20, 50, 100, 1000];
-const DEFAULT_PAGE_SIZE = PAGE_SIZES[1];
+const PAGE_SIZES = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000, 10000];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[6];
 
 async function getExport(queryString, acceptType) {
     let result;
