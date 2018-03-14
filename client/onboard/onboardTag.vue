@@ -33,7 +33,7 @@
                                 <i class="at icon"></i>
                             </div>
                         </div>
-                        <button class="ui large primary submit button" type="submit">Submit</button>
+                        <button class="ui large primary submit button right floated" type="submit">Submit</button>
                         <div class="ui mini error message" />
                     </form>
                 </div>

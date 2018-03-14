@@ -20,8 +20,8 @@
                                 <i class="lock icon"></i>
                             </div>
                         </div>
-                        <button class="ui large primary submit button" type="submit">Submit</button>
-                        <router-link :to="{name: 'onboardTag'}" class="ui large button right floated code-cancel">Cancel</router-link>
+                        <button class="ui large primary submit button right floated" type="submit">Submit</button>
+                        <router-link :to="{name: 'onboardTag'}" class="ui large button code-cancel">Cancel</router-link>
                         <div class="ui mini error message" />
                     </form>
                 </div>
