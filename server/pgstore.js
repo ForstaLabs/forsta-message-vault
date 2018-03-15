@@ -68,6 +68,12 @@ class PGStore {
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_tsvector($11), to_tsvector($12), $13
             )`;
+        
+        this.queryUpdateIntegrity = `
+            UPDATE ${this.prefix}_message
+            SET integrity = $2
+            WHERE message_id = $1;
+        `;
 
         this.queryAddAttachment = `
             INSERT INTO ${this.prefix}_attachment (
@@ -138,6 +144,14 @@ class PGStore {
         return result;
     }
 
+    async updateIntegrity(messageId, integrity) {
+        const result = await this.client.query(this.queryUpdateIntegrity, [messageId, integrity]);
+        if (result.rowCount !== 1)
+            throw new Error("Failure in postgres message insert");
+        
+        return result;
+    }
+
     async getMessages({ 
             limit, offset, 
             orderby='received', ascending='no', 
@@ -147,9 +161,9 @@ class PGStore {
             threadId,
             from, fromId,
             to, toId,
-            needsIntegrity, hasIntegrity, needsOTS
+            needsIntegrity, hasIntegrity, needsOTS, hasOTS
         }) {
-        console.warn('TODO: Need to parameterize getMessage to make it safe!');
+        // console.warn('TODO: Need to parameterize getMessage to make it safe!');
         const _selectfrom = `SELECT *, count(*) OVER() AS full_count FROM ${this.prefix}_message`;
 
         const _limit = limit ? `LIMIT ${limit}` : '';
@@ -169,7 +183,8 @@ class PGStore {
         if (attachments === 'no') predicates.push(`attachment_ids = '{}'`);
         if (needsIntegrity) predicates.push(`integrity IS NULL`);
         if (hasIntegrity) predicates.push(`integrity IS NOT NULL`);
-        if (needsOTS) predicates.push(`integrity->>'ots' IS NULL`);
+        if (needsOTS) predicates.push(`integrity->>'OTS' IS NULL`);
+        if (hasOTS) predicates.push(`integrity->>'OTS' IS NOT NULL`);
         const _where = (predicates.length) ? `WHERE ${predicates.join(' AND ')}` : '';
 
         const _orderby = orderby ? `ORDER BY ${orderby} ${ascending === 'yes' ? 'ASC' : 'DESC'}` : '';

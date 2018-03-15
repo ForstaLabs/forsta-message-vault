@@ -9,8 +9,20 @@ const PGStore = require("./pgstore");
 const uuid4 = require("uuid/v4");
 const moment = require("moment");
 const words = require("./authwords");
+const objectHash = require("object-hash");
+const OpenTimestamps = require('javascript-opentimestamps');
+
+const objectHashConfig = {
+    algorithm: 'sha256',
+    encoding: 'hex',
+    excludeKeys: key => ['integrity', 'fullCount'].includes(key)
+};
 
 const AUTH_FAIL_THRESHOLD = 10;
+
+// const BACKGROUND_FREQUENCY_DELAY = 60 * 60 * 1000; // 1 hour
+const BACKGROUND_FREQUENCY_DELAY = 15000; // 15 seconds
+
 
 async function sleep(ms) { 
     return await new Promise(resolve => setTimeout(resolve, ms)); 
@@ -47,6 +59,7 @@ class ForstaBot {
 
         this.msgSender = await relay.MessageSender.factory();
 
+        this.backgroundInterval = setInterval(this.backgroundWork.bind(this), BACKGROUND_FREQUENCY_DELAY);
         await this.msgReceiver.connect();
     }
 
@@ -67,6 +80,7 @@ class ForstaBot {
             this.msgReceiver.close();
             this.msgReceiver = null;
         }
+        if (this.backgroundInterval) clearInterval(this.backgroundInterval);
         await this.pgStore.shutdown();
     }
 
@@ -326,6 +340,173 @@ class ForstaBot {
         await relay.storage.set('authentication', 'adminIds', adminIds);
 
         return this.getAdministrators();
+    }
+
+
+    async addIntegrity() {
+        const previous = await this.pgStore.getMessages({ limit: 1, hasIntegrity: true, orderby: 'received', ascending: 'no' });
+        let previousId = previous.length ? previous[0].messageId : null;
+        let previousChainHash = previous.length ? previous[0].integrity.chainHash : null;
+
+        const messages = await this.pgStore.getMessages({ needsIntegrity: true, orderby: 'received', ascending: 'yes' });
+
+        for (let message of messages) {
+            console.log(`adding integrity to ${message.messageId}`);
+            const bodyHash = objectHash(message, objectHashConfig);
+            let attachments = {};
+            for (let aid of message.attachmentIds) {
+                attachments[aid] = await this.pgStore.getAttachment(aid);
+            }
+            const attachmentsHash = objectHash(attachments, objectHashConfig);
+            const chainHash = objectHash({bodyHash, attachmentsHash, previousChainHash}, objectHashConfig);
+            const integrity = { bodyHash, attachmentsHash, previousId, chainHash };
+            await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
+
+            previousId = message.messageId;
+            previousChainHash = chainHash;
+        }
+    }
+
+    async verifyIntegrityChain() {
+        const limit = 100;
+        let offset = 0;
+        let previousId = null;
+        let previousChainHash = null;
+
+        let bodyMisses = 0;
+        let fullCount = 0;
+        let attachmentMisses = 0;
+        let chainMisses = 0;
+        let previousIdMisses = 0;
+
+        console.log('verifying full integrity chain');
+        const existing = await relay.storage.remove('integrity', 'progress');
+        if (existing) {
+            console.log('abandoned integrity check because one appears to be already running:', existing);
+            return;
+        }
+
+        while (true) {
+            const messages = await this.pgStore.getMessages({ limit, offset, hasIntegrity: true, orderby: 'received', ascending: 'yes' });
+            fullCount = messages.length ? messages[0].fullCount : 0;
+            console.log(`retrieved ${offset + 1}-${offset + messages.length} of ${fullCount}`);
+            await relay.storage.set('integrity', 'progress', { limit, offset, fullCount });
+
+            for (let message of messages) {
+                console.log(`checking integrity of ${message.messageId}`);
+                const bodyHash = objectHash(message, objectHashConfig);
+                let attachments = {};
+                for (let aid of message.attachmentIds) {
+                    attachments[aid] = await this.pgStore.getAttachment(aid);
+                }
+                const attachmentsHash = objectHash(attachments, objectHashConfig);
+                const chainHash = objectHash({ bodyHash, attachmentsHash, previousChainHash }, objectHashConfig);
+                let integrity = message.integrity;
+                let dirty = false;
+                if (bodyHash !== integrity.bodyHash) {
+                    console.log(`... bodyHash miss: got ${bodyHash}, expected ${integrity.bodyHash}`);
+                    bodyMisses++;
+                    integrity.bodyMiss = Date.now();
+                    dirty = true;
+                }
+                if (attachmentsHash !== integrity.attachmentsHash) {
+                    console.log(`... attachmentsHash miss: got ${attachmentsHash}, expected ${integrity.attachmentsHash}`);
+                    attachmentMisses++;
+                    integrity.attachmentMiss = Date.now();
+                    dirty = true;
+                }
+                if (chainHash !== integrity.chainHash) {
+                    console.log(`... chainHash miss: got ${chainHash}, expected ${integrity.chainHash}`);
+                    chainMisses++;
+                    integrity.chainMiss = Date.now();
+                    dirty = true;
+                }
+                if (previousId !== integrity.previousId) {
+                    console.log(`... previousId miss: got ${previousId}, expected ${integrity.previousId}`);
+                    previousIdMisses++;
+                    integrity.previousIdMiss = Date.now();
+                    dirty = true;
+                }
+                if (dirty) {
+                    await this.pgStore.updateIntegrity(message.messageId, integrity);
+                }
+
+                offset++;
+                previousId = message.messageId;
+                previousChainHash = chainHash;
+            }
+
+            if (offset >= fullCount) break;
+        }
+        await relay.storage.remove('integrity', 'progress');
+        const results = { bodyMisses, attachmentMisses, chainMisses, previousIdMisses };
+        await relay.storage.set('integrity', 'results', { timestamp: Date.now(), fullCount, bodyMisses, attachmentMisses, chainMisses, previousIdMisses });
+        console.log(`chain verification results are:`, results);
+
+        return results;
+    }
+
+
+    async addOpenTimeStamp() {
+        const topNoOTS = await this.pgStore.getMessages({ hasIntegrity: true, needsOTS: true, limit: 1, orderby: 'received', ascending: 'no' });
+        if (!topNoOTS.length) return;
+
+        const topOTS = await this.pgStore.getMessages({ hasOTS: true, limit: 1, orderby: 'received', ascending: 'no' });
+        if (topOTS.length === 1) {
+            if (new Date(topNoOTS[0].received) < new Date(topOTS[0].received)) return;
+        }
+
+        try {
+            const messageId = topNoOTS[0].messageId;
+            console.log(`adding an OTS to ${messageId}`);
+            let integrity = topNoOTS[0].integrity;
+            const detached = OpenTimestamps.DetachedTimestampFile.fromHash(new OpenTimestamps.Ops.OpSHA256(), OpenTimestamps.Utils.hexToBytes(integrity.chainHash));
+            await OpenTimestamps.stamp(detached);
+            integrity.OTS = Buffer.from(detached.serializeToBytes()).toString('hex'); // hex of their Uint8Array
+            await this.pgStore.updateIntegrity(messageId, JSON.stringify(integrity));
+            console.log(`...added an OTS to ${messageId}`);
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+
+    async verifyAndUpgradeOpenTimeStamps(messages) {
+        console.log(`about to verify and upgrade OTS info on ${messages.length} messages`);
+
+        for (let message of messages) {
+            console.log(`checking OTS info for ${message.messageId}`);
+            const integrity = message.integrity;
+            // console.log(`\n\noriginal OTS: https://opentimestamps.org/info.html?ots=${integrity.OTS}\n\n`);
+            let otsFile = Uint8Array.from(new Buffer(integrity.OTS, 'hex'));
+            const detachedOts = OpenTimestamps.DetachedTimestampFile.deserialize(otsFile);
+            // const infoResult = OpenTimestamps.info(detachedOts); // or https://opentimestamps.org/info.html?ots=<otshex>
+            // console.log('...OTS info is', infoResult, '\n\n');
+            const detached = OpenTimestamps.DetachedTimestampFile.fromHash(new OpenTimestamps.Ops.OpSHA256(), OpenTimestamps.Utils.hexToBytes(integrity.chainHash));
+            // console.log('...verifying OTS');
+            const verification = await OpenTimestamps.verify(detachedOts, detached);
+            if (verification) {
+                console.log(`...verified timestamp: ${verification}`);
+                integrity.verifiedTimestamp = verification;
+                integrity.upgradedOTS = Buffer.from(detachedOts.serializeToBytes()).toString('hex'); // hex of their Uint8Array
+                await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
+                // console.log(`\n\nupgraded OTS: https://opentimestamps.org/info.html?ots=${integrity.upgradedOTS}\n\n`);
+                console.log(`... and upgraded OTS`);
+            }
+        }
+    }
+
+    async backgroundWork() {
+        console.log('background work starting');
+        const startTime = Date.now();
+        await this.addIntegrity();
+        await this.addOpenTimeStamp();
+
+        const messages = await this.pgStore.getMessages({ hasOTS: true, limit: 24, orderby: 'received', ascending: 'no' });
+        await this.verifyAndUpgradeOpenTimeStamps(messages);
+        // await this.verifyIntegrityChain();
+        const stopTime = Date.now();
+        console.log(`background work finished (took ${stopTime-startTime}ms)`);
     }
 }
 

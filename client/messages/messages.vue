@@ -101,6 +101,9 @@
         bottom: 1.5em;
         right: 1.5em;
     }
+    span.integrity {
+        color: red;
+    }
 </style>
 
 <template>
@@ -117,6 +120,15 @@
             </template>
         </div>
         <div v-for="m in messages" :key="m.messageId" class="ui raised fluid card">
+            <div class="content" v-if="integrityIssues(m)">
+                <div class="description">
+                    <span class="integrity clickable" @click="toggleIntegrity(m.messageId)"><i class="caret icon" :class="integrityCaret(m.messageId)"></i> 
+                    {{integrityIssues(m)}} integrity failures <i class="exclamation triangle icon"></i> </span>
+                </div>
+                <div class="description" v-if="integrityVisible(m.messageId)">
+                    integrity issues with {{integrityIssues(m)}}
+                </div>
+            </div>
             <div class="content">
                 <div class="right floated time nowrap">
                     <a data-tooltip='filter UNTIL this time' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
@@ -294,6 +306,7 @@ module.exports = {
         enteredText: '',
         filters: {},
         showDist: {},
+        showIntegrity: {},
         hideBody: {},
         selectablePageSizes: PAGE_SIZES,
         pageSize: DEFAULT_PAGE_SIZE,
@@ -385,6 +398,28 @@ module.exports = {
                 right: !this.showDist[id]
             }
         },
+        toggleIntegrity: function(id) {
+            this.$set(this.showIntegrity, id, !this.showIntegrity[id])
+        },
+        integrityCaret: function(id) {
+            return {
+                down: !!this.showIntegrity[id],
+                right: !this.showIntegrity[id]
+            }
+        },
+        integrityVisible: function(id) {
+            return this.showIntegrity[id];
+        },
+        integrityIssues: function(message) {
+            let issues = [];
+
+            if (message.integrity.bodyMiss) issues.push('body');
+            if (message.integrity.attachmentsMiss) issues.push('attachments');
+            if (message.integrity.previousIdMiss) issues.push('previous-id');
+            if (message.integrity.chainMiss) issues.push('chain');
+
+            return issues.join(', ');
+        },
         toggleBody: function(id) {
             this.$set(this.hideBody, id, !this.hideBody[id])
         },
@@ -410,6 +445,7 @@ module.exports = {
                     }
                 });
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
+                console.log('got messages', this.messages);
             });
         },
         getExport: function() {
