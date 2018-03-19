@@ -161,7 +161,8 @@ class PGStore {
             threadId,
             from, fromId,
             to, toId,
-            needsIntegrity, hasIntegrity, needsOTS, hasOTS
+            needsIntegrity, hasIntegrity, needsOTS, hasOTS,
+            anyWarnings, chainWarnings, bodyWarnings, attachmentsWarnings, previousWarnings
         }) {
         // console.warn('TODO: Need to parameterize getMessage to make it safe!');
         const _selectfrom = `SELECT *, count(*) OVER() AS full_count FROM ${this.prefix}_message`;
@@ -185,6 +186,16 @@ class PGStore {
         if (hasIntegrity) predicates.push(`integrity IS NOT NULL`);
         if (needsOTS) predicates.push(`integrity->>'OTS' IS NULL`);
         if (hasOTS) predicates.push(`integrity->>'OTS' IS NOT NULL`);
+        if (chainWarnings === 'yes') predicates.push("integrity->>'misses'->>'chainHash' IS NOT NULL");
+        if (chainWarnings === 'no') predicates.push("integrity->>'misses'->>'chainHash' IS NULL");
+        if (bodyWarnings === 'yes') predicates.push("integrity->>'misses'->>'bodyHash' IS NOT NULL");
+        if (bodyWarnings === 'no') predicates.push("integrity->>'misses'->>'bodyHash' IS NULL");
+        if (attachmentsWarnings === 'yes') predicates.push("integrity->>'misses'->>'attachmentsHash' IS NOT NULL");
+        if (attachmentsWarnings === 'no') predicates.push("integrity->>'misses'->>'attachmentsHash' IS NULL");
+        if (previousWarnings === 'yes') predicates.push("integrity->>'misses'->>'previousId' IS NOT NULL");
+        if (previousWarnings === 'no') predicates.push("integrity->>'misses'->>'previousId' IS NULL");
+        if (anyWarnings === 'yes') predicates.push("integrity->>'misses' IS NOT NULL");
+        if (anyWarnings === 'no') predicates.push("integrity->>'misses' IS NULL");
         const _where = (predicates.length) ? `WHERE ${predicates.join(' AND ')}` : '';
 
         const _orderby = orderby ? `ORDER BY ${orderby} ${ascending === 'yes' ? 'ASC' : 'DESC'}` : '';

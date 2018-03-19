@@ -13,6 +13,8 @@ class VaultAPIv1 extends APIHandler {
         this.router.get('/export/v1', this.asyncRoute(this.onGetExport, true));
         this.router.get('/messages/v1', this.asyncRoute(this.onGetMessages, true));
         this.router.get('/attachment/:id/v1', this.asyncRoute(this.onGetAttachment, true));
+        this.router.get('/integrity/v1', this.asyncRoute(this.onGetIntegrity, true));
+        this.router.post('/integrity/v1', this.asyncRoute(this.onPostIntegrity, true));
     }
 
     async fetchAttachments(record) {
@@ -77,6 +79,24 @@ class VaultAPIv1 extends APIHandler {
         res.status(200).send(attachment.data);
         res.end();
     }
+
+    async onGetIntegrity(req, res, next) {
+        console.log('getting integrity scan status');
+        const status = await this.server.bot.integrityChainVerificationStatus();
+        console.log('returning integrity scan status', status);
+        res.status(200).json({status});
+    }
+
+    async onPostIntegrity(req, res, next) {
+        console.log('starting integrity scan');
+        const force = req.body.force;
+        if (force) {
+            console.log('NOTE: forcing integrity scan');
+        }
+        this.server.bot.verifyIntegrityChain(force);
+        res.status(204).send();
+    }
+
 }
 
 

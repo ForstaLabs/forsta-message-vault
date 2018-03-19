@@ -45,6 +45,7 @@
         padding-bottom: 2.5em;
     }
     .clickable { cursor: pointer; }
+    .capsify { text-transform: capitalize!important; }
     .nowrap { white-space: nowrap; }
     select.rightify { text-align-last: right; }
 
@@ -101,8 +102,8 @@
         bottom: 1.5em;
         right: 1.5em;
     }
-    span.integrity {
-        color: red;
+    .integrity {
+        color: red!important;
     }
 </style>
 
@@ -120,15 +121,6 @@
             </template>
         </div>
         <div v-for="m in messages" :key="m.messageId" class="ui raised fluid card">
-            <div class="content" v-if="integrityIssues(m)">
-                <div class="description">
-                    <span class="integrity clickable" @click="toggleIntegrity(m.messageId)"><i class="caret icon" :class="integrityCaret(m.messageId)"></i> 
-                    {{integrityIssues(m)}} integrity failures <i class="exclamation triangle icon"></i> </span>
-                </div>
-                <div class="description" v-if="integrityVisible(m.messageId)">
-                    integrity issues with {{integrityIssues(m)}}
-                </div>
-            </div>
             <div class="content">
                 <div class="right floated time nowrap">
                     <a data-tooltip='filter UNTIL this time' @click="addTimeFilter(m, 'Until')"><i class="chevron left icon"></i></a>
@@ -171,6 +163,20 @@
                     <i class="download icon"></i> {{attachmentName(m, i)}}
                 </a>
             </div>
+            <div class="content" v-if="attestation(m)">
+                <div class="description attestation">
+                    <span data-tooltip="click to view blockchain attestation"><i class="big green check circle icon"></i> 
+                    <a :href="attestation(m).url" target="_blank" >Verified Blockchain Attestation Checkpoint: {{attestation(m).time}}</a></span>
+                </div>
+            </div>
+            <div class="content" v-if="integrityIssues(m).length">
+                <div class="description integrity">
+                    <span><i class="exclamation triangle icon"></i> Integrity Warnings</span>
+                    <ul>
+                        <li v-for="issue in integrityIssues(m)" :data-tooltip="issue.time" data-position="top left">{{issue.text}}</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         <div class="pager" style="padding-bottom: 1em;">
             <template v-for="(dot, idx) in pagerDots">
@@ -181,9 +187,17 @@
     </div>
     <div class="theleft">
         <div class="obscure-control" @click="flipscure" v-if="messages.length">
-            <div class="clickable ui toggle checkbox">
-                <input type="checkbox" v-model="obscured">
-                <label>Obscure</label>
+            <div class="filter-section">
+                <div class="clickable ui toggle checkbox">
+                    <input type="checkbox" v-model="obscured">
+                    <label>Obscure</label>
+                </div>
+            </div>
+            <div class="filter-section">
+                <button class="ui button primary" :class="scanningClass" @click.prevent.stop="beginScan">Integrity Scan</button>
+            </div>
+            <div>
+              {{scanPercentage}}%
             </div>
         </div>
     </div>
@@ -209,12 +223,19 @@
                     <div class="fields" style="margin-bottom:0;">
                         <input class="ui input" type="text" v-model="enteredText" placeholder="Add and Update Text Filters">
                     </div>
-                    <small><em><span class="nowrap">body words</span> | <span class="nowrap"><b>title:</b> words</span> | <span class="nowrap"><b>to:</b> fragment</span> | <span class="nowrap"><b>from: </b>fragment</span> | <span class="nowrap"><b>has: </b>[no] attach[ment[s]]</span></em></small>
+                    <small><em>
+                        <span class="nowrap">body words</span> 
+                        <span class="nowrap">| <b>title:</b> words</span> 
+                        <span class="nowrap">| <b>to:</b> fragment</span> 
+                        <span class="nowrap">| <b>from: </b>fragment</span> 
+                        <span class="nowrap">| <b>has: </b>[no] attach[ment[s]]</span>
+                        <span class="nowrap">| <b>has: </b>[no] [chain|body|attach[ment[s]]] warn[ing[s]]</span>
+                    </em></small>
                 </form>
             </div>
             <div class="filter-section" v-if="Object.keys(filters).length">
                 <h3>Current Filters</h3>
-                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button">
+                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button capsify">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
             </div>
@@ -236,7 +257,7 @@ const util = require('../util');
 const REFRESH_POLL_RATE = 15000;
 
 const PAGE_SIZES = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000, 10000];
-const DEFAULT_PAGE_SIZE = PAGE_SIZES[6];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[4];
 
 async function getExport(queryString, acceptType) {
     let result;
@@ -306,7 +327,6 @@ module.exports = {
         enteredText: '',
         filters: {},
         showDist: {},
-        showIntegrity: {},
         hideBody: {},
         selectablePageSizes: PAGE_SIZES,
         pageSize: DEFAULT_PAGE_SIZE,
@@ -314,7 +334,8 @@ module.exports = {
         offset: 0,
         ascending: 'no',
         exporting: false,
-        messages: []
+        messages: [],
+        integrityStatus: {}
     }),
     computed: {
         queryString: function() {
@@ -337,6 +358,9 @@ module.exports = {
                     go: () => { this.offset = first - 1; }
                 }
             });
+        },
+        scanPercentage: function() {
+            return Math.floor(100 * (this.integrityStatus.offset / this.integrityStatus.fullCount));
         }
     },
     watch: {
@@ -349,6 +373,15 @@ module.exports = {
         flipscure: function() { this.obscured = !this.obscured; },
         addTextFilters: function() {
             let text = this.enteredText.trim();
+
+            const warns = /(^|\W)has:\s*(no\s+)?((body|chain|prev(ious)?|attach(ment(s)?)?)\s+)?warn(ing(s)?)?(\W|$)/ig;
+            text = extract(text, warns, match => {
+                const yesNo = (match[2] || 'yes').toLowerCase().trim();
+                let type = (match[4] || 'any').toLowerCase().trim();
+                if (type.startsWith('attach')) type = 'attachments';
+                if (type.startsWith('prev')) type = 'previous';
+                this.$set(this.filters, `${type}Warnings`, { value: yesNo, presentation: `${yesNo === 'no' ? 'NO ' : ''}${type !== 'any' ? type + ' ' : ''}Warnings` });
+            });
 
             const attaches = /(^|\W)has:\s*(no\s+)?attach(ment(s)?)?(\W|$)/ig;
             text = extract(text, attaches, match => this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Attachments` }));
@@ -398,27 +431,21 @@ module.exports = {
                 right: !this.showDist[id]
             }
         },
-        toggleIntegrity: function(id) {
-            this.$set(this.showIntegrity, id, !this.showIntegrity[id])
-        },
-        integrityCaret: function(id) {
-            return {
-                down: !!this.showIntegrity[id],
-                right: !this.showIntegrity[id]
-            }
-        },
-        integrityVisible: function(id) {
-            return this.showIntegrity[id];
-        },
         integrityIssues: function(message) {
             let issues = [];
-
-            if (message.integrity.bodyMiss) issues.push('body');
-            if (message.integrity.attachmentsMiss) issues.push('attachments');
-            if (message.integrity.previousIdMiss) issues.push('previous-id');
-            if (message.integrity.chainMiss) issues.push('chain');
-
-            return issues.join(', ');
+            if (!message.integrity || !message.integrity.misses) return issues;
+            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Integrity Mismatch', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
+            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Integrity Mismatch', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
+            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message-ID Mismatch', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
+            if (message.integrity.misses.chainHash) issues.push({text: 'Integrity Chain Mismatch', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
+            return issues;
+        },
+        attestation: function(message) {
+            if (!message.integrity || !message.integrity.verifiedTimestamp) return null;
+            return {
+                time: moment(message.integrity.verifiedTimestamp * 1000).format('llll'),
+                url: `https://opentimestamps.org/info.html?ots=${message.integrity.upgradedOTS}`
+            };
         },
         toggleBody: function(id) {
             this.$set(this.hideBody, id, !this.hideBody[id])
@@ -446,6 +473,18 @@ module.exports = {
                 });
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
                 console.log('got messages', this.messages);
+            });
+
+            util.fetch.call(this, '/api/vault/integrity/v1')
+            .then(result => {
+                this.integrityStatus = result.theJson.status;
+                console.log('got integrity result', this.integrityStatus);
+            });
+        },
+        beginScan: function() {
+            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { }})
+            .then(result => {
+                console.log('initiated integrity scan', result);
             });
         },
         getExport: function() {
