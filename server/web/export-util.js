@@ -45,7 +45,7 @@ function htmlDoc({ query, exportDate, rows, tzoffset }) {
             <title>Vault Export on ${exportDate}</title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.css"/>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.0/semantic.min.js"></script>
 
             <style>
                 div.message-body { padding:5px; overflow: hidden; font-size: 17px; color: black; }
@@ -59,6 +59,7 @@ function htmlDoc({ query, exportDate, rows, tzoffset }) {
                 .hidden { display: none; }
                 .clickable { cursor: pointer; }
                 .query-item { padding:.25em; }
+                .integrity { color: #db2828!important; }
             </style>
         </head>
         <body>
@@ -122,14 +123,46 @@ function htmlRow(row, tzoffset) {
                 </div>
             </div>
             <div class="content ${row.attachmentIds.length ? '' : 'hidden'}">
-                ${row.attachmentIds.map((_, idx) =>
-            `<a href="${attachmentUrl(row, idx)}" class="butspacer ui compact mini button">
-                        <i class="download icon"></i> ${attachmentName(row, idx)}
-                    </a>`
-        ).join('')}
+                ${row.attachmentIds.map((_, idx) => 
+                `<a href="${attachmentUrl(row, idx)}" class="butspacer ui compact mini button">
+                    <i class="download icon"></i> ${attachmentName(row, idx)}
+                 </a>`).join('')}
+            </div>
+            <div class="content ${extConf(row, tzoffset).url ? '' : 'hidden'}">
+                <div class="description">
+                    <span data-tooltip="${extConf(row).hover}"><i class="${extConf(row, tzoffset).icon} icon"></i>
+                    <small><a href="${extConf(row, tzoffset).url}" target="_blank" >Verified Blockchain Checkpoint: ${extConf(row, tzoffset).time}</a></small></span>
+                </div>
+            </div>
+            <div class="content ${integrityIssues(row, tzoffset).length ? '' : 'hidden'}">
+                <div class="description integrity">
+                    <span><i class="exclamation triangle icon"></i> Integrity Alerts</span>
+                    <ul>
+                       ${integrityIssues(row, tzoffset).map(issue => `<li data-tooltip="${issue.time}" data-position="top left">${issue.text}</li>`).join('')}
+                    </ul>
+                </div>
             </div>
         </div>
     `;
+}
+
+function integrityIssues(row, tzoffset) {
+    let issues = [];
+    if (!row.integrity || !row.integrity.misses) return issues;
+    if (row.integrity.misses.mainHash) issues.push({ text: 'Envelope/Body Integrity Corruption', time: 'recorded ' + offsetTimeStr(moment.utc(row.integrity.misses.mainHash), tzoffset) });
+    if (row.integrity.misses.attachmentsHash) issues.push({ text: 'Attachments Integrity Corruption', time: 'recorded ' + offsetTimeStr(moment.utc(row.integrity.misses.attachmentsHash), tzoffset) });
+    if (row.integrity.misses.previousId) issues.push({ text: 'Previous-Message-ID Corruption', time: 'recorded ' + offsetTimeStr(moment.utc(row.integrity.misses.previousId), tzoffset) });
+    if (row.integrity.misses.chainHash) issues.push({ text: 'Integrity Chain Corruption', time: 'recorded ' + offsetTimeStr(moment.utc(row.integrity.misses.chainHash), tzoffset) });
+    return issues;
+}
+function extConf(row, tzoffset) {
+    if (!row.integrity || !row.integrity.verifiedTimestamp) return {time: '', url: '', icon: '', hover: ''};
+    return {
+        time: offsetTimeStr(moment.utc(row.integrity.verifiedTimestamp * 1000), tzoffset),
+        url: `https://opentimestamps.org/info.html?ots=${row.integrity.upgradedOTS}`,
+        icon: row.integrity.misses ? 'red exclamation triangle' : 'green check circle',
+        hover: row.integrity.misses ? 'WARNING: this confirms corrupt data -- click to view anyway' : 'click to view external blockchain confirmation',
+    };
 }
 
 function attachmentUrl(record, idx) {
@@ -179,6 +212,11 @@ function threadColor(id) {
 
 ///////////////////// CSV ///////////////////////
 
+function integrityAlerts(record) {
+    if (!record.integrity || !record.integrity.misses) return '';
+    return Object.keys(record.integrity.misses).reduce((r, k) => [...r, k], []).join('|');
+}
+
 const csvFields = [
     [(x, tzo) => offsetTimeStr(moment.utc(x.received), tzo), 'Received At (local to exporter)'],
     [x => x.messageId, 'Message ID'],
@@ -190,6 +228,7 @@ const csvFields = [
     [x => msgBodyText(x), 'Body Text'],
     [x => x.distribution.pretty, 'Distribution'],
     [x => x.attachmentIds.join('|'), 'Attachment IDs'],
+    [x => integrityAlerts(x), 'Integrity Alerts'],
 ];
 
 async function asyncCsvStringify(data) {

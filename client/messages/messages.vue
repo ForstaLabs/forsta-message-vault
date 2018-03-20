@@ -110,7 +110,7 @@
         left: 1.5em;
     }
     .integrity {
-        color: red!important;
+        color: #db2828!important;
     }
 </style>
 
