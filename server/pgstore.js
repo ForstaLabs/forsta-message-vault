@@ -161,8 +161,8 @@ class PGStore {
             threadId,
             from, fromId,
             to, toId,
-            needsIntegrity, hasIntegrity, needsOTS, hasOTS,
-            anyWarnings, chainWarnings, bodyWarnings, attachmentsWarnings, previousWarnings
+            needsIntegrity, hasIntegrity, needsOTS, hasOTS, confirmation,
+            anyCorruption, chainCorruption, mainCorruption, attachmentsCorruption, previousCorruption
         }) {
         // console.warn('TODO: Need to parameterize getMessage to make it safe!');
         const _selectfrom = `SELECT *, count(*) OVER() AS full_count FROM ${this.prefix}_message`;
@@ -186,16 +186,18 @@ class PGStore {
         if (hasIntegrity) predicates.push(`integrity IS NOT NULL`);
         if (needsOTS) predicates.push(`integrity->>'OTS' IS NULL`);
         if (hasOTS) predicates.push(`integrity->>'OTS' IS NOT NULL`);
-        if (chainWarnings === 'yes') predicates.push("integrity->>'misses'->>'chainHash' IS NOT NULL");
-        if (chainWarnings === 'no') predicates.push("integrity->>'misses'->>'chainHash' IS NULL");
-        if (bodyWarnings === 'yes') predicates.push("integrity->>'misses'->>'bodyHash' IS NOT NULL");
-        if (bodyWarnings === 'no') predicates.push("integrity->>'misses'->>'bodyHash' IS NULL");
-        if (attachmentsWarnings === 'yes') predicates.push("integrity->>'misses'->>'attachmentsHash' IS NOT NULL");
-        if (attachmentsWarnings === 'no') predicates.push("integrity->>'misses'->>'attachmentsHash' IS NULL");
-        if (previousWarnings === 'yes') predicates.push("integrity->>'misses'->>'previousId' IS NOT NULL");
-        if (previousWarnings === 'no') predicates.push("integrity->>'misses'->>'previousId' IS NULL");
-        if (anyWarnings === 'yes') predicates.push("integrity->>'misses' IS NOT NULL");
-        if (anyWarnings === 'no') predicates.push("integrity->>'misses' IS NULL");
+        if (chainCorruption === 'yes') predicates.push("integrity->'misses'->'chainHash' IS NOT NULL");
+        if (chainCorruption === 'no') predicates.push("integrity->'misses'->'chainHash' IS NULL");
+        if (mainCorruption === 'yes') predicates.push("integrity->'misses'->'mainHash' IS NOT NULL");
+        if (mainCorruption === 'no') predicates.push("integrity->'misses'->'mainHash' IS NULL");
+        if (attachmentsCorruption === 'yes') predicates.push("integrity->'misses'->'attachmentsHash' IS NOT NULL");
+        if (attachmentsCorruption === 'no') predicates.push("integrity->'misses'->'attachmentsHash' IS NULL");
+        if (previousCorruption === 'yes') predicates.push("integrity->'misses'->'previousId' IS NOT NULL");
+        if (previousCorruption === 'no') predicates.push("integrity->'misses'->'previousId' IS NULL");
+        if (anyCorruption === 'yes') predicates.push("integrity->'misses' IS NOT NULL");
+        if (anyCorruption === 'no') predicates.push("integrity->'misses' IS NULL");
+        if (confirmation === 'yes') predicates.push("integrity->'verifiedTimestamp' IS NOT NULL");
+        if (confirmation === 'no') predicates.push("integrity->'verifiedTimestamp' IS NULL");
         const _where = (predicates.length) ? `WHERE ${predicates.join(' AND ')}` : '';
 
         const _orderby = orderby ? `ORDER BY ${orderby} ${ascending === 'yes' ? 'ASC' : 'DESC'}` : '';

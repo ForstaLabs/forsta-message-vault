@@ -81,8 +81,7 @@ module.exports = function(callback) {
 
   // two concurrent streams from same source to concat release
   uncompressedStream = stream.pipe(clone());
-  // https://github.com/Semantic-Org/Semantic-UI/issues/6067
-  //compressedStream   = stream.pipe(clone());
+  compressedStream   = stream.pipe(clone());
 
   // uncompressed component css
   uncompressedStream

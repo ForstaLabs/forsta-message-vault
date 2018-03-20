@@ -48,6 +48,8 @@
     .capsify { text-transform: capitalize!important; }
     .nowrap { white-space: nowrap; }
     select.rightify { text-align-last: right; }
+    .emphasized { font-weight: bold; font-size:110%; }
+    .diminished { font-weight:lighter; font-style: italic; font-size:90%; }
 
     div.filter {
         position: sticky;
@@ -102,6 +104,11 @@
         bottom: 1.5em;
         right: 1.5em;
     }
+    div.scan {
+        position: fixed;
+        bottom: 1.5em;
+        left: 1.5em;
+    }
     .integrity {
         color: red!important;
     }
@@ -139,7 +146,7 @@
                 </div>
                 <div class="description">
                     <a @click="toggleDist(m.messageId)"><i class="caret icon" :class="distCaret(m.messageId)"></i> 
-                    {{m.recipientLabels.length}} recipient{{m.recipientLabels.length ? 's':''}}</a>
+                    {{countify(m.recipientLabels.length, 'recipient')}}</a>
                 </div>
                 <div v-show="showDist[m.messageId]" class="description">
                     <div v-for="(label,idx) in m.recipientLabels" :key="idx" class="recipients">
@@ -163,15 +170,15 @@
                     <i class="download icon"></i> {{attachmentName(m, i)}}
                 </a>
             </div>
-            <div class="content" v-if="attestation(m)">
-                <div class="description attestation">
-                    <span data-tooltip="click to view blockchain attestation"><i class="big green check circle icon"></i> 
-                    <a :href="attestation(m).url" target="_blank" >Verified Blockchain Attestation Checkpoint: {{attestation(m).time}}</a></span>
+            <div class="content" v-if="extConf(m)">
+                <div class="description">
+                    <span :data-tooltip="extConf(m).hover"><sui-icon :name="extConf(m).icon" />
+                    <small><a :href="extConf(m).url" target="_blank" >Verified Blockchain Checkpoint: {{extConf(m).time}}</a></small></span>
                 </div>
             </div>
             <div class="content" v-if="integrityIssues(m).length">
                 <div class="description integrity">
-                    <span><i class="exclamation triangle icon"></i> Integrity Warnings</span>
+                    <span><i class="exclamation triangle icon"></i> Integrity Alerts</span>
                     <ul>
                         <li v-for="issue in integrityIssues(m)" :data-tooltip="issue.time" data-position="top left">{{issue.text}}</li>
                     </ul>
@@ -193,17 +200,11 @@
                     <label>Obscure</label>
                 </div>
             </div>
-            <div class="filter-section">
-                <button class="ui button primary" :class="scanningClass" @click.prevent.stop="beginScan">Integrity Scan</button>
-            </div>
-            <div>
-              {{scanPercentage}}%
-            </div>
         </div>
     </div>
     <div class="theright">
         <div class="filter">
-            <h1 class="ruled">{{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</h1>
+            <h1 class="ruled">{{countify(fullCount, 'Result')}}</h1>
             <div class="filter-section ui form">
                 <form class="ui form">
                 <div class="fields">
@@ -225,11 +226,12 @@
                     </div>
                     <small><em>
                         <span class="nowrap">body words</span> 
-                        <span class="nowrap">| <b>title:</b> words</span> 
-                        <span class="nowrap">| <b>to:</b> fragment</span> 
-                        <span class="nowrap">| <b>from: </b>fragment</span> 
-                        <span class="nowrap">| <b>has: </b>[no] attach[ment[s]]</span>
-                        <span class="nowrap">| <b>has: </b>[no] [chain|body|attach[ment[s]]] warn[ing[s]]</span>
+                        <span class="nowrap">&nbsp;| <b>title:</b> words</span> 
+                        <span class="nowrap">&nbsp;| <b>to:</b> fragment</span> 
+                        <span class="nowrap">&nbsp;| <b>from: </b>fragment</span> 
+                        <span class="nowrap">&nbsp;| <b>has: </b>[no] attachments</span>
+                        <span class="nowrap">&nbsp;| <b>has: </b>[no] [main|attachments|chain] corruption</span>
+                        <span class="nowrap">&nbsp;| <b>has: </b>[no] confirmation</span>
                     </em></small>
                 </form>
             </div>
@@ -242,8 +244,51 @@
             <div class="filter-section">
             </div>
             <div v-if="fullCount" class="export">
-                <button class="ui fluid primary button" :class="{loading: exporting}" @click="getExport">Export {{fullCount}} Result{{fullCount == 1 ? '' : 's'}}</button>
+                <button class="ui fluid primary button" :class="{loading: exporting}" @click="getExport">Export {{countify(fullCount, 'Result')}}</button>
             </div>
+            <div class="scan">
+                <sui-button primary :icon="scanningIcon" @click="showScan=!showScan" content="Integrity" />
+            </div>
+            <sui-modal size="small" v-model="showScan">
+                <sui-modal-header>
+                    <b>Full Vault Integrity Scan</b>
+                </sui-modal-header>
+                <sui-modal-content>
+                    <sui-progress
+                        :state="scanState"
+                        indicating
+                        :percent="scanPercentage"
+                        :label="scanProgressLabel"
+                    />
+                    <sui-table striped fixed>
+                        <sui-table-body>
+                            <sui-table-row>
+                                <sui-table-cell text-align="right">Started {{timestamp(this.integrityStatus.started)}}</sui-table-cell>
+                                <sui-table-cell v-if="this.integrityStatus.finished">Finished {{timestamp(this.integrityStatus.finished)}}</sui-table-cell>
+                                <sui-table-cell class="diminished" v-else>Checking {{this.integrityStatus.offset}}-{{this.integrityStatus.offset + this.integrityStatus.limit}} of {{this.integrityStatus.fullCount}}...</sui-table-cell>
+                            </sui-table-row>
+                            <sui-table-row v-if="this.integrityStatus.mainHash" state="error" class="emphasized">
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Integrity Corruption</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.mainHash, 'Message')}}</sui-table-cell>
+                            </sui-table-row>
+                            <sui-table-row v-if="this.integrityStatus.attachmentsHash" state="error" class="emphasized">
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Attachments Integrity Corruption</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.attachmentsHash, 'Message')}}</sui-table-cell>
+                            </sui-table-row>
+                            <sui-table-row v-if="this.integrityStatus.chainHash" state="error" class="emphasized">
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Integrity Chain Corruption</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.chainHash, 'Message')}}</sui-table-cell>
+                            </sui-table-row>
+                            <sui-table-row v-if="this.integrityStatus.previousId" state="error" class="emphasized">
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Previous-Message-ID Corruption</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.previousId, 'Message')}}</sui-table-cell>
+                            </sui-table-row>
+                        </sui-table-body>
+                    </sui-table>
+                    <sui-button primary @click="beginScan" :icon="scanningIcon" :disabled="scanning" content="Initiate Full Integrity Scan" />
+                    <sui-button floated="right" @click="showScan=!showScan" content="Hide" />
+                </sui-modal-content>
+            </sui-modal> 
         </div>
     </div>
 </div>
@@ -255,6 +300,7 @@ const moment = require('moment');
 const util = require('../util');
 
 const REFRESH_POLL_RATE = 15000;
+const INTEGRITY_REFRESH_POLL_RATE = 1500;
 
 const PAGE_SIZES = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000, 10000];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[4];
@@ -323,7 +369,8 @@ module.exports = {
     data: () => ({ 
         global: shared.state,
         obscured: true,
-        interval: null,
+        backgroundInterval: null,
+        scanInterval: null,
         enteredText: '',
         filters: {},
         showDist: {},
@@ -335,7 +382,8 @@ module.exports = {
         ascending: 'no',
         exporting: false,
         messages: [],
-        integrityStatus: {}
+        integrityStatus: {},
+        showScan: false
     }),
     computed: {
         queryString: function() {
@@ -360,7 +408,21 @@ module.exports = {
             });
         },
         scanPercentage: function() {
-            return Math.floor(100 * (this.integrityStatus.offset / this.integrityStatus.fullCount));
+            const retval = Math.floor(100 * (this.integrityStatus.offset / this.integrityStatus.fullCount));
+            return isNaN(retval) ? 0 : retval;
+        },
+        scanProgressLabel: function() {
+            return `${this.scanPercentage}% Complete`;
+        },
+        scanning: function() {
+            return this.integrityStatus.started && !this.integrityStatus.finished;
+        },
+        scanningIcon: function() {
+            return this.scanning ? 'loading sync' : 'shield alternate';
+        },
+        scanState: function() {
+            const wellDone = this.integrityStatus.finished && (Date.now() - this.integrityStatus.finished > 3000)
+            return wellDone ? 'disabled' : 'active';
         }
     },
     watch: {
@@ -368,23 +430,32 @@ module.exports = {
             this.getMessages();
             window.scrollTo(0, 0);
         },
+        showScan: function(next, last) {
+            clearInterval(this.scanInterval);
+            if (next) {
+                this.scanInterval = setInterval(() => this.getIntegrityStatus(), INTEGRITY_REFRESH_POLL_RATE); 
+            }
+        }
     },
     methods: {
         flipscure: function() { this.obscured = !this.obscured; },
         addTextFilters: function() {
             let text = this.enteredText.trim();
 
-            const warns = /(^|\W)has:\s*(no\s+)?((body|chain|prev(ious)?|attach(ment(s)?)?)\s+)?warn(ing(s)?)?(\W|$)/ig;
-            text = extract(text, warns, match => {
+            const corrupties = /(^|\W)has:\s*(no\s+)?((main|chain|prev(ious)?|attach(ment(s)?)?)\s+)?corrupt(ion)?(\W|$)/ig;
+            text = extract(text, corrupties, match => {
                 const yesNo = (match[2] || 'yes').toLowerCase().trim();
                 let type = (match[4] || 'any').toLowerCase().trim();
                 if (type.startsWith('attach')) type = 'attachments';
                 if (type.startsWith('prev')) type = 'previous';
-                this.$set(this.filters, `${type}Warnings`, { value: yesNo, presentation: `${yesNo === 'no' ? 'NO ' : ''}${type !== 'any' ? type + ' ' : ''}Warnings` });
+                this.$set(this.filters, `${type}Corruption`, { value: yesNo, presentation: `${yesNo === 'no' ? 'NO ' : ''}${type !== 'any' ? type + ' ' : ''}Corruption` });
             });
 
             const attaches = /(^|\W)has:\s*(no\s+)?attach(ment(s)?)?(\W|$)/ig;
             text = extract(text, attaches, match => this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Attachments` }));
+
+            const confirms = /(^|\W)has:\s*(no\s+)?confirm(ation)?(\W|$)/ig;
+            text = extract(text, confirms, match => this.$set(this.filters, 'confirmation', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Confirmation` }));
 
             const tos = /(^|\W)to:\s*([.:@\w]+)/ig;
             text = extract(text, tos, match => this.$set(this.filters, 'to', { value: match[2], presentation: `To "${match[2]}"` }));
@@ -434,17 +505,19 @@ module.exports = {
         integrityIssues: function(message) {
             let issues = [];
             if (!message.integrity || !message.integrity.misses) return issues;
-            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Integrity Mismatch', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
-            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Integrity Mismatch', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
-            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message-ID Mismatch', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
-            if (message.integrity.misses.chainHash) issues.push({text: 'Integrity Chain Mismatch', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
+            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Integrity Corruption', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
+            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Integrity Corruption', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
+            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message-ID Corruption', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
+            if (message.integrity.misses.chainHash) issues.push({text: 'Integrity Chain Corruption', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
             return issues;
         },
-        attestation: function(message) {
+        extConf: function(message) {
             if (!message.integrity || !message.integrity.verifiedTimestamp) return null;
             return {
                 time: moment(message.integrity.verifiedTimestamp * 1000).format('llll'),
-                url: `https://opentimestamps.org/info.html?ots=${message.integrity.upgradedOTS}`
+                url: `https://opentimestamps.org/info.html?ots=${message.integrity.upgradedOTS}`,
+                icon: message.integrity.misses ? 'red exclamation triangle' : 'green check circle',
+                hover: message.integrity.misses ? 'WARNING: this confirms corrupt data -- click to view anyway' : 'click to view external blockchain confirmation',
             };
         },
         toggleBody: function(id) {
@@ -458,6 +531,10 @@ module.exports = {
         },
         bodyVisible: function(id) {
             return !this.hideBody[id];
+        },
+        backgroundRefresh: function() {
+            this.getMessages();
+            this.getIntegrityStatus();
         },
         getMessages: function() {
             const q = this.queryString;
@@ -474,17 +551,23 @@ module.exports = {
                 this.fullCount = (this.messages.length && this.messages[0].fullCount) || 0;
                 console.log('got messages', this.messages);
             });
-
+        },
+        getIntegrityStatus: function() {
             util.fetch.call(this, '/api/vault/integrity/v1')
             .then(result => {
                 this.integrityStatus = result.theJson.status;
                 console.log('got integrity result', this.integrityStatus);
             });
         },
+        countify: function(n, label) {
+            return `${n} ${n == 1 ? label : (label + 's')}`;
+        },
         beginScan: function() {
+            this.integrityStatus = {started:Date.now()};
             util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { }})
             .then(result => {
                 console.log('initiated integrity scan', result);
+                this.getIntegrityStatus();
             });
         },
         getExport: function() {
@@ -522,16 +605,20 @@ module.exports = {
             const hue = (val % 90) * 4;
             const lum = (val % 5) * 10 + 20;
             return { color: `hsl(${hue}, 100%, ${lum}%)` };
+        },
+        timestamp: function(ts) {
+            return ts ? moment(ts).format('llll') : '';
         }
     },
     mounted: function() {
         util.checkPrerequisites.call(this);
 
-        this.getMessages();
-        this.interval = setInterval(() => this.getMessages(), REFRESH_POLL_RATE); 
+        this.backgroundRefresh();
+        this.backgroundInterval = setInterval(() => this.backgroundRefresh(), REFRESH_POLL_RATE); 
     },
     beforeDestroy: function() {
-        clearInterval(this.interval);
+        clearInterval(this.backgroundInterval);
+        clearInterval(this.scanInterval);
     }
 }
 </script>

@@ -2,7 +2,9 @@ addEventListener('load', main);
 function main() {
     const Vue = require('vue');
     const VueRouter = require('vue-router');
+    const SuiVue = require('semantic-ui-vue');
     Vue.use(VueRouter);
+    Vue.use(SuiVue.default);
 
     const Root = require('./root.vue');
     const routes = [

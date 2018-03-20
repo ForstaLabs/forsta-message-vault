@@ -14,8 +14,7 @@ const OpenTimestamps = require('javascript-opentimestamps');
 
 const AUTH_FAIL_THRESHOLD = 10;
 
-// const BACKGROUND_FREQUENCY_DELAY = 60 * 60 * 1000; // 1 hour
-const BACKGROUND_FREQUENCY_DELAY = 2 * 60 * 1000; // 2 minutes
+const BACKGROUND_FREQUENCY_DELAY = 60 * 60 * 1000; // 1 hour
 const OTS_ROLLING_VERIFY_COUNT = 24;
 
 const objectHashConfig = {
@@ -371,13 +370,13 @@ class ForstaBot {
     }
 
     async verifyIntegrityChain(force=false) {
-        const batchThrottle = 1000; // delay after checking each message batch of size limit
+        const batchThrottle = 200; // delay after checking each message batch of size limit
         let previousId = null;
         let previousChainHash = null;
 
         let status = {
             started: Date.now(),
-            limit: 3,
+            limit: 50,
             offset: 0,
             fullCount: 0,
             mainHash: 0,
@@ -388,7 +387,7 @@ class ForstaBot {
 
         console.log('\n\nstarting full verification of integrity chain\n\n');
         const existing = await relay.storage.get('integrity', 'status');
-        if (existing && !existing.ended) {
+        if (existing && !existing.finished) {
             if (force) {
                 console.log('starting new integrity chain even though one appears to be already running:', existing);
             } else {
@@ -428,13 +427,13 @@ class ForstaBot {
 
                 status.offset++;
                 previousId = message.messageId;
-                previousChainHash = integrity.chainHash;
+                previousChainHash = chainHash;
             }
 
             await sleep(batchThrottle);
             if (status.offset >= status.fullCount) break;
         }
-        status.ended = Date.now();
+        status.finished = Date.now();
         await relay.storage.set('integrity', 'status', status);
         console.log(`integrity chain verification complete`, status);
     }
@@ -474,20 +473,15 @@ class ForstaBot {
         for (let message of messages) {
             console.log(`checking OTS info for ${message.messageId}`);
             const integrity = message.integrity;
-            // console.log(`\n\noriginal OTS: https://opentimestamps.org/info.html?ots=${integrity.OTS}\n\n`);
             let otsFile = Uint8Array.from(new Buffer(integrity.OTS, 'hex'));
             const detachedOts = OpenTimestamps.DetachedTimestampFile.deserialize(otsFile);
-            // const infoResult = OpenTimestamps.info(detachedOts); // or https://opentimestamps.org/info.html?ots=<otshex>
-            // console.log('...OTS info is', infoResult, '\n\n');
             const detached = OpenTimestamps.DetachedTimestampFile.fromHash(new OpenTimestamps.Ops.OpSHA256(), OpenTimestamps.Utils.hexToBytes(integrity.chainHash));
-            // console.log('...verifying OTS');
             const verification = await OpenTimestamps.verify(detachedOts, detached);
             if (verification) {
                 console.log(`...verified timestamp: ${verification}`);
                 integrity.verifiedTimestamp = verification;
                 integrity.upgradedOTS = Buffer.from(detachedOts.serializeToBytes()).toString('hex'); // hex of their Uint8Array
                 await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
-                // console.log(`\n\nupgraded OTS: https://opentimestamps.org/info.html?ots=${integrity.upgradedOTS}\n\n`);
                 console.log(`... and upgraded OTS`);
             }
             await sleep(5000); // be polite with opentimestamps.org
