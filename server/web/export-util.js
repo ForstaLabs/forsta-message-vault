@@ -131,7 +131,7 @@ function htmlRow(row, tzoffset) {
             <div class="content ${extConf(row, tzoffset).url ? '' : 'hidden'}">
                 <div class="description">
                     <span data-tooltip="${extConf(row).hover}"><i class="${extConf(row, tzoffset).icon} icon"></i>
-                    <small><a href="${extConf(row, tzoffset).url}" target="_blank" >Verified Blockchain Checkpoint: ${extConf(row, tzoffset).time}</a></small></span>
+                    <small><a href="${extConf(row, tzoffset).url}" target="_blank" >Confirmed Blockchain Checkpoint: ${extConf(row, tzoffset).time}</a></small></span>
                 </div>
             </div>
             <div class="content ${integrityIssues(row, tzoffset).length ? '' : 'hidden'}">

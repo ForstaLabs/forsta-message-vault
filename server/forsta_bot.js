@@ -9,6 +9,7 @@ const PGStore = require("./pgstore");
 const uuid4 = require("uuid/v4");
 const moment = require("moment");
 const words = require("./authwords");
+const _ = require("lodash");
 const objectHash = require("object-hash");
 const OpenTimestamps = require('javascript-opentimestamps');
 
@@ -25,6 +26,34 @@ const objectHashConfig = {
 
 async function sleep(ms) { 
     return await new Promise(resolve => setTimeout(resolve, ms)); 
+}
+
+// queue up long-running async work IN ONE SERVER so it doesn't interleave
+// (todo: this needs to be upgraded to use a db mutexy sort of thing for multiple servers too coordinate)
+let waiting = [];
+let underway = null;
+async function serialize(name, work) {
+    if (name) console.log('queued', name);
+    waiting.push(work);
+    while (waiting[0] !== work) {
+        try {
+            await underway;
+        } catch (e) {
+            // these are not the errors you are looking for
+        }
+    }
+    try {
+        if (name) console.log('started performing', name);
+        underway = work();
+        const retval = await underway;
+        waiting.shift();
+        if (name) console.log('happily completed', name);
+        return retval;
+    } catch (e) {
+        waiting.shift();
+        if (name) console.log('CAUGHT-completed', name);
+        throw e;
+    }
 }
 
 class ForstaBot {
@@ -163,7 +192,7 @@ class ForstaBot {
             });
         }
 
-        await this.addIntegrity(); 
+        this.addIntegrity();
     }
 
     async incrementAuthFailCount() {
@@ -344,8 +373,8 @@ class ForstaBot {
         return this.getAdministrators();
     }
 
-
-    async addIntegrity() {
+    async addIntegrity() { await serialize('add integrity', ()=>this.serializedAddIntegrity()); }
+    async serializedAddIntegrity() {
         const previous = await this.pgStore.getMessages({ limit: 1, hasIntegrity: true, orderby: 'received', ascending: 'no' });
         let previousId = previous.length ? previous[0].messageId : null;
         let previousChainHash = previous.length ? previous[0].integrity.chainHash : null;
@@ -353,7 +382,6 @@ class ForstaBot {
         const messages = await this.pgStore.getMessages({ needsIntegrity: true, orderby: 'received', ascending: 'yes' });
 
         for (let message of messages) {
-            console.log(`adding integrity to ${message.messageId}`);
             const mainHash = objectHash(message, objectHashConfig);
             let attachments = {};
             for (let aid of message.attachmentIds) {
@@ -369,7 +397,8 @@ class ForstaBot {
         }
     }
 
-    async verifyIntegrityChain(force=false) {
+    async verifyIntegrityChain(force=false) { await serialize('verify integrity', ()=>this.serializedVerifyIntegrityChain(force)); }
+    async serializedVerifyIntegrityChain(force=false) {
         const batchThrottle = 200; // delay after checking each message batch of size limit
         let previousId = null;
         let previousChainHash = null;
@@ -397,32 +426,61 @@ class ForstaBot {
         }
 
         while (true) {
+            const demoCorruption = await this.demoCorruptionStatus();
             const messages = await this.pgStore.getMessages({ limit: status.limit, offset: status.offset, hasIntegrity: true, orderby: 'received', ascending: 'yes' });
             status.fullCount = Math.max(status.fullCount, messages.length ? messages[0].fullCount : 0);
-            console.log(`retrieved ${status.offset + 1}-${status.offset + messages.length} of ${status.fullCount}`);
             await relay.storage.set('integrity', 'status', status);
 
             for (let message of messages) {
                 console.log(`checking integrity of ${message.messageId}`);
+
+                if (demoCorruption.mainHash === message.messageId) message.corrupt = true;
                 const mainHash = objectHash(message, objectHashConfig);
                 let attachments = {};
                 for (let aid of message.attachmentIds) {
                     attachments[aid] = await this.pgStore.getAttachment(aid);
                 }
+                if (demoCorruption.attachmentsHash === message.messageId) attachments.corrupt = true;
                 const attachmentsHash = objectHash(attachments, objectHashConfig);
                 const chainHash = objectHash({ mainHash, attachmentsHash, previousChainHash }, objectHashConfig);
                 const now = Date.now();
                 let integrity = message.integrity;
-                let misses = integrity.misses || {};
+                let misses = Object.assign({}, integrity.misses);
 
-                if (mainHash !== integrity.mainHash) misses.mainHash = now;
-                if (attachmentsHash !== integrity.attachmentsHash) misses.attachmentsHash = now;
-                if (chainHash !== integrity.chainHash) misses.chainHash = now;
-                if (previousId !== integrity.previousId) misses.previousId = now;
+                if (mainHash !== integrity.mainHash) {
+                    misses.mainHash = now;
+                } else {
+                    delete misses.mainHash;
+                }
+                if (attachmentsHash !== integrity.attachmentsHash) {
+                    misses.attachmentsHash = now;
+                } else {
+                    delete misses.attachmentsHash;
+                }
+                if (chainHash !== integrity.chainHash) {
+                    misses.chainHash = now;
+                } else {
+                    delete misses.chainHash;
+                }
+                if (previousId !== integrity.previousId) {
+                    misses.previousId = now;
+                } else {
+                    delete misses.previousId;
+                }
 
-                if (Object.keys(misses).length) {
-                    Object.keys(misses).forEach(k => { status[k] += 1;});
-                    await this.pgStore.updateIntegrity(message.messageId, Object.assign(integrity, { misses }));
+                Object.keys(misses).forEach(k => { status[k] += 1;});
+
+                if (_.isEqual(integrity.misses, {})) integrity.misses = { sigh: true };
+
+                if (! _.isEqual(integrity.misses || {}, misses)) {
+                    if (Object.keys(misses).length) {
+                        integrity.misses = misses;
+                    } else {
+                        delete integrity.misses;
+                    }
+
+                    console.log('... updating integrity with misses:', misses);
+                    await this.pgStore.updateIntegrity(message.messageId, integrity);
                 }
 
                 status.offset++;
@@ -442,8 +500,8 @@ class ForstaBot {
         return await relay.storage.get('integrity', 'status');
     }
 
-    async addOpenTimeStamp() {
-        await this.addIntegrity();
+    async addOpenTimeStamp() { await serialize('add open time stamp', ()=>this.serializedAddOpenTimeStamp()); }
+    async serializedAddOpenTimeStamp() {
         const topNoOTS = await this.pgStore.getMessages({ hasIntegrity: true, needsOTS: true, limit: 1, orderby: 'received', ascending: 'no' });
         if (!topNoOTS.length) return;
 
@@ -466,12 +524,11 @@ class ForstaBot {
         }
     }
 
-
-    async verifyAndUpgradeOpenTimeStamps(messages) {
-        console.log(`about to verify and upgrade OTS info on ${messages.length} messages`);
-
+    async verifyAndUpgradeOpenTimeStamps() { await serialize('verify and upgrade open time stamps', ()=>this.serializedVerifyAndUpgradeOpenTimeStamps()); }
+    async serializedVerifyAndUpgradeOpenTimeStamps() {
+        const messages = await this.pgStore.getMessages({ hasOTS: true, limit: OTS_ROLLING_VERIFY_COUNT, orderby: 'received', ascending: 'no' });
         for (let message of messages) {
-            console.log(`checking OTS info for ${message.messageId}`);
+            console.log(`checking OTS info for ${message.messageId}...`);
             const integrity = message.integrity;
             let otsFile = Uint8Array.from(new Buffer(integrity.OTS, 'hex'));
             const detachedOts = OpenTimestamps.DetachedTimestampFile.deserialize(otsFile);
@@ -491,12 +548,33 @@ class ForstaBot {
     async backgroundWork() {
         console.log('background work starting');
         const startTime = Date.now();
+        await this.addIntegrity();
         await this.addOpenTimeStamp();
-
-        const messages = await this.pgStore.getMessages({ hasOTS: true, limit: OTS_ROLLING_VERIFY_COUNT, orderby: 'received', ascending: 'no' });
-        await this.verifyAndUpgradeOpenTimeStamps(messages);
+        await this.verifyAndUpgradeOpenTimeStamps();
         const stopTime = Date.now();
         console.log(`\nbackground work finished (took ${stopTime-startTime}ms)\n\n\n`);
+    }
+
+    async demoCorruptionToggle(category) {
+        const demoStatus = await this.demoCorruptionStatus();
+
+        let victim;
+        if (demoStatus[category]) {
+            delete demoStatus[category];
+        } else {
+            const [countProbe] = await this.pgStore.getMessages({ hasIntegrity: true, limit: 1 });
+            if (!countProbe || !countProbe.fullCount) return demoStatus;
+            const offset = Math.floor(countProbe.fullCount * Math.random());
+            [victim] = await this.pgStore.getMessages({ hasIntegrity: true, limit: 1, offset });
+            if (!victim) throw `random corruption victim at offset ${offset} didn't work out!`;
+            demoStatus[category] = victim.messageId;
+        }
+        await relay.storage.set('integrity', 'demo', demoStatus);
+        return demoStatus;
+    }
+
+    async demoCorruptionStatus() {
+        return await relay.storage.get('integrity', 'demo', {});
     }
 }
 

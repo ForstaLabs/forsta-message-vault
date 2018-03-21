@@ -159,6 +159,7 @@ class PGStore {
             body, title,
             attachments,
             threadId,
+            messageId,
             from, fromId,
             to, toId,
             needsIntegrity, hasIntegrity, needsOTS, hasOTS, confirmation,
@@ -176,6 +177,7 @@ class PGStore {
         if (body) predicates.push(`ts_main @@ plainto_tsquery('${body}')`);
         if (title) predicates.push(`ts_title @@ plainto_tsquery('${title}')`);
         if (threadId) predicates.push(`thread_id = '${threadId}'`);
+        if (messageId) predicates.push(`message_id = '${messageId}'`);
         if (from) predicates.push(`sender_label ILIKE '%${from}%'`);
         if (fromId) predicates.push(`sender_id = '${fromId}'`);
         if (to) predicates.push(`recipient_labels ILIKE '%${to}%'`);

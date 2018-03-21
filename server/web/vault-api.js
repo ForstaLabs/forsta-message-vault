@@ -65,7 +65,6 @@ class VaultAPIv1 extends APIHandler {
     }
 
     async onGetMessages(req, res, next) {
-        console.log('query parameters are', req.query);
         const rows = await this.server.bot.pgStore.getMessages(req.query);
         res.status(200).json({messages: rows});
     }
@@ -81,14 +80,19 @@ class VaultAPIv1 extends APIHandler {
     }
 
     async onGetIntegrity(req, res, next) {
-        console.log('getting integrity scan status');
         const status = await this.server.bot.integrityChainVerificationStatus();
-        console.log('returning integrity scan status', status);
-        res.status(200).json({status});
+        const demoCorruptionStatus = await this.server.bot.demoCorruptionStatus();
+        res.status(200).json({status, demoCorruptionStatus});
     }
 
     async onPostIntegrity(req, res, next) {
         console.log('starting integrity scan');
+        const category = req.body.demoCorruptionToggle;
+        if (category) {
+            const result = await this.server.bot.demoCorruptionToggle(category);
+            res.status(200).json(result);
+            return;
+        }
         const force = req.body.force;
         if (force) {
             console.log('NOTE: forcing integrity scan');

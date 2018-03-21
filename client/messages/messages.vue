@@ -44,7 +44,7 @@
     div.filter-section {
         padding-bottom: 2.5em;
     }
-    .clickable { cursor: pointer; }
+    .clickable { cursor: pointer!important; }
     .capsify { text-transform: capitalize!important; }
     .nowrap { white-space: nowrap; }
     select.rightify { text-align-last: right; }
@@ -173,7 +173,7 @@
             <div class="content" v-if="extConf(m)">
                 <div class="description">
                     <span :data-tooltip="extConf(m).hover"><sui-icon :name="extConf(m).icon" />
-                    <small><a :href="extConf(m).url" target="_blank" >Verified Blockchain Checkpoint: {{extConf(m).time}}</a></small></span>
+                    <small><a :href="extConf(m).url" target="_blank" >Confirmed Blockchain Checkpoint: {{extConf(m).time}}</a></small></span>
                 </div>
             </div>
             <div class="content" v-if="integrityIssues(m).length">
@@ -286,7 +286,37 @@
                         </sui-table-body>
                     </sui-table>
                     <sui-button primary @click="beginScan" :icon="scanningIcon" :disabled="scanning" content="Initiate Full Integrity Scan" />
+                    <sui-button basic @click="showDemo=!showDemo" content="Simulated Corruption" />
                     <sui-button floated="right" @click="showScan=!showScan" content="Hide" />
+                </sui-modal-content>
+            </sui-modal> 
+            <sui-modal size="tiny" v-model="showDemo">
+                <sui-modal-header>
+                    <b>Simulate the Effect of...</b>
+                </sui-modal-header>
+                <sui-modal-content>
+                    <p class="integrity">These controls simulate changes in randomly-chosen messages.</p>
+                    <p>
+                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('mainHash')">
+                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.mainHash">
+                            <label class="clickable" @click.prevent><b>Envelope/Body Corruption</b></label>
+                        </div>
+                        <br /><i><small>This integrity check detects any changes in body, timing, and distribution.</small></i>
+                    </p>
+                    <p>
+                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('attachmentsHash')">
+                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.attachmentsHash">
+                            <label class="clickable" @click.prevent><b>Attachments Corruption</b></label>
+                        </div>
+                        <br /><i><small>This integrity check detects any changes in attached data.</small></i>
+                    </p>
+                    <p>
+                        <b>Chain Corruption</b> (will be caused by either of the above)
+                        <br /><i><small>This integrity check detects any message insertion/deletion/reordering.</small></i>
+                    </p>
+                    <sui-button floated="right" @click="showDemo=!showDemo" content="Close" />
+                    <br />
+                    <br />
                 </sui-modal-content>
             </sui-modal> 
         </div>
@@ -383,7 +413,9 @@ module.exports = {
         exporting: false,
         messages: [],
         integrityStatus: {},
-        showScan: false
+        demoCorruptionStatus: {},
+        showScan: false,
+        showDemo: false
     }),
     computed: {
         queryString: function() {
@@ -556,7 +588,9 @@ module.exports = {
             util.fetch.call(this, '/api/vault/integrity/v1')
             .then(result => {
                 this.integrityStatus = result.theJson.status;
-                console.log('got integrity result', this.integrityStatus);
+                this.demoCorruptionStatus = result.theJson.demoCorruptionStatus;
+                console.log('got integrity status', this.integrityStatus);
+                console.log('got demo corruption status', this.demoCorruptionStatus);
             });
         },
         countify: function(n, label) {
@@ -608,6 +642,13 @@ module.exports = {
         },
         timestamp: function(ts) {
             return ts ? moment(ts).format('llll') : '';
+        },
+        demoToggle(category) {
+            this.demoCorruptionStatus[category] = !this.demoCorruptionStatus[category];
+            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { demoCorruptionToggle: category }})
+            .then(result => {
+                this.demoCorruptionStatus = result.theJson;
+            });
         }
     },
     mounted: function() {
