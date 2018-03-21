@@ -2,8 +2,13 @@ Forsta Message Vault
 ========
 This is a bot that performs secure autonomous monitoring of 
 an entire organization's messaging traffic, storing all messages 
-and useful metadata to support basic forensic searching and retrieval 
-via a web-based UI. 
+and useful metadata to support basic forensic investigation and export
+via a web-based UI.
+
+Integrity of all data and its appearance through time
+is ensured via SHA256 fingerprints and Merkle-chains; proof of no regeneration
+of fingerprints is ensured via external blockchain association 
+(using opentimestamps.org).
 
 This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) 
 codebase, which you can use for secure message receipt, processing, storage, and/or transmission 

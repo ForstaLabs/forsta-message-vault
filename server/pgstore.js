@@ -26,8 +26,20 @@ class PGStore {
                 attachment_ids   uuid[],
 
                 ts_main          tsvector,
-                ts_title         tsvector
+                ts_title         tsvector,
+                integrity        jsonb
             );`;
+
+        this.queryAddIntegrityColumnIfNeeded = `
+            DO $$ 
+                BEGIN
+                    BEGIN
+                        ALTER TABLE ${this.prefix}_message ADD COLUMN integrity jsonb;
+                    EXCEPTION
+                        WHEN duplicate_column THEN RAISE NOTICE 'column integrity already exists in ${this.prefix}_message.';
+                    END;
+                END;
+            $$`;
 
         this.queryCreateAttachmentTableIfNeeded = `
             CREATE TABLE IF NOT EXISTS ${this.prefix}_attachment (
@@ -51,10 +63,17 @@ class PGStore {
                 recipient_labels,
                 attachment_ids,
                 ts_main,
-                ts_title
+                ts_title,
+                integrity
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_tsvector($11), to_tsvector($12)
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_tsvector($11), to_tsvector($12), $13
             )`;
+        
+        this.queryUpdateIntegrity = `
+            UPDATE ${this.prefix}_message
+            SET integrity = $2
+            WHERE message_id = $1;
+        `;
 
         this.queryAddAttachment = `
             INSERT INTO ${this.prefix}_attachment (
@@ -76,6 +95,7 @@ class PGStore {
         await this.client.connect();
         return [
             this.client.query(this.queryCreateMessageTableIfNeeded),
+            this.client.query(this.queryAddIntegrityColumnIfNeeded),
             this.client.query(this.queryCreateAttachmentTableIfNeeded)
         ];
     }
@@ -99,7 +119,8 @@ class PGStore {
             recipientLabels,
             attachmentIds,
             tsMain,
-            tsTitle
+            tsTitle,
+            integrity
         } = entry;
 
         const result = await this.client.query(this.queryAddMessage, [
@@ -114,8 +135,17 @@ class PGStore {
             recipientLabels && recipientLabels.join(ARRAY_SEPARATOR),
             attachmentIds,
             tsMain,
-            tsTitle
+            tsTitle,
+            integrity
         ]);
+        if (result.rowCount !== 1)
+            throw new Error("Failure in postgres message insert");
+        
+        return result;
+    }
+
+    async updateIntegrity(messageId, integrity) {
+        const result = await this.client.query(this.queryUpdateIntegrity, [messageId, integrity]);
         if (result.rowCount !== 1)
             throw new Error("Failure in postgres message insert");
         
@@ -130,8 +160,11 @@ class PGStore {
             attachments,
             threadId,
             from, fromId,
-            to, toId }) {
-        console.warn('TODO: Need to parameterize getMessage to make it safe!');
+            to, toId,
+            needsIntegrity, hasIntegrity, needsOTS, hasOTS, confirmation,
+            anyCorruption, chainCorruption, mainCorruption, attachmentsCorruption, previousCorruption
+        }) {
+        // console.warn('TODO: Need to parameterize getMessage to make it safe!');
         const _selectfrom = `SELECT *, count(*) OVER() AS full_count FROM ${this.prefix}_message`;
 
         const _limit = limit ? `LIMIT ${limit}` : '';
@@ -149,6 +182,22 @@ class PGStore {
         if (toId) predicates.push(`recipient_ids @> ARRAY['${toId}'::uuid]`);
         if (attachments === 'yes') predicates.push('array_length(attachment_ids, 1) > 0');
         if (attachments === 'no') predicates.push(`attachment_ids = '{}'`);
+        if (needsIntegrity) predicates.push(`integrity IS NULL`);
+        if (hasIntegrity) predicates.push(`integrity IS NOT NULL`);
+        if (needsOTS) predicates.push(`integrity->>'OTS' IS NULL`);
+        if (hasOTS) predicates.push(`integrity->>'OTS' IS NOT NULL`);
+        if (chainCorruption === 'yes') predicates.push("integrity->'misses'->'chainHash' IS NOT NULL");
+        if (chainCorruption === 'no') predicates.push("integrity->'misses'->'chainHash' IS NULL");
+        if (mainCorruption === 'yes') predicates.push("integrity->'misses'->'mainHash' IS NOT NULL");
+        if (mainCorruption === 'no') predicates.push("integrity->'misses'->'mainHash' IS NULL");
+        if (attachmentsCorruption === 'yes') predicates.push("integrity->'misses'->'attachmentsHash' IS NOT NULL");
+        if (attachmentsCorruption === 'no') predicates.push("integrity->'misses'->'attachmentsHash' IS NULL");
+        if (previousCorruption === 'yes') predicates.push("integrity->'misses'->'previousId' IS NOT NULL");
+        if (previousCorruption === 'no') predicates.push("integrity->'misses'->'previousId' IS NULL");
+        if (anyCorruption === 'yes') predicates.push("integrity->'misses' IS NOT NULL");
+        if (anyCorruption === 'no') predicates.push("integrity->'misses' IS NULL");
+        if (confirmation === 'yes') predicates.push("integrity->'verifiedTimestamp' IS NOT NULL");
+        if (confirmation === 'no') predicates.push("integrity->'verifiedTimestamp' IS NULL");
         const _where = (predicates.length) ? `WHERE ${predicates.join(' AND ')}` : '';
 
         const _orderby = orderby ? `ORDER BY ${orderby} ${ascending === 'yes' ? 'ASC' : 'DESC'}` : '';
@@ -170,6 +219,7 @@ class PGStore {
                 recipientLabels: row.recipient_labels.split(ARRAY_SEPARATOR),
                 recipientIds: row.recipient_ids,
                 attachmentIds: row.attachment_ids,
+                integrity: row.integrity,
                 fullCount: row.full_count
             };
         });
