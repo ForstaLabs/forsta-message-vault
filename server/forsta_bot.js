@@ -419,13 +419,13 @@ class ForstaBot {
             previousId: 0
         };
 
-        console.log('\n\nstarting full verification of integrity chain\n\n');
+        console.log('\n\nstarting full verification of vault integrity\n\n');
         const existing = await relay.storage.get('integrity', 'status');
         if (existing && !existing.finished) {
             if (force) {
-                console.log('starting new integrity chain even though one appears to be already running:', existing);
+                console.log('starting new integrity scan even though one appears to be already running:', existing);
             } else {
-                console.log('abandoning new integrity chain check because one appears to be already running:', existing);
+                console.log('abandoning new integrity scan because one appears to be already running:', existing);
                 return;
             }
         }
@@ -498,12 +498,12 @@ class ForstaBot {
         }
         status.finished = Date.now();
         await relay.storage.set('integrity', 'status', status);
-        console.log(`integrity chain verification complete`, status);
+        console.log(`integrity scan complete`, status);
 
         let report = [];
-        if (status.mainHash) report.push(`Envelope/Body Integrity Corruption: ${countify(status.mainHash, 'Message')}`);
-        if (status.attachmentsHash) report.push(`Attachments Integrity Corruption: ${countify(status.attachmentsHash, 'Message')}`);
-        if (status.chainHash) report.push(`Integrity Chain Corruption: ${countify(status.chainHash, 'Message')}`);
+        if (status.mainHash) report.push(`Envelope/Body Corruption: ${countify(status.mainHash, 'Message')}`);
+        if (status.attachmentsHash) report.push(`Attachments Corruption: ${countify(status.attachmentsHash, 'Message')}`);
+        if (status.chainHash) report.push(`Message Chain Corruption: ${countify(status.chainHash, 'Message')}`);
         if (status.previousId) report.push(`Previous-ID Misses: ${countify(status.previousId, 'Message')}`);
 
         if (report.length) {

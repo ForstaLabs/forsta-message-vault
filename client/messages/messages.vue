@@ -268,19 +268,19 @@
                                 <sui-table-cell class="diminished" v-else>Checking {{this.integrityStatus.offset}}-{{this.integrityStatus.offset + this.integrityStatus.limit}} of {{this.integrityStatus.fullCount}}...</sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.mainHash" state="error" class="emphasized">
-                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Integrity Corruption</sui-table-cell>
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Corruption</sui-table-cell>
                                 <sui-table-cell>{{countify(this.integrityStatus.mainHash, 'Message')}}</sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.attachmentsHash" state="error" class="emphasized">
-                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Attachments Integrity Corruption</sui-table-cell>
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Attachments Corruption</sui-table-cell>
                                 <sui-table-cell>{{countify(this.integrityStatus.attachmentsHash, 'Message')}}</sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.chainHash" state="error" class="emphasized">
-                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Integrity Chain Corruption</sui-table-cell>
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Message Chain Corruption</sui-table-cell>
                                 <sui-table-cell>{{countify(this.integrityStatus.chainHash, 'Message')}}</sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.previousId" state="error" class="emphasized">
-                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Previous-Message-ID Corruption</sui-table-cell>
+                                <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Previous-Message Misses</sui-table-cell>
                                 <sui-table-cell>{{countify(this.integrityStatus.previousId, 'Message')}}</sui-table-cell>
                             </sui-table-row>
                         </sui-table-body>
@@ -311,7 +311,7 @@
                         <br /><i><small>This integrity check detects any changes in attached data.</small></i>
                     </p>
                     <p>
-                        <b>Chain Corruption</b> (will be caused by either of the above)
+                        <b>Message Chain Corruption</b> (will be caused by either of the above)
                         <br /><i><small>This integrity check detects any message insertion/deletion/reordering.</small></i>
                     </p>
                     <sui-button floated="right" @click="showDemo=!showDemo" content="Close" />
@@ -537,10 +537,10 @@ module.exports = {
         integrityIssues: function(message) {
             let issues = [];
             if (!message.integrity || !message.integrity.misses) return issues;
-            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Integrity Corruption', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
-            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Integrity Corruption', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
-            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message-ID Corruption', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
-            if (message.integrity.misses.chainHash) issues.push({text: 'Integrity Chain Corruption', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
+            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Corruption', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
+            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Corruption', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
+            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message Mismatches', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
+            if (message.integrity.misses.chainHash) issues.push({text: 'Message Chain Corruption', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
             return issues;
         },
         extConf: function(message) {
