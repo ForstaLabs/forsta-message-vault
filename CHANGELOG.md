@@ -1,5 +1,8 @@
 # Change Log
 
+- **Include website url** in authorized-user broadcasts, if/as provided by env WEBSITE_URL.
+- **Broadcast failures** found by integrity-scan to authorized users.
+
 ## [0.5.0]
 - **Internal Integrity with External Blockchain Attestation** of all message data. 
   **First**, all messages get a SHA256 integrity hash of the main envelope/body and another
