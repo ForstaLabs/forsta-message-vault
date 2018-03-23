@@ -28,6 +28,10 @@ async function sleep(ms) {
     return await new Promise(resolve => setTimeout(resolve, ms)); 
 }
 
+function countify(n, label) {
+    return `${n} ${n == 1 ? label : (label + 's')}`;
+}
+
 // queue up long-running async work IN ONE SERVER so it doesn't interleave
 // (todo: this needs to be upgraded to use a db mutexy sort of thing for multiple servers too coordinate)
 let waiting = [];
@@ -494,6 +498,17 @@ class ForstaBot {
         status.finished = Date.now();
         await relay.storage.set('integrity', 'status', status);
         console.log(`integrity chain verification complete`, status);
+
+        let report = [];
+        if (status.mainHash) report.push(`Envelope/Body Integrity Corruption: ${countify(status.mainHash, 'Message')}`);
+        if (status.attachmentsHash) report.push(`Attachments Integrity Corruption: ${countify(status.attachmentsHash, 'Message')}`);
+        if (status.chainHash) report.push(`Integrity Chain Corruption: ${countify(status.chainHash, 'Message')}`);
+        if (status.previousId) report.push(`Previous-ID Misses: ${countify(status.previousId, 'Message')}`);
+
+        if (report.length) {
+            const note = `SECURITY ALERT: Integrity Scan Failures\n\n* ${report.join('\n* ')}`;
+            this.broadcastNotice({ listAll: false, note });
+        }
     }
 
     async integrityChainVerificationStatus() {
