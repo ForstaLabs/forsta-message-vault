@@ -316,7 +316,7 @@ class ForstaBot {
         return admins;
     }
 
-    async broadcastNotice({note, actorUserId, listAll=true}) {
+    async broadcastNotice({note, actorUserId, listAll=true, url=process.env.WEBSITE_URL}) {
         const adminIds = await relay.storage.get('authentication', 'adminIds', []);
         let added = false;
         if (actorUserId && !adminIds.includes(actorUserId)) {
@@ -334,6 +334,7 @@ class ForstaBot {
         let fullMessage = note;
         fullMessage += actorUserId ? `\n\nPerformed by ${actorLabel}` : '';
         fullMessage += listAll ? `\n\nCurrent authorized users:\n${adminList}` : '';
+        fullMessage += url ? `\n\nWebsite: ${url}` : '';
         fullMessage = fullMessage.replace(/<<([^>]*)>>/g, (_, id) => {
             const user = adminUsers.find(x => x.id === id);
             return this.fqLabel(user);
