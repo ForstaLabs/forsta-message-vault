@@ -1,14 +1,15 @@
 # Change Log
 
 ## [0.5.0]
-- **Internal Integrity with External Blockchain Attestation** of all the data in the vault. 
+- **Internal Integrity with External Blockchain Attestation** of all message data. 
   **First**, all messages get a SHA256 integrity hash of the main envelope/body and another
   for any attachments, plus a Merkle-chain hash of those two hashes and the chain hash of the 
-  *previous* message. These provide guarantees of integrity for all message, attachment, and 
-  recipient ID and label data received, as well as guarantees of no insertion, deletion, or 
-  reordering of messages. **Second**, periodically (maybe 1/hr), a message's "chain" hash is 
-  given to an external blockchain-based timestamp facility (opentimestamps.org) to provide 
-  prove that hashes/chains have not been regenerated.
+  *previously stored message*. These provide guarantees of integrity for the data of all messages, 
+  attachments, and recipient ID/label data, as well as guarantees of no insertion, deletion, 
+  or reordering of messages. **Second**, periodically (about 1/hr), the most recent chain-hash 
+  is given to an external blockchain-based timestamp facility (opentimestamps.org) to provide 
+  proof that the integrity data existed at that point in time (i.e., proof that it could not have
+  been regenerated to mask data changes).
 
 - **Force SSL on Heroku** by setting `HEROKU_FORCE_SSL=yes` in the environment. 
   (The heroku-ssl-redirect module itself also looks for `NODE_ENV=production`.)
