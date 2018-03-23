@@ -8,9 +8,14 @@
     "addons": ["heroku-postgresql"],
     "env": {
       "RELAY_STORAGE_BACKING": {
-        "description": "Control where bot settings and data will be stored.  For heroku 'postgresql' is recommended.",
-        "required": false,
+        "description": "Control where bot settings and data will be stored.  For the vault, 'postgresql' is required.",
+        "required": true,
         "value": "postgres"
+      },
+      "WEBSITE_URL": {
+        "description": "Optional website URL to include in broadcasts to authorized users.",
+        "required": false,
+        "value": "https://this.servers.url.com"
       },
       "HEROKU_FORCE_SSL": {
         "description": "Require that all communications with the message vault be via SSL.",
