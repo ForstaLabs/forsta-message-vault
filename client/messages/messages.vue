@@ -45,7 +45,6 @@
         padding-bottom: 2.5em;
     }
     .clickable { cursor: pointer!important; }
-    .capsify { text-transform: capitalize!important; }
     .nowrap { white-space: nowrap; }
     select.rightify { text-align-last: right; }
     .emphasized { font-weight: bold; font-size:110%; }
@@ -180,7 +179,7 @@
                 <div class="description integrity">
                     <span><i class="exclamation triangle icon"></i> Integrity Alerts</span>
                     <ul>
-                        <li v-for="issue in integrityIssues(m)" :data-tooltip="issue.time" data-position="top left">{{issue.text}}</li>
+                        <li v-for="issue in integrityIssues(m)" data-position="top left"><span :data-tooltip="issue.time">{{issue.text}}</span> <a class="icobut" data-tooltip="add filter for this issue" @click="addFilter(issue.filter, 'yes')"><sui-icon name="crosshairs" /></a></li>
                     </ul>
                 </div>
             </div>
@@ -237,7 +236,7 @@
             </div>
             <div class="filter-section" v-if="Object.keys(filters).length">
                 <h3>Current Filters</h3>
-                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button capsify">
+                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
             </div>
@@ -269,19 +268,19 @@
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.mainHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.mainHash, 'Message')}}</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.mainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('mainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.attachmentsHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Attachments Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.attachmentsHash, 'Message')}}</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.attachmentsHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('attachmentsCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.chainHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Message Chain Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.chainHash, 'Message')}}</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.chainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('chainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.previousId" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Previous-Message Misses</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.previousId, 'Message')}}</sui-table-cell>
+                                <sui-table-cell>{{countify(this.integrityStatus.previousId, 'Message')}} <a class="clickable icobut" @click="showCorruption('previousCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
                         </sui-table-body>
                     </sui-table>
@@ -327,6 +326,7 @@
 <script>
 
 const moment = require('moment');
+const _ = require('lodash');
 const util = require('../util');
 
 const REFRESH_POLL_RATE = 15000;
@@ -395,6 +395,20 @@ function extract(text, regex, action) {
     return stripped;
 }
 
+function caps(str) {
+    return str.split(/\s+/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+}
+function abbrev(str, maxLen=15) {
+    return (str.length + 3 > maxLen) ? `${str.slice(0, maxLen)}...` : str;
+}
+function present(name, value) {
+    if (['attachments', 'confirmation', 'corruption'].includes(name)) return `${caps(name)}: ${value.toUpperCase()}`;
+    if (name.endsWith('Corruption')) return `${caps(name.slice(0, -10))} Corruption: ${value.toUpperCase()}`;
+    if (name === 'threadId') return `Thread ID [${abbrev(value.split('|').pop())}]`;
+    if (['fromId', 'toId'].includes(name)) return `${caps(name.slice(0,-2))} ID [${abbrev(value.split('|').pop())}]`;
+    return `${caps(name)}: ${value.split('|').pop()}`;
+}
+
 module.exports = {
     data: () => ({ 
         global: shared.state,
@@ -402,7 +416,6 @@ module.exports = {
         backgroundInterval: null,
         scanInterval: null,
         enteredText: '',
-        filters: {},
         showDist: {},
         hideBody: {},
         selectablePageSizes: PAGE_SIZES,
@@ -418,8 +431,17 @@ module.exports = {
         showDemo: false
     }),
     computed: {
+        filters: function() {
+            let filts = _.mapValues(this.$route.query, (v, k) => { 
+                return { 
+                    value: v, 
+                    presentation: present(k, v)
+                };
+            });
+            return filts;
+        },
         queryString: function() {
-            let q = Object.keys(this.filters).map(k => `${k}=${this.filters[k].value}`);
+            let q = Object.keys(this.filters).map(k => `${k}=${this.filters[k].value.split('|')[0]}`);
             q.push(`offset=${this.offset}`);
             q.push(`limit=${this.pageSize}`);
             q.push(`ascending=${this.ascending}`);
@@ -470,6 +492,12 @@ module.exports = {
         }
     },
     methods: {
+        showCorruption: function(kind) {
+            this.showScan=false;
+            let query = {};
+            query[kind] = 'yes';
+            this.$router.push({ name: "messages", query });
+        },
         flipscure: function() { this.obscured = !this.obscured; },
         addTextFilters: function() {
             let text = this.enteredText.trim();
@@ -480,50 +508,55 @@ module.exports = {
                 let type = (match[4] || 'any').toLowerCase().trim();
                 if (type.startsWith('attach')) type = 'attachments';
                 if (type.startsWith('prev')) type = 'previous';
-                this.$set(this.filters, `${type}Corruption`, { value: yesNo, presentation: `${yesNo === 'no' ? 'NO ' : ''}${type !== 'any' ? type + ' ' : ''}Corruption` });
+                this.addFilter(`${type}Corruption`, yesNo);
             });
 
             const attaches = /(^|\W)has:\s*(no\s+)?attach(ment(s)?)?(\W|$)/ig;
-            text = extract(text, attaches, match => this.$set(this.filters, 'attachments', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Attachments` }));
+            text = extract(text, attaches, match => this.addFilter('attachments', (match[2] || 'yes').toLowerCase().trim()));
 
             const confirms = /(^|\W)has:\s*(no\s+)?confirm(ation)?(\W|$)/ig;
-            text = extract(text, confirms, match => this.$set(this.filters, 'confirmation', { value: (match[2] || 'yes').toLowerCase().trim(), presentation: `${(match[2] || '').toUpperCase()} Confirmation` }));
+            text = extract(text, confirms, match => this.addFilter('confirmation', (match[2] || 'yes').toLowerCase().trim()));
 
             const tos = /(^|\W)to:\s*([.:@\w]+)/ig;
-            text = extract(text, tos, match => this.$set(this.filters, 'to', { value: match[2], presentation: `To "${match[2]}"` }));
+            text = extract(text, tos, match => this.addFilter('to', match[2]));
 
             const froms = /(^|\W)from:\s*([.:@\w]+)/ig;
-            text = extract(text, froms, match => this.$set(this.filters, 'from', { value: match[2], presentation: `From "${match[2]}"` }));
+            text = extract(text, froms, match => this.addFilter('from', match[2]));
 
             const titles = /(^|\W)title:\s*(.*)$/ig;
-            text = extract(text, titles, match => this.$set(this.filters, 'title', { value: match[2], presentation: `Title: ${match[2]}` }));
+            text = extract(text, titles, match => this.addFilter('title', match[2]));
 
             if (text) {
-                this.$set(this.filters, 'body', { value: text, presentation: `Body: ${text}` });
+                this.addFilter('body', text);
             }
 
             this.enteredText = '';
             this.offset = 0;
         },
         addThreadFilter: function(m) {
-            this.$set(this.filters, 'threadId', { value: m.threadId, presentation: 'Thread ID' });
-            this.offset = 0;
+            this.addFilter('threadId', `${m.threadId}|${this.threadTitle(m)}`);
         },
         addUserIdFilter: function(m, direction, idx=-1) {
             const key = direction.toLowerCase() + 'Id';
             const id = (idx < 0) ? m.senderId : m.recipientIds[idx];
             const who = (idx < 0) ? m.senderLabel : m.recipientLabels[idx];
-            this.$set(this.filters, key, { value: id, presentation: `${direction} ${who}` });
-            this.offset = 0;
+            this.addFilter(key, `${id}|${who}`);
         },
         addTimeFilter: function(m, direction) {
             const val = m.receivedMoment.format('YYYY-MM-DD HH:mm:ss.SSSZ');
-            this.$set(this.filters, direction.toLowerCase(), { value: val, presentation: `${direction} ${m.receivedMoment.format('lll') }`});
+            this.addFilter(direction.toLowerCase(), `${val}|${m.receivedMoment.format('lll')}`);
+        },
+        addFilter: function(name, value) {
             this.offset = 0;
+            let query = Object.assign({}, this.$route.query);
+            query[name] = value;
+            this.$router.push({ name: "messages", query })
         },
         removeFilter: function(k) {
-            this.$delete(this.filters, k);
             this.offset = 0;
+            let query = Object.assign({}, this.$route.query);
+            delete query[k];
+            this.$router.push({ name: "messages", query })
         },
         toggleDist: function(id) {
             this.$set(this.showDist, id, !this.showDist[id])
@@ -537,10 +570,26 @@ module.exports = {
         integrityIssues: function(message) {
             let issues = [];
             if (!message.integrity || !message.integrity.misses) return issues;
-            if (message.integrity.misses.mainHash) issues.push({text: 'Envelope/Body Corruption', time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll')});
-            if (message.integrity.misses.attachmentsHash) issues.push({text: 'Attachments Corruption', time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll')});
-            if (message.integrity.misses.previousId) issues.push({text: 'Previous-Message Mismatches', time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll')});
-            if (message.integrity.misses.chainHash) issues.push({text: 'Message Chain Corruption', time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll')});
+            if (message.integrity.misses.mainHash) issues.push({
+                text: 'Envelope/Body Corruption',
+                time: 'recorded ' + moment(message.integrity.misses.mainHash).format('llll'),
+                filter: 'mainCorruption'
+            });
+            if (message.integrity.misses.attachmentsHash) issues.push({
+                text: 'Attachments Corruption',
+                time: 'recorded ' + moment(message.integrity.misses.attachmentsHash).format('llll'),
+                filter: 'attachmentsCorruption'
+            });
+            if (message.integrity.misses.previousId) issues.push({
+                text: 'Previous-Message Mismatches',
+                time: 'recorded ' + moment(message.integrity.misses.previousId).format('llll'),
+                filter: 'previousCorruption'
+            });
+            if (message.integrity.misses.chainHash) issues.push({
+                text: 'Message Chain Corruption',
+                time: 'recorded ' + moment(message.integrity.misses.chainHash).format('llll'),
+                filter: 'chainCorruption'
+            });
             return issues;
         },
         extConf: function(message) {
