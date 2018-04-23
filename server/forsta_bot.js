@@ -419,7 +419,7 @@ class ForstaBot {
             previousId: 0
         };
 
-        console.log('\n\nstarting full verification of vault integrity\n\n');
+        console.log(`\n\nstarting full verification of vault integrity (force is ${force})\n\n`);
         const existing = await relay.storage.get('integrity', 'status');
         if (existing && !existing.finished) {
             if (force) {
@@ -485,7 +485,7 @@ class ForstaBot {
                     }
 
                     console.log('... updating integrity with misses:', misses);
-                    await this.pgStore.updateIntegrity(message.messageId, integrity);
+                    await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
                 }
 
                 status.offset++;
