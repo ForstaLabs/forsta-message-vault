@@ -596,7 +596,7 @@ module.exports = {
             if (!message.integrity || !message.integrity.verifiedTimestamp) return null;
             return {
                 time: moment(message.integrity.verifiedTimestamp * 1000).format('llll'),
-                url: `https://opentimestamps.org/info.html?ots=${message.integrity.upgradedOTS}`,
+                url: `https://opentimestamps.org/info/?${message.integrity.upgradedOTS}`,
                 icon: message.integrity.misses ? 'red exclamation triangle' : 'green check circle',
                 hover: message.integrity.misses ? 'WARNING: this confirms corrupt data -- click to view anyway' : 'click to view external blockchain confirmation',
             };
