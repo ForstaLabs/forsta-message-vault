@@ -129,10 +129,10 @@ ELECTRON_IGNORES := \
 	--ignore '^/node_modules/bower' \
 	--ignore '^/electron/downloads' \
 
-electron-clean: 
+electron-clean:
 	rm -rf electron/pgdata
 
-electron-windows: 
+electron-windows:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform win64 \
