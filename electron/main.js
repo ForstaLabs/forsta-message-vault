@@ -1,16 +1,17 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const childProcess = require('child_process');
 const {app, BrowserWindow, Tray, nativeImage, shell} = require('electron');
 const path = require('path');
 const process = require('process');
-const platform = require('os').platform();
+const platform = os.platform();
 
 const pgdata = path.join(__dirname, 'pgdata');
 const pgsql = path.join(__dirname, 'pgsql');
 const pgconf = path.join(__dirname, 'pgconf');
-const pgsock = path.join(pgdata, 'unixsock');
+const pgsock = fs.mkdtempSync(os.tmpdir());
 const pgConfData = [
     `unix_socket_directories = '${pgsock}'`
 ].join('\n');
@@ -18,7 +19,7 @@ const pgConfData = [
 const title = 'Forsta Message Vault';
 const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '../dist/static/images/');
-const appIcon = nativeImage.createFromPath(imagesDir + 'app.png');
+const appIcon = nativeImage.createFromPath(imagesDir + 'logo.png');
 
 async function sleep(seconds) {
     await new Promise(resolve => setTimeout(resolve, seconds * 1000));
@@ -30,10 +31,9 @@ async function initDatabase() {
         console.log("Setup database...", __dirname);
         console.log(childProcess.execSync(`${pgsql}/bin/initdb ${pgdata}`, {encoding: 'utf8'}));
         fs.copyFileSync(`${pgconf}/pg_hba.conf`, `${pgdata}/pg_hba.conf`);
-        fs.writeFileSync(`${pgdata}/postgresql.conf`, pgConfData);
-        fs.mkdirSync(pgsock);
         needCreate = true;
     }
+    fs.writeFileSync(`${pgdata}/postgresql.conf`, pgConfData);
     childProcess.exec(`${pgsql}/bin/pg_ctl -D ${pgdata} start`);
     if (needCreate) {
         // XXX Hack time.
@@ -43,20 +43,7 @@ async function initDatabase() {
     }
 }
 
-let trayIcon;
-let trayIconPending;
-if (platform === 'darwin') {
-    trayIcon = nativeImage.createFromPath(imagesDir + 'macTrayIcon.png');
-    trayIcon.setTemplateImage(true);
-    trayIconPending = nativeImage.createFromPath(imagesDir + 'macTrayIconPending.png');
-    trayIconPending.setTemplateImage(true);
-} else {
-    trayIcon = nativeImage.createFromPath(imagesDir + 'favicon.png');
-    trayIconPending = nativeImage.createFromPath(imagesDir + 'favicon-pending.png');
-}
-
 let win;
-let tray;
 
 if (app.dock) {
     app.dock.setIcon(appIcon);
@@ -117,7 +104,7 @@ app.on('ready', async () => {
     process.env.DATABASE_URL = pgsock;
     require('../server');
 
-    tray = new Tray(trayIcon);
+    const tray = new Tray(appIcon);
     tray.setToolTip(title);
     tray.on('click', showWindow);
 
