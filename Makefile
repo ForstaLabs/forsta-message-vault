@@ -85,3 +85,82 @@ run: $(BUILD)
 
 forcerun:
 	npm start
+
+run-electron: $(BUILD)
+	$(NPATH)/electron .
+
+PG_SITE := https://get.enterprisedb.com/postgresql/
+PG_BIN_LINUX := postgresql-10.3-3-linux-x64-binaries.tar.gz
+PG_BIN_WINDOWS := postgresql-10.3-3-windows-x64-binaries.zip
+PG_BIN_DARWIN := postgresql-10.3-3-osx-binaries.zip
+
+ELECTRON_IGNORES := \
+	--ignore '^/.bowerrc' \
+	--ignore '^/.buildpacks' \
+	--ignore '^/.github' \
+	--ignore '^/.gitignore' \
+	--ignore '^/.lint.pass' \
+	--ignore '^/.npmrc' \
+	--ignore '^/.sass-cache' \
+	--ignore '^/.slugignore' \
+	--ignore '^/Gemfile.*' \
+	--ignore '^/Gruntfile.js.json' \
+	--ignore '^/Makefile' \
+	--ignore '^/Procfile' \
+	--ignore '^/app' \
+	--ignore '^/audio' \
+	--ignore '^/bower.json' \
+	--ignore '^/build' \
+	--ignore '^/components' \
+	--ignore '^/fonts' \
+	--ignore '^/html' \
+	--ignore '^/images' \
+	--ignore '^/lib' \
+	--ignore '^/references' \
+	--ignore '^/semantic' \
+	--ignore '^/semantic.json' \
+	--ignore '^/stylesheets' \
+	--ignore '^/templates' \
+	--ignore '^/tests' \
+	--ignore '^/worker' \
+	--ignore '^/node_modules/semantic-ui' \
+	--ignore '^/node_modules/librelay-web' \
+	--ignore '^/node_modules/libsignal-protocol' \
+	--ignore '^/node_modules/bower' \
+	--ignore '^/electron/downloads' \
+
+electron-clean: 
+	rm -rf electron/pgdata
+
+electron-windows: 
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform win64 \
+		--icon electron/windowsAssets/app.ico \
+		--out builds \
+		--arch x64 \
+		--asar \
+		$(ELECTRON_IGNORES)
+
+electron-darwin:
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform darwin \
+		--icon images/app.icns \
+		--out builds \
+		--appBundleId io.forsta.vault \
+		$(ELECTRON_IGNORES)
+
+electron-linux:
+	mkdir -p electron/downloads
+	cd electron/downloads; wget -c $(PG_SITE)$(PG_BIN_LINUX)
+	rm -rf electron/pgsql
+	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform linux \
+		--icon images/app.png \
+		--out builds \
+		$(ELECTRON_IGNORES)
+
+.PHONY: electron

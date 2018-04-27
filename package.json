@@ -23,6 +23,7 @@
   "bin": {
     "message-vault": "./server/index.js"
   },
+  "main": "./electron/main.js",
   "dependencies": {
     "adm-zip": "^0.4.7",
     "browserify": "^14.5.0",
@@ -58,6 +59,8 @@
     "vueify": "^9.4.1"
   },
   "devDependencies": {
+    "electron": "2.0.0-beta.7",
+    "electron-packager": "12.0.1",
     "eslint": "4.12.1",
     "grunt-contrib-watch": "1.0.0"
   }
