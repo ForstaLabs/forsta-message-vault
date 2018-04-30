@@ -139,7 +139,7 @@ electron-darwin:
 		--out builds \
 		--appBundleId io.forsta.vault \
 		$(ELECTRON_IGNORES)
-	cd builds/forsta-message-vault-darwin-x64; zip -yr \
+	cd builds/forsta-message-vault-darwin-x64; zip -qyr \
 		forsta-message-vault-darwin-x64.zip forsta-message-vault.app
 
 electron-linux:
@@ -153,6 +153,7 @@ electron-linux:
 		--icon images/logo.png \
 		--out builds \
 		$(ELECTRON_IGNORES)
+	cd builds/; tar zcvf forsta-message-vault-linux-x64.tar.gz forsta-message-vault-linux-x64
 
 
 ########################################################
