@@ -141,7 +141,7 @@ electron-darwin:
 		--appBundleId io.forsta.vault \
 		$(ELECTRON_IGNORES)
 	cd builds/forsta-message-vault-darwin-x64; zip -qyr \
-		forsta-message-vault-darwin-x64.zip forsta-message-vault.app
+		../forsta-message-vault-darwin-x64.zip forsta-message-vault.app
 
 electron-linux:
 	mkdir -p electron/downloads
