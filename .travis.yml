@@ -4,4 +4,5 @@ cache:
     directories:
      - node_modules
      - electron/downloads
+before_install: gem install sass
 script: make && make electron-linux
