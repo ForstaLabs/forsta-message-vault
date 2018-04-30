@@ -129,9 +129,9 @@ electron-windows:
 
 electron-darwin:
 	mkdir -p electron/downloads
-	cd electron/downloads; wget -c $(PG_SITE)$(PG_BIN_DARWIN)
+	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_DARWIN)
 	rm -rf electron/pgsql
-	cd electron; unzip downloads/$(PG_BIN_DARWIN)
+	cd electron; unzip -q downloads/$(PG_BIN_DARWIN)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4.app stackbuilder
 	$(NPATH)/electron-packager . \
 		--overwrite \
@@ -144,7 +144,7 @@ electron-darwin:
 
 electron-linux:
 	mkdir -p electron/downloads
-	cd electron/downloads; wget -c $(PG_SITE)$(PG_BIN_LINUX)
+	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_LINUX)
 	rm -rf electron/pgsql
 	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
 	$(NPATH)/electron-packager . \
