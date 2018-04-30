@@ -10,4 +10,4 @@ addons:
         debug: true
         paths: $(ls builds/*.zip | tr "\n" ":")
 before_install: gem install sass
-script: make && make electron-linux
+script: make && make electron-linux electron-darwin
