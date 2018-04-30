@@ -118,14 +118,14 @@ electron-clean:
 	rm -rf electron/pgdata
 
 electron-windows:
+	# XXX TBD
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform win64 \
-		--icon images/logo.png \
 		--out builds \
-		--arch x64 \
-		--asar \
+		--quiet \
 		$(ELECTRON_IGNORES)
+	# / XXX TBD
 
 electron-darwin:
 	mkdir -p electron/downloads
@@ -137,6 +137,7 @@ electron-darwin:
 		--overwrite \
 		--platform darwin \
 		--out builds \
+		--quiet \
 		--appBundleId io.forsta.vault \
 		$(ELECTRON_IGNORES)
 	cd builds/forsta-message-vault-darwin-x64; zip -qyr \
@@ -147,11 +148,12 @@ electron-linux:
 	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_LINUX)
 	rm -rf electron/pgsql
 	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
+	cd electron/pgsql; rm -rf doc pgAdmin\ 4 stackbuilder
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform linux \
-		--icon images/logo.png \
 		--out builds \
+		--quiet \
 		$(ELECTRON_IGNORES)
 	cd builds/; tar zcf forsta-message-vault-linux-x64.tar.gz forsta-message-vault-linux-x64
 
