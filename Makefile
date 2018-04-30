@@ -153,7 +153,7 @@ electron-linux:
 		--icon images/logo.png \
 		--out builds \
 		$(ELECTRON_IGNORES)
-	cd builds/; tar zcvf forsta-message-vault-linux-x64.tar.gz forsta-message-vault-linux-x64
+	cd builds/; tar zcf forsta-message-vault-linux-x64.tar.gz forsta-message-vault-linux-x64
 
 
 ########################################################
