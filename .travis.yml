@@ -1,18 +1,22 @@
 language: node_js
 node_js: '9'
 cache:
-    directories:
-     - node_modules
-     - electron/downloads
-     - semantic
-     - "$HOME/.electron"
+  directories:
+  - node_modules
+  - electron/downloads
+  - semantic
+  - "$HOME/.electron"
 addons:
-    artifacts:
-        s3_region: "us-west-2"
-        debug: true
-        working_dir: builds
-        paths: $(ls builds/*.zip builds/*.tar.gz | tr "\n" ":")
-        target_paths:
-         - /
+  artifacts:
+    s3_region: us-west-2
+    debug: true
+    working_dir: builds
+    paths: $(ls builds/*.zip builds/*.tar.gz | tr "\n" ":")
+    target_paths:
+    - "/"
 before_install: gem install sass
 script: make && make electron-linux electron-darwin
+notifications:
+  webhooks:
+    urls:
+      secure: ZNSxvDnI3ERmX8wKxEMMSep1uQFlmkiNJCKFgHOkLtseLuYP7CLZw9oXq+WIKaZrJvLxqTNnvUnEQd4m0WS5uc5LpQAgyhzrpjvk11Z7xh9lCifnpUg3PPogQ6fPRNM75Vl3dTvTWqd0LoMn3FsBci00v0w5O8A05DILl3/5bfZIQ3mcnbTMbYiT/SpH0HFoVcdkYSAI9tyIFP3wuy//cNIjGrlXAflXiQ+qe+q7a+nq5adsM5FxPY6y93zHFYt63mihQ5oNCauNkfIuSJ8DilvMxqPnvu1hL8fFL43390+yReyUpQpSW0lCGC0hfU5xLcaF1dEfv6zpe3fZ/6zGLFRB3Vp+RalnK1DJ5OcGG7/wcl8MQfKiNhwdBhLx95Bx9lygHdrCMurZspdjlQrwW7PBlFiApHVcsl7pGRPfLHeZJpZSO8DQTzzzZnYVpjdsn39BdydK7OVq4Gg7r+5zUh30DtEJJcnIlXTXBjKuTjDHIp3NiE6z3yRfUwjTGpUwIY83vIc5yi/LVvK8ORYqSWqgcXz8vkazvOCgZiXxvQSnw89BAfFQvyfp/j00wPYRbLctOtlQvneZKLbjW7DAJl9rZcZfGAAWzpQetMduw4r7SmBESWgoYgzptEXbzU6TMXl8Uw77S7B+IFCHEUnROE1Se6A/m7cbGIeE9JbNGBI=
