@@ -13,6 +13,6 @@ addons:
         working_dir: builds
         paths: $(ls builds/*.zip builds/*.tar.gz | tr "\n" ":")
         target_paths:
-         - /ForstaMessageVault-$(npm view . version)
+         - /
 before_install: gem install sass
 script: make && make electron-linux electron-darwin

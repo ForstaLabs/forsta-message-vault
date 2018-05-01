@@ -6,6 +6,7 @@ GRUNT := dist/.grunt.build
 LINT := .lint.pass
 BUILD := dist/build.json
 DOCKER_DB_NAME := vault_db$(shell pwd | sed 's/\//_/g')
+APP_NAME := $(shell npm info . name)-$(shell npm info . version)
 
 export NO_MINIFY ?= 1
 
@@ -129,7 +130,7 @@ electron-darwin:
 		--appBundleId io.forsta.vault \
 		$(ELECTRON_IGNORES)
 	cd builds/forsta-message-vault-darwin-x64; zip -qyr \
-		../forsta-message-vault-darwin-x64.zip forsta-message-vault.app
+		../$(APP_NAME)-osx.zip forsta-message-vault.app
 
 electron-linux:
 	mkdir -p electron/downloads
@@ -143,7 +144,7 @@ electron-linux:
 		--out builds \
 		--quiet \
 		$(ELECTRON_IGNORES)
-	cd builds/; tar zcf forsta-message-vault-linux-x64.tar.gz forsta-message-vault-linux-x64
+	cd builds/; tar zcf $(APP_NAME)-linux.tar.gz forsta-message-vault-linux-x64
 
 
 ########################################################
