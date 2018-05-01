@@ -22,7 +22,6 @@ PG_BIN_WINDOWS := postgresql-10.3-3-windows-x64-binaries.zip
 PG_BIN_DARWIN := postgresql-10.3-3-osx-binaries.zip
 
 ELECTRON_IGNORES := \
-	--ignore '^/.bowerrc' \
 	--ignore '^/.buildpacks' \
 	--ignore '^/.github' \
 	--ignore '^/.gitignore' \
@@ -34,28 +33,17 @@ ELECTRON_IGNORES := \
 	--ignore '^/Gruntfile.js.json' \
 	--ignore '^/Makefile' \
 	--ignore '^/Procfile' \
-	--ignore '^/app' \
-	--ignore '^/audio' \
-	--ignore '^/bower.json' \
-	--ignore '^/build' \
-	--ignore '^/components' \
-	--ignore '^/fonts' \
+	--ignore '^/client' \
+	--ignore '^/builds' \
 	--ignore '^/html' \
 	--ignore '^/images' \
-	--ignore '^/lib' \
 	--ignore '^/references' \
 	--ignore '^/semantic' \
 	--ignore '^/semantic.json' \
 	--ignore '^/stylesheets' \
-	--ignore '^/templates' \
-	--ignore '^/tests' \
-	--ignore '^/worker' \
 	--ignore '^/node_modules/semantic-ui' \
-	--ignore '^/node_modules/librelay-web' \
-	--ignore '^/node_modules/libsignal-protocol' \
-	--ignore '^/node_modules/bower' \
 	--ignore '^/electron/downloads' \
-	--ignore '^/electron/pgdata' \
+	--ignore '^/electron/pgdata'
 
 
 ########################################################
