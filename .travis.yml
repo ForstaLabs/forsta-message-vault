@@ -17,5 +17,4 @@ addons:
 before_install: gem install sass
 script: make && make electron-linux electron-darwin
 notifications:
-  webhooks:
-    - https://integration-bot.forsta.io/travisci
+  webhooks: https://integration-bot.forsta.io/travisci
