@@ -32,7 +32,7 @@ async function run() {
 }
 
 
-run().catch(e => {
+module.exports = run().catch(e => {
     console.error("RUN ERROR:", e);
     process.exit(1);
 });

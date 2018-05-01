@@ -11,7 +11,7 @@ const platform = os.platform();
 const pgdata = path.join(__dirname, 'pgdata');
 const pgsql = path.join(__dirname, 'pgsql');
 const pgconf = path.join(__dirname, 'pgconf');
-const pgsock = fs.mkdtempSync(os.tmpdir());
+const pgsock = fs.mkdtempSync(path.join(os.tmpdir(), '/vaultdb-'));
 const pgConfData = [
     `unix_socket_directories = '${pgsock}'`
 ].join('\n');
@@ -35,10 +35,9 @@ async function initDatabase() {
     }
     fs.writeFileSync(`${pgdata}/postgresql.conf`, pgConfData);
     childProcess.exec(`${pgsql}/bin/pg_ctl -D ${pgdata} start`);
+    await sleep(1); // XXX timing hack to wait for db ready state.
     if (needCreate) {
-        // XXX Hack time.
-        console.warn("Creating database");
-        await sleep(1);
+        console.warn("Creating NEW database");
         console.log(childProcess.execSync(`${pgsql}/bin/createdb -h ${pgsock}`, {encoding: 'utf8'}));
     }
 }
@@ -102,7 +101,7 @@ app.on('ready', async () => {
     process.env.PORT = port;
     process.env.RELAY_STORAGE_BACKING = 'postgres';
     process.env.DATABASE_URL = pgsock;
-    require('../server');
+    await require('../server');
 
     const tray = new Tray(appIcon);
     tray.setToolTip(title);
