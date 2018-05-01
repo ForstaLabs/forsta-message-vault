@@ -10,8 +10,9 @@ addons:
     artifacts:
         s3_region: "us-west-2"
         debug: true
-        paths: $(ls builds/*.zip builds/*.tar.gz | tr "\n" ":")
+        working_dir: builds
+        paths: $(ls *.zip *.tar.gz | tr "\n" ":")
         target_paths:
-         - /ForstaMessageVault-$(sw_vers -productVersion | grep --only -E '^[0-9]+\.[0-9]+')
+         - /ForstaMessageVault-$(npm view . version)
 before_install: gem install sass
 script: make && make electron-linux electron-darwin
