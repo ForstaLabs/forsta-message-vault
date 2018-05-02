@@ -69,13 +69,11 @@ function createWindow() {
         }
     });
 
-    win.loadURL(`http://localhost:${port}`);
-
     win.on('close', ev => {
         ev.preventDefault();
-        console.warn("Translating window close into hide.");
         win.hide();  // Keep it alive to avoid closing our websocket.
     });
+
     win.on('closed', () => {
         // Dereference the window object, usually you would store windows
         // in an array if your app supports multi windows, this is the time
@@ -84,12 +82,13 @@ function createWindow() {
         win = null;
     });
 
-    // Open clicked links in external browser
-    // source: https://stackoverflow.com/questions/32402327/how-can-i-force-external-links-from-browser-window-to-open-in-a-default-browser
-    win.webContents.on('new-window', function(e, url) {
-        e.preventDefault();
+    win.webContents.on('new-window', (ev, url) => {
+        // Open clicked links in external browser
+        ev.preventDefault();
         shell.openExternal(url);
     });
+
+    win.loadURL(`http://localhost:${port}`);
 }
 
 
