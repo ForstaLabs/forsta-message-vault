@@ -14,10 +14,11 @@ addons:
     paths: $(ls builds/*.zip builds/*.tar.gz | tr "\n" ":")
     target_paths:
     - "/"
+  apt:
+    packages:
+    - wine
 before_install:
 - gem install sass
-- sudo apt-get -qq update
-- sudo apt-get install -y wine
 script: make && make electron-linux electron-darwin electron-windows
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci
