@@ -78,10 +78,7 @@ class ForstaBot {
             this.atlas.resolveTags.bind(this.atlas)
         );
         this.msgReceiver = await relay.MessageReceiver.factory();
-        this.msgReceiver.addEventListener(
-            'keychange',
-            this.onKeyChange.bind(this)
-        );
+        this.msgReceiver.addEventListener('keychange', this.onKeyChange.bind(this));
         this.msgReceiver.addEventListener(
             'message',
             ev => this.onMessage(ev),
@@ -90,6 +87,7 @@ class ForstaBot {
         this.msgReceiver.addEventListener('error', this.onError.bind(this));
 
         this.msgSender = await relay.MessageSender.factory();
+        this.msgSender.addEventListener('keychange', this.onKeyChange.bind(this));
 
         this.verifyIntegrityChain(true);
         this.backgroundInterval = setInterval(this.backgroundWork.bind(this), BACKGROUND_FREQUENCY_DELAY);
@@ -123,7 +121,7 @@ class ForstaBot {
     }
 
     async onKeyChange(ev) {
-        console.warn('Auto-accepting new identity key for:', ev.addr);
+        console.warn('Auto-accepting new identity key for:', ev.keyError.addr);
         await ev.accept();
     }
 

@@ -34,7 +34,11 @@ async function initDatabase() {
         needCreate = true;
     }
     fs.writeFileSync(`${pgdata}/postgresql.conf`, pgConfData);
-    childProcess.exec(`${pgsql}/bin/pg_ctl -D ${pgdata} start`);
+    const dbProc = childProcess.exec(`${pgsql}/bin/postgres -D ${pgdata}`);
+    console.log('Started PostgreSQL PID:', dbProc.pid);
+    dbProc.on('exit', ev => {
+        console.error("Database server exited", ev);
+    });
     await sleep(1); // XXX timing hack to wait for db ready state.
     if (needCreate) {
         console.warn("Creating NEW database");
