@@ -3,10 +3,11 @@
 const fs = require('fs');
 const os = require('os');
 const childProcess = require('child_process');
-const {app, BrowserWindow, Tray, nativeImage, shell} = require('electron');
+const {app, BrowserWindow, Tray, nativeImage, shell, Menu} = require('electron');
 const path = require('path');
 const process = require('process');
 const platform = os.platform();
+const menu = require('./menu');
 
 const pgdata = path.join(__dirname, 'pgdata');
 const pgsql = path.join(__dirname, 'pgsql');
@@ -96,7 +97,7 @@ function createWindow() {
 }
 
 
-app.on('ready', async () => {
+app.once('ready', async () => {
     // This method will be called when Electron has finished
     // initialization and is ready to create browser windows.
     // Some APIs can only be used after this event occurs.
@@ -105,6 +106,8 @@ app.on('ready', async () => {
     process.env.RELAY_STORAGE_BACKING = 'postgres';
     process.env.DATABASE_URL = pgsock;
     await require('../server');
+
+    Menu.setApplicationMenu(menu)
 
     const tray = new Tray(appIcon);
     tray.setToolTip(title);
