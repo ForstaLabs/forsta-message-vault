@@ -15,6 +15,6 @@ addons:
     target_paths:
     - "/"
 before_install: gem install sass
-script: make && make electron-linux electron-darwin
+script: make && make electron-linux electron-darwin electron-windows
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci

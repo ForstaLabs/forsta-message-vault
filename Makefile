@@ -107,14 +107,19 @@ electron-clean:
 	rm -rf electron/pgdata
 
 electron-windows:
-	# XXX TBD
+	mkdir -p electron/downloads
+	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_WINDOWS)
+	rm -rf electron/pgsql
+	cd electron; unzip -q downloads/$(PG_BIN_WINDOWS)
+	cd electron/pgsql; rm -rf doc pgAdmin\ 4 StackBuilder
 	$(NPATH)/electron-packager . \
 		--overwrite \
-		--platform win64 \
+		--platform win32 \
+		--arch x64 \
 		--out builds \
 		--quiet \
 		$(ELECTRON_IGNORES)
-	# / XXX TBD
+	cd builds; zip -qyr $(APP_NAME)-windows.zip forsta-message-vault-win32-x64
 
 electron-darwin:
 	mkdir -p electron/downloads
