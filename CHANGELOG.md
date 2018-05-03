@@ -1,5 +1,6 @@
 # Change Log
 
+## [0.6.0]
 - **Include website url** in authorized-user broadcasts, if/as provided by env WEBSITE_URL.
 - **Broadcast failures** found by integrity-scan to authorized users.
 
