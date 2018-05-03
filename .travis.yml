@@ -6,7 +6,6 @@ cache:
   - node_modules
   - electron/downloads
   - semantic
-  - "$HOME/.electron"
 addons:
   artifacts:
     s3_region: us-west-2
