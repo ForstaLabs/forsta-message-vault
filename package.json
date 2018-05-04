@@ -1,6 +1,7 @@
 {
   "name": "forsta-message-vault",
   "version": "0.6.1",
+  "author": "Forsta Inc.",
   "description": "Forsta Message Vault",
   "engines": {
     "node": "8"

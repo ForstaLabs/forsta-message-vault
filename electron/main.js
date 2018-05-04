@@ -10,7 +10,7 @@ const process = require('process');
 const platform = os.platform();
 const menu = require('./menu');
 
-const pgdata = path.join(__dirname, 'pgdata');
+const pgdata = path.join(os.homedir(), '.forsta_message_vault_pgdata');
 const pgsql = path.join(__dirname, 'pgsql');
 const pgconf = path.join(__dirname, 'pgconf');
 const pgsock = fs.mkdtempSync(path.join(os.tmpdir(), '/vaultdb-'));
