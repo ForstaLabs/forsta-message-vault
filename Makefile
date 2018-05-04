@@ -119,6 +119,7 @@ electron-windows:
 		--arch x64 \
 		--out builds \
 		--quiet \
+		--executable-name $(APP_NAME)-$(APP_VERSION) \
 		$(ELECTRON_IGNORES)
 	cd builds; zip -qyr $(APP_NAME)-$(APP_VERSION)-windows.zip forsta-message-vault-win32-x64
 
@@ -133,6 +134,7 @@ electron-darwin:
 		--platform darwin \
 		--out builds \
 		--quiet \
+		--executable-name $(APP_NAME)-$(APP_VERSION) \
 		--appBundleId io.forsta.vault \
 		$(ELECTRON_IGNORES)
 	cd builds/forsta-message-vault-darwin-x64; zip -qyr \
@@ -144,13 +146,8 @@ electron-linux:
 	rm -rf electron/pgsql
 	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4 stackbuilder
-	$(NPATH)/electron-packager . \
-		--overwrite \
-		--platform linux \
-		--out builds \
-		--quiet \
-		$(ELECTRON_IGNORES)
-	cd builds/; tar zcf $(APP_NAME)-$(APP_VERSION)-linux.tar.gz forsta-message-vault-linux-x64
+	$(NPATH)/electron-builder --linux dir
+	#cd builds/; tar zcf $(APP_NAME)-$(APP_VERSION)-linux.tar.gz forsta-message-vault-linux-x64
 
 
 ########################################################

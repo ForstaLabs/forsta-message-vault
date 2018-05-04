@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const os = require('os');
+const pkg = require('../package');
 const childProcess = require('child_process');
 const {app, BrowserWindow, Tray, nativeImage, shell, Menu} = require('electron');
 const path = require('path');
@@ -17,7 +18,6 @@ const pgConfData = [
     `unix_socket_directories = '${pgsock}'`
 ].join('\n');
 
-const title = 'Forsta Message Vault';
 const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '../dist/static/images/');
 const appIcon = nativeImage.createFromPath(imagesDir + 'logo.png');
@@ -67,7 +67,6 @@ function createWindow() {
         width: 1024,
         height: 768,
         icon: appIcon,
-        title,
         webPreferences: {
             nodeIntegration: false,
             sandbox: true
@@ -110,7 +109,7 @@ app.once('ready', async () => {
     Menu.setApplicationMenu(menu)
 
     const tray = new Tray(appIcon);
-    tray.setToolTip(title);
+    tray.setToolTip(pkg.description || 'Forsta Message Vault');
     tray.on('click', showWindow);
 
     createWindow();

@@ -23,6 +23,24 @@
   "bin": {
     "message-vault": "./server/index.js"
   },
+  "build": {
+    "appId": "io.forsta.message-vault",
+    "productName": "Forsta Message Vault",
+    "files": [
+      "dist",
+      "server",
+      "electron",
+      "!electron/downloads",
+      "!electron/pgdata"
+    ],
+    "asar": false,
+    "asarUnpack": [
+      "electron/pgsql"
+    ],
+    "directories": {
+      "output": "builds"
+    }
+  },
   "main": "./electron/main.js",
   "dependencies": {
     "adm-zip": "^0.4.7",
@@ -49,8 +67,6 @@
     "moment": "^2.20.1",
     "morgan": "1.9.0",
     "object-hash": "^1.2.0",
-    "semantic-ui": "2.3.0",
-    "semantic-ui-vue": "^0.2.5",
     "swearjar": "^0.2.0",
     "uuid": "^3.1.0",
     "vue": "^2.5.9",
@@ -60,8 +76,10 @@
   },
   "devDependencies": {
     "electron": "2.0.0",
-    "electron-packager": "12.0.1",
+    "electron-builder": "20.11.1",
     "eslint": "4.12.1",
-    "grunt-contrib-watch": "1.0.0"
+    "grunt-contrib-watch": "1.0.0",
+    "semantic-ui": "2.3.0",
+    "semantic-ui-vue": "^0.2.5"
   }
 }

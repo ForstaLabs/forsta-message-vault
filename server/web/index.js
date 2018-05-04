@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const vaultApi = require('./vault-api');
 const path = require('path');
 const process = require('process');
-const herokuSslRedirect = require('heroku-ssl-redirect');
 
 const root = `${__dirname}/../../dist`;
 const build = require(`${root}/build.json`);
@@ -24,7 +23,7 @@ class WebServer {
         this.app = express();
         if (process.env.HEROKU_FORCE_SSL) {
             console.log('forcing SSL on heroku');
-            this.app.use(herokuSslRedirect());
+            this.app.use(require('heroku-ssl-redirect')());
         }
         this.app.use(morgan('dev')); // logging
         this.app.use(bodyParser.json());
