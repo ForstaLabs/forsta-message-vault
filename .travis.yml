@@ -27,7 +27,7 @@ addons:
     target_paths:
     - "/"
 before_install:
-- gem install sass
+- gem install sass -v 3.4.23
 script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make electron-linux; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make electron-darwin electron-windws; fi
