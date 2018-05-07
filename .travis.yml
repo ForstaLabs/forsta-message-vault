@@ -5,7 +5,6 @@ env:
   global:
   - ELECTRON_CACHE=$HOME/.cache/electron
   - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-  - SKIP_PACKAGES=1
 language: node_js
 node_js: '9'
 before_cache:
