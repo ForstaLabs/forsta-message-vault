@@ -5,6 +5,7 @@ env:
   global:
   - ELECTRON_CACHE=$HOME/.cache/electron
   - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+  - SKIP_PACKAGES=1
 language: node_js
 node_js: '9'
 before_cache:
@@ -28,7 +29,7 @@ addons:
 before_install:
 - gem install sass
 script:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make build electron-linux; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make build electron-darwin electron-windws; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make electron-linux; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make electron-darwin electron-windws; fi
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci
