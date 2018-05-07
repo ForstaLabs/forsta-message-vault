@@ -1,11 +1,22 @@
+os:
+- osx
+- linux
+env:
+  global:
+  - ELECTRON_CACHE=$HOME/.cache/electron
+  - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
 language: node_js
-sudo: true
 node_js: '9'
+before_cache:
+- rm -rf $HOME/.cache/electron-builder/wine
 cache:
   directories:
   - node_modules
-  - electron/downloads
   - semantic
+  - electron/downloads
+  - $HOME/.cache/electron
+  - $HOME/.cache/electron-builder
+  - $HOME/.npm/_prebuilds
 addons:
   artifacts:
     s3_region: us-west-2
@@ -14,11 +25,10 @@ addons:
     paths: $(ls builds/*.zip builds/*.tar.gz builds/*.AppImage builds/*.exe | tr "\n" ":")
     target_paths:
     - "/"
-  apt:
-    packages:
-    - wine
 before_install:
 - gem install sass
-script: make && make electron-linux electron-darwin electron-windows
+script:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make build electron-linux; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make build electron-darwin electron-windws; fi
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci
