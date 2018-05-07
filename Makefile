@@ -130,7 +130,7 @@ electron-darwin:
 	rm -rf electron/pgsql
 	cd electron; unzip -q downloads/$(PG_BIN_DARWIN)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4.app stackbuilder
-	$(NPATH)/electron-builder --mac dmg
+	$(NPATH)/electron-builder --mac zip
 
 electron-linux:
 	mkdir -p electron/downloads

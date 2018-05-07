@@ -15,6 +15,7 @@ const pgsql = path.join(__dirname, 'pgsql');
 const pgconf = path.join(__dirname, 'pgconf');
 const pgsock = fs.mkdtempSync(path.join(os.tmpdir(), '/vaultdb-'));
 const pgConfData = [
+    `listen_addresses = ''`,
     `unix_socket_directories = '${pgsock}'`
 ].join('\n');
 
@@ -30,20 +31,22 @@ async function initDatabase() {
     let needCreate;
     if (!fs.existsSync(pgdata)) {
         console.log("Setup database...", __dirname);
-        console.log(childProcess.execSync(`${pgsql}/bin/initdb ${pgdata}`, {encoding: 'utf8'}));
+        console.log(childProcess.execFileSync(`${pgsql}/bin/initdb`, [pgdata], {encoding: 'utf8'}));
         fs.copyFileSync(`${pgconf}/pg_hba.conf`, `${pgdata}/pg_hba.conf`);
         needCreate = true;
     }
     fs.writeFileSync(`${pgdata}/postgresql.conf`, pgConfData);
-    const dbProc = childProcess.exec(`${pgsql}/bin/postgres -D ${pgdata}`);
+    const dbProc = childProcess.execFile(`${pgsql}/bin/postgres`, ['-D', pgdata]);
     console.log('Started PostgreSQL PID:', dbProc.pid);
+    dbProc.stdout.on('data', x => console.info("DB: " + x));
+    dbProc.stderr.on('data', x => console.warn("DB [E]: " + x));
     dbProc.on('exit', ev => {
         console.error("Database server exited", ev);
     });
     await sleep(1); // XXX timing hack to wait for db ready state.
     if (needCreate) {
         console.warn("Creating NEW database");
-        console.log(childProcess.execSync(`${pgsql}/bin/createdb -h ${pgsock}`, {encoding: 'utf8'}));
+        console.log(childProcess.execFileSync(`${pgsql}/bin/createdb`, ['-h', pgsock], {encoding: 'utf8'}));
     }
 }
 
