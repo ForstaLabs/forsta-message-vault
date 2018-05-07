@@ -113,16 +113,7 @@ electron-windows:
 	rm -rf electron/pgsql
 	cd electron; unzip -q downloads/$(PG_BIN_WINDOWS)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4 StackBuilder
-	$(NPATH)/electron-builder --win portable
-	$(NPATH)/electron-packager . \
-		--overwrite \
-		--platform win32 \
-		--arch x64 \
-		--out builds \
-		--quiet \
-		--executable-name $(APP_NAME)-$(APP_VERSION) \
-		$(ELECTRON_IGNORES)
-	cd builds; zip -qyr $(APP_NAME)-$(APP_VERSION)-windows.zip forsta-message-vault-win32-x64
+	$(NPATH)/electron-builder --win portable --publish never
 
 electron-darwin:
 	mkdir -p electron/downloads
@@ -130,7 +121,7 @@ electron-darwin:
 	rm -rf electron/pgsql
 	cd electron; unzip -q downloads/$(PG_BIN_DARWIN)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4.app stackbuilder
-	$(NPATH)/electron-builder --mac zip
+	$(NPATH)/electron-builder --mac zip --publish never
 
 electron-linux:
 	mkdir -p electron/downloads
@@ -138,7 +129,7 @@ electron-linux:
 	rm -rf electron/pgsql
 	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4 stackbuilder
-	$(NPATH)/electron-builder --linux AppImage
+	$(NPATH)/electron-builder --linux AppImage --publish never
 
 
 ########################################################
