@@ -6,7 +6,6 @@ RUN apt-get update && \
 RUN gem install sass
 WORKDIR /usr/src/client
 COPY package.json ./
-ENV NODE_ENV=production
 COPY . .
 RUN make
 EXPOSE 4096
