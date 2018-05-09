@@ -32,7 +32,17 @@
       "server",
       "electron",
       "!electron/downloads",
-      "!electron/pgdata"
+      "!electron/pgdata",
+      "!electron/extraFiles"
+    ],
+    "extraFiles": [
+      {
+        "from": "electron/extraFiles/${os}",
+        "to": "./",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "asar": false,
     "asarUnpack": [
