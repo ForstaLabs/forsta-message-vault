@@ -113,7 +113,7 @@ electron-windows:
 	rm -rf electron/pgsql
 	cd electron; unzip -q downloads/$(PG_BIN_WINDOWS)
 	cd electron/pgsql; rm -rf doc pgAdmin\ 4 StackBuilder
-	$(NPATH)/electron-builder --win portable --publish never
+	$(NPATH)/electron-builder --win nsis --publish never
 
 electron-darwin:
 	mkdir -p electron/downloads

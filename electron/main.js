@@ -12,8 +12,9 @@ const menu = require('./menu');
 const isUnix = os.platform() !== 'win32';
 const pgDataDir = path.join(os.homedir(), '.forsta_message_vault_pgdata');
 const pgDir = path.join(__dirname, 'pgsql');
-const pgPort = 32245;
-const pgHost = isUnix ? fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-')) : `localhost:${pgPort}`;
+const pgWindowsHost = 'localhost';
+const pgWindowsPort = 32245;
+const pgUnixSockDir = isUnix && fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-'));
 
 const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '..', 'dist', 'static', 'images');
@@ -21,11 +22,13 @@ const appIcon = nativeImage.createFromPath(path.join(imagesDir, 'logo.png'));
 
 let win;
 let started;
+let stopping = false;
 
 
 function showErrorAndDie(title, message) {
     console.error(`${title}: ${message}`);
     dialog.showErrorBox(title, message);
+    stopping = true;
     process.exit(1);
     process.kill(0);
 }
@@ -51,18 +54,23 @@ function execFile(file, args, options) {
 
 async function initDatabase() {
     let needCreate;
-    console.log("Setup database...", process.cwd());
     if (!fs.existsSync(pgDataDir)) {
-        console.log("Setup database...");
+        console.log("Setup database:", pgDataDir);
         console.log(execFileSync(path.join(pgDir, 'bin', 'initdb'), [pgDataDir]));
-        const hbaConf = isUnix ? 'local all all trust' : 'host all all localhost trust';
-        fs.writeFileSync(path.join(pgDataDir, 'pg_hba.conf'), hbaConf);
         needCreate = true;
     }
+    let hbaConf;
+    if (isUnix) {
+        hbaConf = 'local all all trust\n';
+    } else {
+        hbaConf = 'host all all 127.0.0.1/32 trust\r\n' + 
+                  'host all all ::1/128 trust\r\n';
+    }
+    fs.writeFileSync(path.join(pgDataDir, 'pg_hba.conf'), hbaConf);
     const pgConfData = isUnix ? [
         `listen_addresses = ''`,
-        `unix_socket_directories = '${pgHost}'`
-    ].join('\n') : `port=${pgPort}`;
+        `unix_socket_directories = '${pgUnixSockDir}'`
+    ].join('\n') : `port=${pgWindowsPort}`;
     fs.writeFileSync(path.join(pgDataDir, 'postgresql.conf'), pgConfData);
     const dbProc = execFile(path.join(pgDir, 'bin', 'postgres'), ['-D', pgDataDir]);
     console.log('Started PostgreSQL PID:', dbProc.pid);
@@ -81,7 +89,17 @@ async function initDatabase() {
     await sleep(2); // XXX timing hack to wait for db ready state.
     if (needCreate) {
         console.warn("Creating NEW database");
-        console.log(execFileSync(path.join(pgDir, 'bin', 'createdb'), ['-h', pgHost]));
+        dialog.showMessageBox({
+            title: "Creating new database",
+            message: `New database will be created at: ${pgDataDir}`
+        });
+        let args;
+        if (isUnix) {
+            args = ['-h', pgUnixSockDir];
+        } else {
+            args = ['-h', pgWindowsHost, '-p', pgWindowsPort];
+        }
+        console.log(execFileSync(path.join(pgDir, 'bin', 'createdb'), args));
     }
 }
 
@@ -148,7 +166,7 @@ app.once('ready', async () => {
     }
     process.env.PORT = port;
     process.env.RELAY_STORAGE_BACKING = 'postgres';
-    process.env.DATABASE_URL = pgHost;
+    process.env.DATABASE_URL = isUnix ? pgUnixSockDir : `postgres://${pgWindowsHost}:${pgWindowsPort}`;
     try {
         await require('../server');
     } catch(e) {
@@ -173,6 +191,8 @@ app.on('before-quit', () => {
 app.on('activate', showWindow);
 
 process.on('unhandledRejection', ev => {
-    console.error('Unhandled rejection: ' + ev.reason);
-    dialog.showErrorBox('Unhandled Rejection', ev.reason);
+    if (!stopping) {
+        console.error('Unhandled rejection: ' + ev.reason);
+        dialog.showErrorBox('Unhandled Rejection', ev.reason);
+    }
 });

@@ -1,6 +1,6 @@
 {
   "name": "forsta-message-vault",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "author": "Forsta Inc.",
   "description": "Forsta Message Vault",
   "engines": {
@@ -33,16 +33,14 @@
       "electron",
       "!electron/downloads",
       "!electron/pgdata",
-      "!electron/extraFiles"
+      "!electron/extraFiles",
+      "!electron/buildResources"
     ],
-    "compression": "store",
     "extraFiles": [
       {
         "from": "electron/extraFiles/${os}",
         "to": "resources/app/electron/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       }
     ],
     "asar": false,
@@ -50,7 +48,8 @@
       "electron/pgsql"
     ],
     "directories": {
-      "output": "builds"
+      "output": "builds",
+      "buildResources": "electron/buildResources"
     }
   },
   "main": "./electron/main.js",
@@ -88,7 +87,7 @@
   },
   "devDependencies": {
     "electron": "2.0.0",
-    "electron-builder": "20.11.1",
+    "electron-builder": "20.13.3",
     "eslint": "4.12.1",
     "grunt-contrib-watch": "1.0.0",
     "semantic-ui": "2.3.0",
