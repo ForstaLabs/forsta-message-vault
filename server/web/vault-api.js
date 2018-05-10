@@ -81,7 +81,8 @@ class VaultAPIv1 extends APIHandler {
 
     async onGetIntegrity(req, res, next) {
         const status = await this.server.bot.integrityChainVerificationStatus();
-        const demoCorruptionStatus = await this.server.bot.demoCorruptionStatus();
+        let demoCorruptionStatus = await this.server.bot.demoCorruptionStatus();
+        demoCorruptionStatus.offerCorruptionDemoUI = process.env.CORRUPTION_DEMO === 'on';
         res.status(200).json({status, demoCorruptionStatus});
     }
 

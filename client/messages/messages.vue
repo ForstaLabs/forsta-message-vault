@@ -285,7 +285,7 @@
                         </sui-table-body>
                     </sui-table>
                     <sui-button primary @click="beginScan" :icon="scanningIcon" :disabled="scanning" content="Initiate Full Integrity Scan" />
-                    <sui-button basic @click="showDemo=!showDemo" content="Simulated Corruption" />
+                    <sui-button v-if="demoCorruptionStatus.offerCorruptionDemoUI" basic @click="showDemo=!showDemo" content="Simulated Corruption" />
                     <sui-button floated="right" @click="showScan=!showScan" content="Hide" />
                 </sui-modal-content>
             </sui-modal> 
