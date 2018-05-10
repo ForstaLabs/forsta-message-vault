@@ -13,11 +13,12 @@ const menu = require('./menu');
 const pgdata = path.join(os.homedir(), '.forsta_message_vault_pgdata');
 const pgsql = path.join(__dirname, 'pgsql');
 const pgconf = path.join(__dirname, 'pgconf');
-const pgsock = fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-'));
-const pgConfData = [
+const isUnix = os.platform() !== 'win32';
+const pghost = isUnix ? fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-')) : 'localhost:32245';
+const pgConfData = isUnix ? [
     `listen_addresses = ''`,
-    `unix_socket_directories = '${pgsock}'`
-].join('\n');
+    `unix_socket_directories = '${pghost}'`
+].join('\n') : 'port=32245';
 
 const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '..', 'dist', 'static', 'images');
@@ -26,35 +27,62 @@ const appIcon = nativeImage.createFromPath(path.join(imagesDir, 'logo.png'));
 let win;
 let started;
 
-process.on('unhandledRejection', ev => {
-    console.error(ev.reason);
-    dialog.showErrorBox('Unhandled Rejection', ev.reason);
-});
+
+function showErrorAndDie(title, message) {
+    console.error(`${title}: ${message}`);
+    dialog.showErrorBox(title, message);
+    process.exit(1);
+    process.kill(0);
+}
 
 async function sleep(seconds) {
     await new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+function execFileSync(file, args, options) {
+    options = Object.assign({
+        encoding: 'utf8',
+        cwd: __dirname
+    }, options);
+    return childProcess.execFileSync(file, args, options);
+}
+
+function execFile(file, args, options) {
+    options = Object.assign({
+        cwd: __dirname
+    }, options);
+    return childProcess.execFile(file, args, options);
+}
+
 async function initDatabase() {
     let needCreate;
+    console.log("Setup database...", process.cwd());
     if (!fs.existsSync(pgdata)) {
-        console.log("Setup database...", __dirname);
-        console.log(childProcess.execFileSync(path.join(pgsql, 'bin', 'initdb'), [pgdata], {encoding: 'utf8'}));
+        console.log("Setup database...", process.cwd());
+        console.log(execFileSync(path.join(pgsql, 'bin', 'initdb'), [pgdata]));
         fs.copyFileSync(path.join(pgconf, 'pg_hba.conf'), path.join(pgdata, 'pg_hba.conf'));
         needCreate = true;
     }
     fs.writeFileSync(path.join(pgdata, 'postgresql.conf'), pgConfData);
-    const dbProc = childProcess.execFile(path.join(pgsql, 'bin', 'postgres'), ['-D', pgdata]);
+    const dbProc = execFile(path.join(pgsql, 'bin', 'postgres'), ['-D', pgdata]);
+        encoding: 'utf8',
     console.log('Started PostgreSQL PID:', dbProc.pid);
-    dbProc.stdout.on('data', x => console.info("DB: " + x));
-    dbProc.stderr.on('data', x => console.warn("DB [E]: " + x));
+    const dbLogs = [];
+    dbProc.stdout.on('data', x => {
+        console.info("DB: " + x);
+        dbLogs.push(x)
+    });
+    dbProc.stderr.on('data', x => {
+        console.warn("DB [E]: " + x);
+        dbLogs.push(x);
+    });
     dbProc.on('exit', ev => {
-        console.error("Database server exited", ev);
+        showErrorAndDie("Database server exited", dbLogs.slice(-100).join('\n'));
     });
     await sleep(1); // XXX timing hack to wait for db ready state.
     if (needCreate) {
         console.warn("Creating NEW database");
-        console.log(childProcess.execFileSync(path.join(pgsql, 'bin', 'createdb'), ['-h', pgsock], {encoding: 'utf8'}));
+        console.log(execFileSync(path.join(pgsql, 'bin', 'createdb'), ['-h', pghost]));
     }
 }
 
@@ -117,21 +145,15 @@ app.once('ready', async () => {
     try {
         await initDatabase();
     } catch(e) {
-        console.error("Database startup error: " + e.message);
-        dialog.showErrorBox("Database startup error", e.message);
-        process.exit(1);
-        return;
+        return showErrorAndDie('Database startup error', e.message);
     }
     process.env.PORT = port;
     process.env.RELAY_STORAGE_BACKING = 'postgres';
-    process.env.DATABASE_URL = pgsock;
+    process.env.DATABASE_URL = pghost;
     try {
         await require('../server');
     } catch(e) {
-        console.error("Web server startup error: " + e.message);
-        dialog.showErrorBox("Web server startup error", e.message);
-        process.exit(1);
-        return;
+        return showErrorAndDie("Web server startup error", e.message);
     }
 
     Menu.setApplicationMenu(menu)
@@ -150,3 +172,8 @@ app.on('before-quit', () => {
     }
 });
 app.on('activate', showWindow);
+
+process.on('unhandledRejection', ev => {
+    console.error('Unhandled rejection: ' + ev.reason);
+    dialog.showErrorBox('Unhandled Rejection', ev.reason);
+});

@@ -35,10 +35,11 @@
       "!electron/pgdata",
       "!electron/extraFiles"
     ],
+    "compression": "store",
     "extraFiles": [
       {
         "from": "electron/extraFiles/${os}",
-        "to": "./",
+        "to": "resources/app/electron/",
         "filter": [
           "**/*"
         ]
