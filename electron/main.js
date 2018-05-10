@@ -7,18 +7,13 @@ const childProcess = require('child_process');
 const {app, BrowserWindow, Tray, nativeImage, shell, Menu, dialog} = require('electron');
 const path = require('path');
 const process = require('process');
-const platform = os.platform();
 const menu = require('./menu');
 
-const pgdata = path.join(os.homedir(), '.forsta_message_vault_pgdata');
-const pgsql = path.join(__dirname, 'pgsql');
-const pgconf = path.join(__dirname, 'pgconf');
 const isUnix = os.platform() !== 'win32';
-const pghost = isUnix ? fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-')) : 'localhost:32245';
-const pgConfData = isUnix ? [
-    `listen_addresses = ''`,
-    `unix_socket_directories = '${pghost}'`
-].join('\n') : 'port=32245';
+const pgDataDir = path.join(os.homedir(), '.forsta_message_vault_pgdata');
+const pgDir = path.join(__dirname, 'pgsql');
+const pgPort = 32245;
+const pgHost = isUnix ? fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-')) : `localhost:${pgPort}`;
 
 const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '..', 'dist', 'static', 'images');
@@ -57,32 +52,36 @@ function execFile(file, args, options) {
 async function initDatabase() {
     let needCreate;
     console.log("Setup database...", process.cwd());
-    if (!fs.existsSync(pgdata)) {
-        console.log("Setup database...", process.cwd());
-        console.log(execFileSync(path.join(pgsql, 'bin', 'initdb'), [pgdata]));
-        fs.copyFileSync(path.join(pgconf, 'pg_hba.conf'), path.join(pgdata, 'pg_hba.conf'));
+    if (!fs.existsSync(pgDataDir)) {
+        console.log("Setup database...");
+        console.log(execFileSync(path.join(pgDir, 'bin', 'initdb'), [pgDataDir]));
+        const hbaConf = isUnix ? 'local all all trust' : 'host all all localhost trust';
+        fs.writeFileSync(path.join(pgDataDir, 'pg_hba.conf'), hbaConf);
         needCreate = true;
     }
-    fs.writeFileSync(path.join(pgdata, 'postgresql.conf'), pgConfData);
-    const dbProc = execFile(path.join(pgsql, 'bin', 'postgres'), ['-D', pgdata]);
-        encoding: 'utf8',
+    const pgConfData = isUnix ? [
+        `listen_addresses = ''`,
+        `unix_socket_directories = '${pgHost}'`
+    ].join('\n') : `port=${pgPort}`;
+    fs.writeFileSync(path.join(pgDataDir, 'postgresql.conf'), pgConfData);
+    const dbProc = execFile(path.join(pgDir, 'bin', 'postgres'), ['-D', pgDataDir]);
     console.log('Started PostgreSQL PID:', dbProc.pid);
     const dbLogs = [];
     dbProc.stdout.on('data', x => {
         console.info("DB: " + x);
-        dbLogs.push(x)
+        dbLogs.push(x);
     });
     dbProc.stderr.on('data', x => {
         console.warn("DB [E]: " + x);
         dbLogs.push(x);
     });
-    dbProc.on('exit', ev => {
+    dbProc.on('exit', () => {
         showErrorAndDie("Database server exited", dbLogs.slice(-100).join('\n'));
     });
-    await sleep(1); // XXX timing hack to wait for db ready state.
+    await sleep(2); // XXX timing hack to wait for db ready state.
     if (needCreate) {
         console.warn("Creating NEW database");
-        console.log(execFileSync(path.join(pgsql, 'bin', 'createdb'), ['-h', pghost]));
+        console.log(execFileSync(path.join(pgDir, 'bin', 'createdb'), ['-h', pgHost]));
     }
 }
 
@@ -149,14 +148,14 @@ app.once('ready', async () => {
     }
     process.env.PORT = port;
     process.env.RELAY_STORAGE_BACKING = 'postgres';
-    process.env.DATABASE_URL = pghost;
+    process.env.DATABASE_URL = pgHost;
     try {
         await require('../server');
     } catch(e) {
         return showErrorAndDie("Web server startup error", e.message);
     }
 
-    Menu.setApplicationMenu(menu)
+    Menu.setApplicationMenu(menu);
 
     const tray = new Tray(appIcon);
     tray.setToolTip(pkg.description || 'Forsta Message Vault');
