@@ -45,7 +45,9 @@
       {
         "from": "electron/extraFiles/${os}",
         "to": "resources/app/",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "asar": false,
