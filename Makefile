@@ -107,28 +107,28 @@ docker-db-clean:
 electron-clean:
 	rm -rf electron/pgdata
 
-electron-windows:
-	mkdir -p electron/downloads
+electron-win:
+	mkdir -p electron/downloads/win
+	rm -rf electron/downloads/win/*
 	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_WINDOWS)
-	rm -rf electron/pgsql
-	cd electron; unzip -q downloads/$(PG_BIN_WINDOWS)
-	cd electron/pgsql; rm -rf doc pgAdmin\ 4 StackBuilder
+	cd electron/downloads/win; unzip -q ../$(PG_BIN_WINDOWS)
+	cd electron/downloads/win/pgsql && rm -rf doc pgAdmin\ 4 StackBuilder
 	$(NPATH)/electron-builder --win nsis --publish never
 
-electron-darwin:
-	mkdir -p electron/downloads
+electron-mac:
+	mkdir -p electron/downloads/mac
+	rm -rf electron/downloads/mac/*
 	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_DARWIN)
-	rm -rf electron/pgsql
-	cd electron; unzip -q downloads/$(PG_BIN_DARWIN)
-	cd electron/pgsql; rm -rf doc pgAdmin\ 4.app stackbuilder
+	cd electron/downloads/mac; unzip -q ../$(PG_BIN_DARWIN)
+	cd electron/downloads/mac/pgsql; rm -rf doc pgAdmin\ 4.app stackbuilder
 	$(NPATH)/electron-builder --mac zip --publish never
 
 electron-linux:
-	mkdir -p electron/downloads
+	mkdir -p electron/downloads/linux
+	rm -rf electron/downloads/linux/*
 	cd electron/downloads; wget -qc $(PG_SITE)$(PG_BIN_LINUX)
-	rm -rf electron/pgsql
-	cd electron; tar zxf downloads/$(PG_BIN_LINUX)
-	cd electron/pgsql; rm -rf doc pgAdmin\ 4 stackbuilder
+	cd electron/downloads/linux; tar zxf ../$(PG_BIN_LINUX)
+	cd electron/downloads/linux/pgsql; rm -rf doc pgAdmin\ 4 stackbuilder
 	$(NPATH)/electron-builder --linux AppImage --publish never
 
 

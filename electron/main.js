@@ -11,7 +11,7 @@ const menu = require('./menu');
 
 const isUnix = os.platform() !== 'win32';
 const pgDataDir = path.join(os.homedir(), '.forsta_message_vault_pgdata');
-const pgDir = path.join(__dirname, 'pgsql');
+const pgDir = path.join(__dirname, '..', 'pgsql');
 const pgWindowsHost = 'localhost';
 const pgWindowsPort = 32245;
 const pgUnixSockDir = isUnix && fs.mkdtempSync(path.join(os.tmpdir(), 'vaultdb-'));

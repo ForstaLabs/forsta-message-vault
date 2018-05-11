@@ -1,17 +1,17 @@
 Forsta Message Vault
 ========
-This is a bot that performs secure autonomous monitoring of 
-an entire organization's messaging traffic, storing all messages 
+This is a bot that performs secure autonomous monitoring of
+an entire organization's messaging traffic, storing all messages
 and useful metadata to support basic forensic investigation and export
 via a web-based UI.
 
 Integrity of all data and its appearance through time
 is ensured via SHA256 fingerprints and Merkle-chains; proof of no regeneration
-of fingerprints is ensured via external blockchain association 
+of fingerprints is ensured via external blockchain association
 (using opentimestamps.org).
 
-This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot) 
-codebase, which you can use for secure message receipt, processing, storage, and/or transmission 
+This is a descendant of the [Forsta Messaging Bot](https://github.com/ForstaLabs/messaging-bot)
+codebase, which you can use for secure message receipt, processing, storage, and/or transmission
 on the Forsta messaging platform.
 
 Please see the [CHANGELOG](https://github.com/ForstaLabs/message-vault/blob/master/CHANGELOG.md)
@@ -22,47 +22,54 @@ for the current set of features!
 [![License](https://img.shields.io/npm/l/forsta-message-vault.svg)](https://github.com/ForstaLabs/message-vault)
 
 
-The Why &mdash; Decentralized Data Security
---------
-
-What is important to Forsta is that **your messaging data** is only accessible to 
-messaging clients that **you are in control** of, whether the client is an app 
-running on the phone in your pocket, or a bot that is running on a server in your
-datacenter or the compute cloud of your choice. 
-
-Some organizations need to be able perform forensic e-discovery on past 
-messages. Others may need to be able to automatically monitor for 
-transmission of sensitive information. Or maybe they want something to 
-automatically deliver sensitive information, or answer 
-help-desk questions and handle after-hours inquires. Or individual users 
-might want to be able to securely access their own message histories after 
-buying a new phone and reinstalling their messaging client.
-
-There are countless needs like these, and typically they are satisfied using 
-**centrally-managed** infrastructure that can receive, store, process, and respond 
-to messages as needed. Even systems that have pluggable architectures 
-to facilitate outside development of these sorts of capabilities usually rely on a 
-centralized approach. Unfortunately, the centralized approach provides a 
-tempting, centralized target for outside 
-attackers -- and it also requires users to trust that *insiders* won't abuse 
-their access to all messages. Forsta is different.
-
-Forsta does not offer anything that depends on centralized receipt, storage, or 
-processing of users’ messaging data.  Instead, Forsta makes it trivial for 
-*others* to run messaging “bots” to perform these functions. These bots are just 
-another kind of messaging client, like the messaging clients running in users’ 
-browsers and on their phones. And just like the other messaging clients, Forsta 
-bots send and receive end-to-end encrypted messages to do their work **while 
-running in a context controlled by the user**.
-
-
 Quick Start
 --------
+## Hosted Options
 These deployment buttons can be used to validate that this message vault
-will meet your organizations needs with as little setup pain as possible.  
+will meet your organizations needs with as little setup pain as possible.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/message-vault)
 [![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
+
+## Bundled Download Options (embedded database)
+For serious deployments we recommend you run your own database server, but for
+small sites or testing these bundles may suffice.
+[Download v0.6.3 - Linux](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-linux.AppImage)
+[Download v0.6.3 - macOS](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-mac.zip)
+[Download v0.6.3 - Windows](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-win.exe)
+
+
+Decentralized Data Security
+--------
+What is important to Forsta is that **your messaging data** is only accessible to
+messaging clients that **you are in control** of, whether the client is an app
+running on the phone in your pocket, or a bot that is running on a server in your
+datacenter or the compute cloud of your choice.
+
+Some organizations need to be able perform forensic e-discovery on past
+messages. Others may need to be able to automatically monitor for
+transmission of sensitive information. Or maybe they want something to
+automatically deliver sensitive information, or answer
+help-desk questions and handle after-hours inquires. Or individual users
+might want to be able to securely access their own message histories after
+buying a new phone and reinstalling their messaging client.
+
+There are countless needs like these, and typically they are satisfied using
+**centrally-managed** infrastructure that can receive, store, process, and respond
+to messages as needed. Even systems that have pluggable architectures
+to facilitate outside development of these sorts of capabilities usually rely on a
+centralized approach. Unfortunately, the centralized approach provides a
+tempting, centralized target for outside
+attackers -- and it also requires users to trust that *insiders* won't abuse
+their access to all messages. Forsta is different.
+
+Forsta does not offer anything that depends on centralized receipt, storage, or
+processing of users’ messaging data.  Instead, Forsta makes it trivial for
+*others* to run messaging “bots” to perform these functions. These bots are just
+another kind of messaging client, like the messaging clients running in users’
+browsers and on their phones. And just like the other messaging clients, Forsta
+bots send and receive end-to-end encrypted messages to do their work **while
+running in a context controlled by the user**.
 
 
 Install Requirements
@@ -70,7 +77,7 @@ Install Requirements
  * Node.js 8 (or newer)
  * Ruby
    * sass (`gem install sass`)
-   
+
 
 Installation
 --------
@@ -78,7 +85,9 @@ You can choose from our official docker image or NPM package depending on your
 preference.
 
 ### Docker
-To run a stack using docker-compose that includes postgres for storage, just get the [`docker-compose.yml`](./docker-compose.yml) file from the top level of this repository and
+To run a stack using docker-compose that includes postgres for storage, just
+get the [`docker-compose.yml`](./docker-compose.yml) file from the top level
+of this repository and run:
 
     docker-compose up
 
@@ -89,7 +98,7 @@ To run a stack using docker-compose that includes postgres for storage, just get
 
 Developer Install
 --------
-If you want to extend the Forsta Message Vault or just get closer to the code, 
+If you want to extend the Forsta Message Vault or just get closer to the code,
 you can install and run directly from the source code:
 
     git clone https://github.com/ForstaLabs/message-vault.git
@@ -104,6 +113,7 @@ the server, be sure to set the following environment variables:
     DATABASE_URL=postgres://postgres@localhost/postgres
 
 (That database URL is for the default docker postgres you'll get if you do a `make docker-db-run`.)
+
 
 Usage
 --------

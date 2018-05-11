@@ -1,6 +1,6 @@
 {
   "name": "forsta-message-vault",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "author": "Forsta Inc.",
   "description": "Forsta Message Vault",
   "engines": {
@@ -27,6 +27,7 @@
   "build": {
     "appId": "io.forsta.message-vault",
     "productName": "Forsta Message Vault",
+    "artifactName": "${name}-${version}-${os}.${ext}",
     "files": [
       "dist",
       "server",
@@ -34,12 +35,16 @@
       "!electron/downloads",
       "!electron/pgdata",
       "!electron/extraFiles",
-      "!electron/buildResources"
+      "!electron/buildResources",
+      {
+        "from": "electron/downloads/${os}/pgsql",
+        "to": "pgsql"
+      }
     ],
     "extraFiles": [
       {
         "from": "electron/extraFiles/${os}",
-        "to": "resources/app/electron/",
+        "to": "resources/app/",
         "filter": ["**/*"]
       }
     ],

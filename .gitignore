@@ -10,5 +10,4 @@ dist
 .DS_Store
 electron/pgsql
 electron/downloads
-electron/pgdata
 builds
