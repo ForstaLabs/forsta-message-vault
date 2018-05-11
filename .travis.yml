@@ -20,15 +20,14 @@ cache:
 addons:
   artifacts:
     s3_region: us-west-2
-    debug: true
     working_dir: builds
-    paths: $(ls builds/*.zip builds/*.tar.gz builds/*.AppImage builds/*.exe | tr "\n" ":")
+    paths: $(ls builds/*-mac.zip builds/*-linux.AppImage builds/*-win.exe | tr "\n" ":")
     target_paths:
     - "/"
 before_install:
 - gem install sass -v 3.4.23
 script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make electron-linux; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make electron-darwin electron-windows; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j electron-mac electron-win; fi
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci
