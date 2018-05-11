@@ -20,7 +20,10 @@ const port = Number(process.env['PORT']) || 14096;
 const imagesDir = path.join(__dirname, '..', 'dist', 'static', 'images');
 const appIcon = nativeImage.createFromPath(path.join(imagesDir, 'logo.png'));
 
+const dbLogs = [];
+
 let win;
+let tray;
 let started;
 let stopping = false;
 
@@ -28,7 +31,12 @@ let stopping = false;
 function showErrorAndDie(title, message) {
     console.error(`${title}: ${message}`);
     dialog.showErrorBox(title, message);
+    shutdown();
+}
+
+function shutdown() {
     stopping = true;
+    app.quit();
     process.exit(1);
     process.kill(0);
 }
@@ -74,7 +82,6 @@ async function initDatabase() {
     fs.writeFileSync(path.join(pgDataDir, 'postgresql.conf'), pgConfData);
     const dbProc = execFile(path.join(pgDir, 'bin', 'postgres'), ['-D', pgDataDir]);
     console.log('Started PostgreSQL PID:', dbProc.pid);
-    const dbLogs = [];
     dbProc.stdout.on('data', x => {
         console.info("DB: " + x);
         dbLogs.push(x);
@@ -104,9 +111,6 @@ async function initDatabase() {
 }
 
 
-if (app.dock) {
-    app.dock.setIcon(appIcon);
-}
 
 function showWindow() {
     if (!win) {
@@ -154,45 +158,66 @@ function createWindow() {
     win.loadURL(`http://localhost:${port}`);
 }
 
-
-app.once('ready', async () => {
-    // This method will be called when Electron has finished
-    // initialization and is ready to create browser windows.
-    // Some APIs can only be used after this event occurs.
-    try {
-        await initDatabase();
-    } catch(e) {
-        return showErrorAndDie('Database startup error', e.message);
-    }
-    process.env.PORT = port;
-    process.env.RELAY_STORAGE_BACKING = 'postgres';
-    process.env.DATABASE_URL = isUnix ? pgUnixSockDir : `postgres://${pgWindowsHost}:${pgWindowsPort}`;
-    try {
-        await require('../server');
-    } catch(e) {
-        return showErrorAndDie("Web server startup error", e.message);
-    }
-
-    Menu.setApplicationMenu(menu);
-
-    const tray = new Tray(appIcon);
-    tray.setToolTip(pkg.description || 'Forsta Message Vault');
-    tray.on('click', showWindow);
-    started = true;
-    createWindow();
-});
-app.on('before-quit', () => {
-    console.warn("Shutdown: Destroying window");
-    if (win) {
-        win.destroy();
-        win = null;
-    }
-});
-app.on('activate', showWindow);
-
-process.on('unhandledRejection', ev => {
+process.on('unhandledrejection', ev => {
     if (!stopping) {
         console.error('Unhandled rejection: ' + ev.reason);
         dialog.showErrorBox('Unhandled Rejection', ev.reason);
     }
 });
+
+function main() {
+    if (app.makeSingleInstance(showWindow)) {
+        console.warn("Already running in another process");
+        process.exit(0);
+        return;
+    }
+    if (app.dock) {
+        app.dock.setIcon(appIcon);
+    }
+    app.once('ready', async () => {
+        tray = new Tray(appIcon);
+        tray.setToolTip(pkg.description || 'Forsta Message Vault');
+        tray.setContextMenu(Menu.buildFromTemplate([{
+            label: 'Shutdown',
+            click: shutdown
+        }, {
+            label: 'Database logs',
+            click: () => {
+                dialog.showMessageBox({
+                    title: "Database logs",
+                    message: dbLogs.join('\n')
+                });
+            }
+        }]));
+
+        try {
+            await initDatabase();
+        } catch(e) {
+            return showErrorAndDie('Database startup error', e.message);
+        }
+        process.env.PORT = port;
+        process.env.RELAY_STORAGE_BACKING = 'postgres';
+        process.env.DATABASE_URL = isUnix ? pgUnixSockDir : `postgres://${pgWindowsHost}:${pgWindowsPort}`;
+        try {
+            await require('../server');
+        } catch(e) {
+            return showErrorAndDie("Web server startup error", e.message);
+        }
+
+        Menu.setApplicationMenu(menu);
+
+        started = true;
+        createWindow();
+        tray.on('click', showWindow);
+    });
+    app.on('before-quit', () => {
+        console.warn("Shutdown: Destroying window");
+        if (win) {
+            win.destroy();
+            win = null;
+        }
+    });
+    app.on('activate', showWindow);
+}
+
+main();
