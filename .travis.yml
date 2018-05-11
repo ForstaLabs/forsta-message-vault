@@ -27,7 +27,7 @@ addons:
 before_install:
 - gem install sass -v 3.4.23
 script:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make electron-linux; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j electron-mac electron-win; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j electron-linux electron-mac; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make electron-win; fi
 notifications:
   webhooks: https://integration-bot.forsta.io/travisci
