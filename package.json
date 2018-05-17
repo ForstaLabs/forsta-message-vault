@@ -84,7 +84,7 @@
     "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "morgan": "1.9.0",
-    "object-hash": "^1.2.0",
+    "object-hash": "1.2.0",
     "swearjar": "^0.2.0",
     "uuid": "^3.1.0",
     "vue": "^2.5.9",
