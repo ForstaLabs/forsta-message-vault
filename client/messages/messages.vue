@@ -25,6 +25,10 @@
         max-width: 40vw;
     }
 
+    span.thread-title.muted {
+        color: lightgray;
+    }
+
     span.thread-title.obscured, div.message-body.obscured { 
         color: transparent;
         text-shadow: rgba(0, 0, 0, 0.8) 0px 0px 12px;
@@ -135,7 +139,7 @@
                 </div>
                 <div class="header">
                     <a data-tooltip='filter for this thread ID' @click="addThreadFilter(m)"><i class="large comments icon" :style="threadColor(m.threadId)"></i></a>
-                    <span class="thread-title" :class="{obscured: obscured}" @click="flipscure">{{threadTitle(m)}}</span>
+                    <span class="thread-title" :class="{obscured: obscured, muted: !threadTitle(m)}" @click="flipscure">{{threadTitle(m) || 'Untitled Thread'}}</span>
                 </div>
                 <div class="meta">{{m.distribution.pretty}}</div>
                 <div class="description">
@@ -675,7 +679,7 @@ module.exports = {
         },
         threadTitle: function(m) {
             const message = m.payload.find(x => x.version === 1);
-            return message.threadTitle || '<thread title not defined>';
+            return message.threadTitle;
         },
         attachmentName: function(m, idx) {
             const message = m.payload.find(x => x.version === 1);

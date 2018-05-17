@@ -60,6 +60,7 @@ function htmlDoc({ query, exportDate, rows, tzoffset }) {
                 .clickable { cursor: pointer; }
                 .query-item { padding:.25em; }
                 .integrity { color: #db2828!important; }
+                span.thread-title.muted { color: lightgray; }
             </style>
         </head>
         <body>
@@ -100,7 +101,7 @@ function htmlRow(row, tzoffset) {
                 </div>
                 <div class="header">
                     <a data-tooltip="thread ID ${row.threadId}"><i class="large comments icon" style="color: ${threadColor(row.threadId)};"></i></a>
-                    <span class="thread-title" data-tooltip="thread ID ${row.threadId}">${threadTitle(row)}</span>
+                    <span class="thread-title${threadTitle(row) ? '' : ' muted'}" data-tooltip="thread ID ${row.threadId}">${threadTitle(row) || 'Untitled Thread'}</span>
                 </div>
                 <div class="meta">${row.distribution.pretty}</div>
                 <div class="description">
@@ -198,7 +199,7 @@ function msgBodyHtml(record) {
 
 function threadTitle(record) {
     const message = record.payload.find(x => x.version === 1);
-    return message.threadTitle || '&lt;thread title not defined&gt;';
+    return message.threadTitle;
 }
 
 function threadColor(id) {
