@@ -5,7 +5,7 @@
     <div class="ui main text container" style="margin-top: 80px;">
         <div class="ui container center aligned">
             <div v-if="monitor" class="ui basic segment huge">
-                <h1 class="ui header">
+                <h1>
                     <i class="circular icon add user"></i>
                     Create Catch-All User
                 </h1>
@@ -16,7 +16,7 @@
                 Please authenticate as an <b>org administrator</b> to create this new user.
             </div>
             <div v-if="!monitor" class="ui basic segment huge">
-                <h1 class="ui header">
+                <h1>
                     <i class="large circular icon user"></i>
                     Connect User
                 </h1>
@@ -81,11 +81,11 @@ function setup() {
 function requestAuth() {
     var tag = this.tag;
     this.loading = true;
-    util.fetch.call(this, '/api/onboard/authcode/v1/' + tag)
+    util.fetch.call(this, '/api/onboard/atlasauth/request/v1/' + tag)
     .then(result => {
         this.loading = false;
         if (result.ok) {
-            this.$router.push({ name: 'onboardCode', params: { tag: this.tag }});
+            this.$router.push({ name: 'onboardAuth', params: { tag: this.tag, type: result.theJson.type }});
             return false;
         } else {
             util.addFormErrors('enter-tag', { tag: util.mergeErrors(result.theJson) });
