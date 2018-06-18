@@ -85,8 +85,8 @@ class OnboardAPIV1 extends APIHandler {
     constructor(options) {
         super(options);
         this.router.get('/status/v1', this.asyncRoute(this.onStatusGet, false));
-        this.router.get('/authcode/v1/:tag', this.asyncRoute(this.onRequestAtlasLoginCode, false));
-        this.router.post('/authcode/v1/:tag', this.asyncRoute(this.onCompleteAtlasLoginAndOnboard, false));
+        this.router.get('/atlasauth/request/v1/:tag', this.asyncRoute(this.onRequestAtlasAuthentication, false));
+        this.router.post('/atlasauth/complete/v1/:tag', this.asyncRoute(this.onCompleteAtlasLoginAndOnboard, false));
     }
 
     async onStatusGet(req, res, next) {
@@ -96,10 +96,7 @@ class OnboardAPIV1 extends APIHandler {
         });
     }
 
-    async onRequestAtlasLoginCode(req, res) {
-        /* Request authcode for an Atlas admin user.  This request should be followed
-         * by an API call to the sibling POST method using a payload of the SMS auth
-         * code sent to the user's SMS device. */
+    async onRequestAtlasAuthentication(req, res) {
         const tag = req.params.tag;
         if (!tag) {
             res.status(412).json({
@@ -109,18 +106,15 @@ class OnboardAPIV1 extends APIHandler {
             return;
         }
         try {
-            await BotAtlasClient.requestAuthenticationCode(tag);
+            let result = await BotAtlasClient.requestAuthentication(tag);
+            res.status(200).json({type: result.type});
         } catch (e) {
             res.status(e.code).json(e.json);
-            return;
         }
-        res.status(200).json({status: 'happy'});
         return;
     }
 
     async onCompleteAtlasLoginAndOnboard(req, res) {
-        /* Complete registration using the SMS auth code that the user should have received
-         * following a call to `onAuthCodeGet`. */
         const tag = req.params.tag;
         if (!tag) {
             res.status(412).json({
@@ -129,17 +123,38 @@ class OnboardAPIV1 extends APIHandler {
             });
             return;
         }
-        const code = req.body.code;
-        if (!code) {
+        const type = req.body.type;
+        const value = req.body.value;
+        if (!type) {
             res.status(412).json({
                 error: 'missing_arg',
-                message: 'Missing payload param: code'
+                message: 'Missing payload param: type'
+            });
+            return;
+        }
+        if (!value) {
+            res.status(412).json({
+                error: 'missing_arg',
+                message: 'Missing payload param: value'
             });
             return;
         }
         let onboarderClient;
         try {
-            onboarderClient = await BotAtlasClient.authenticateViaCode(tag, code);
+            if (type === 'sms') {
+                console.log('about to sms auth with', tag, value);
+                onboarderClient = await BotAtlasClient.authenticateViaCode(tag, value);
+                console.log('returned with', onboarderClient);
+            } else if (type === 'password') {
+                console.log('about to password auth with', tag, value);
+                onboarderClient = await BotAtlasClient.authenticateViaPassword(tag, value);
+                console.log('returned with', onboarderClient);
+            } else {
+                res.status(412).json({
+                    error: 'value_error',
+                    message: 'Missing payload param: type must be sms or password'
+                });
+            }
         } catch (e) {
             if (e.code == 429) {
                 res.status(403).json({ "non_field_errors": ["Too many requests, please try again later."] });
