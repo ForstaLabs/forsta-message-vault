@@ -5,7 +5,6 @@ const relay = require('librelay');
 const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
 
-
 async function genToken(userId) {
     let secret = await relay.storage.get('authentication', 'jwtsecret');
     if (!secret) {
@@ -148,6 +147,18 @@ class OnboardAPIV1 extends APIHandler {
             } else if (type === 'password') {
                 console.log('about to password auth with', tag, value);
                 onboarderClient = await BotAtlasClient.authenticateViaPassword(tag, value);
+                console.log('returned with', onboarderClient);
+            } else if (type === 'totp') {
+                const otp = req.body.otp;
+                if (!otp) {
+                    res.status(412).json({
+                        error: 'missing_arg',
+                        message: 'Missing payload param: otp'
+                    });
+                    return;
+                }
+                console.log('about to password+totp auth with', tag, value, otp);
+                onboarderClient = await BotAtlasClient.authenticateViaPasswordOtp(tag, value, otp);
                 console.log('returned with', onboarderClient);
             } else {
                 res.status(412).json({
