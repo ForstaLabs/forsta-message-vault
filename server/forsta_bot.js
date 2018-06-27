@@ -24,10 +24,6 @@ const objectHashConfig = {
     excludeKeys: key => ['integrity', 'fullCount'].includes(key)
 };
 
-async function sleep(ms) { 
-    return await new Promise(resolve => setTimeout(resolve, ms)); 
-}
-
 function countify(n, label) {
     return `${n} ${n == 1 ? label : (label + 's')}`;
 }
@@ -290,7 +286,7 @@ class ForstaBot {
         }
         if (auth.code != code) {
             this.incrementAuthFailCount();
-            await sleep(500); // throttle guessers
+            await relay.util.sleep(.5); // throttle guessers
             throw { statusCode: 403, info: { code: ['incorrect codewords, please try again'] } }; 
         }
 
@@ -491,7 +487,7 @@ class ForstaBot {
                 previousChainHash = chainHash;
             }
 
-            await sleep(batchThrottle);
+            await relay.util.sleep(batchThrottle);
             if (status.offset >= status.fullCount) break;
         }
         status.finished = Date.now();
@@ -555,7 +551,7 @@ class ForstaBot {
                 await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
                 console.log(`... and upgraded OTS`);
             }
-            await sleep(5000); // be polite with opentimestamps.org
+            await relay.util.sleep(5000); // be polite with opentimestamps.org
         }
     }
 
