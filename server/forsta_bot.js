@@ -486,7 +486,7 @@ class ForstaBot {
                 previousChainHash = chainHash;
             }
 
-            await relay.util.sleep(batchThrottle);
+            await relay.util.sleep(batchThrottle/1000);
             if (status.offset >= status.fullCount) break;
         }
         status.finished = Date.now();
@@ -550,7 +550,7 @@ class ForstaBot {
                 await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
                 console.log(`... and upgraded OTS`);
             }
-            await relay.util.sleep(5000); // be polite with opentimestamps.org
+            await relay.util.sleep(5); // be polite with opentimestamps.org
         }
     }
 
