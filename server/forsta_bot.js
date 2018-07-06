@@ -85,7 +85,6 @@ class ForstaBot {
         this.msgSender = await relay.MessageSender.factory();
         this.msgSender.addEventListener('keychange', this.onKeyChange.bind(this));
 
-        this.verifyIntegrityChain(true);
         this.backgroundInterval = setInterval(this.backgroundWork.bind(this), BACKGROUND_FREQUENCY_DELAY);
         await this.msgReceiver.connect();
     }
