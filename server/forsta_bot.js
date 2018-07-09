@@ -424,7 +424,6 @@ class ForstaBot {
         }
 
         while (true) {
-            const demoCorruption = await this.demoCorruptionStatus();
             const messages = await this.pgStore.getMessages({ limit: status.limit, offset: status.offset, hasIntegrity: true, orderby: 'received', ascending: 'yes' });
             status.fullCount = Math.max(status.fullCount, messages.length ? messages[0].fullCount : 0);
             await relay.storage.set('integrity', 'status', status);
@@ -432,13 +431,11 @@ class ForstaBot {
             for (let message of messages) {
                 console.log(`checking integrity of ${message.messageId}`);
 
-                if (demoCorruption.mainHash === message.messageId) message.corrupt = true;
                 const mainHash = objectHash(message, objectHashConfig);
                 let attachments = {};
                 for (let aid of message.attachmentIds) {
                     attachments[aid] = await this.pgStore.getAttachment(aid);
                 }
-                if (demoCorruption.attachmentsHash === message.messageId) attachments.corrupt = true;
                 const attachmentsHash = objectHash(attachments, objectHashConfig);
                 const chainHash = objectHash({ mainHash, attachmentsHash, previousChainHash }, objectHashConfig);
                 const now = Date.now();
@@ -562,28 +559,6 @@ class ForstaBot {
         await this.verifyAndUpgradeOpenTimeStamps();
         const stopTime = Date.now();
         console.log(`\nbackground work finished (took ${stopTime-startTime}ms)\n\n\n`);
-    }
-
-    async demoCorruptionToggle(category) {
-        const demoStatus = await this.demoCorruptionStatus();
-
-        let victim;
-        if (demoStatus[category]) {
-            delete demoStatus[category];
-        } else {
-            const [countProbe] = await this.pgStore.getMessages({ hasIntegrity: true, limit: 1 });
-            if (!countProbe || !countProbe.fullCount) return demoStatus;
-            const offset = Math.floor(countProbe.fullCount * Math.random());
-            [victim] = await this.pgStore.getMessages({ hasIntegrity: true, limit: 1, offset });
-            if (!victim) throw `random corruption victim at offset ${offset} didn't work out!`;
-            demoStatus[category] = victim.messageId;
-        }
-        await relay.storage.set('integrity', 'demo', demoStatus);
-        return demoStatus;
-    }
-
-    async demoCorruptionStatus() {
-        return await relay.storage.get('integrity', 'demo', {});
     }
 }
 

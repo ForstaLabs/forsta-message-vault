@@ -81,19 +81,11 @@ class VaultAPIv1 extends APIHandler {
 
     async onGetIntegrity(req, res, next) {
         const status = await this.server.bot.integrityChainVerificationStatus();
-        let demoCorruptionStatus = await this.server.bot.demoCorruptionStatus();
-        demoCorruptionStatus.offerCorruptionDemoUI = process.env.CORRUPTION_DEMO === 'on';
-        res.status(200).json({status, demoCorruptionStatus});
+        res.status(200).json({status});
     }
 
     async onPostIntegrity(req, res, next) {
         console.log('starting integrity scan');
-        const category = req.body.demoCorruptionToggle;
-        if (category) {
-            const result = await this.server.bot.demoCorruptionToggle(category);
-            res.status(200).json(result);
-            return;
-        }
         const force = req.body.force;
         if (force) {
             console.log('NOTE: forcing integrity scan');

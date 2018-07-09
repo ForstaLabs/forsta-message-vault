@@ -266,9 +266,9 @@
                     <sui-table striped fixed>
                         <sui-table-body>
                             <sui-table-row>
-                                <sui-table-cell text-align="right">Started {{timestamp(this.integrityStatus.started)}}</sui-table-cell>
+                                <sui-table-cell v-if="this.integrityStatus.started" text-align="right">Started {{timestamp(this.integrityStatus.started)}}</sui-table-cell>
                                 <sui-table-cell v-if="this.integrityStatus.finished">Finished {{timestamp(this.integrityStatus.finished)}}</sui-table-cell>
-                                <sui-table-cell class="diminished" v-else>Checking {{this.integrityStatus.offset}}-{{this.integrityStatus.offset + this.integrityStatus.limit}} of {{this.integrityStatus.fullCount}}...</sui-table-cell>
+                                <sui-table-cell class="diminished" v-else-if="this.integrityStatus.fullCount">Checking {{this.integrityStatus.offset}}-{{this.integrityStatus.offset + this.integrityStatus.limit}} of {{this.integrityStatus.fullCount}}...</sui-table-cell>
                             </sui-table-row>
                             <sui-table-row v-if="this.integrityStatus.mainHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Corruption</sui-table-cell>
@@ -289,37 +289,7 @@
                         </sui-table-body>
                     </sui-table>
                     <sui-button primary @click="beginScan" :icon="scanningIcon" :disabled="scanning" content="Initiate Full Integrity Scan" />
-                    <sui-button v-if="demoCorruptionStatus.offerCorruptionDemoUI" basic @click="showDemo=!showDemo" content="Simulated Corruption" />
                     <sui-button floated="right" @click="showScan=!showScan" content="Hide" />
-                </sui-modal-content>
-            </sui-modal> 
-            <sui-modal size="tiny" v-model="showDemo">
-                <sui-modal-header>
-                    <b>Simulate the Effect of...</b>
-                </sui-modal-header>
-                <sui-modal-content>
-                    <p class="integrity">These controls simulate changes in randomly-chosen messages.</p>
-                    <p>
-                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('mainHash')">
-                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.mainHash">
-                            <label class="clickable" @click.prevent><b>Envelope/Body Corruption</b></label>
-                        </div>
-                        <br /><i><small>This integrity check detects any changes in body, timing, and distribution.</small></i>
-                    </p>
-                    <p>
-                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('attachmentsHash')">
-                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.attachmentsHash">
-                            <label class="clickable" @click.prevent><b>Attachments Corruption</b></label>
-                        </div>
-                        <br /><i><small>This integrity check detects any changes in attached data.</small></i>
-                    </p>
-                    <p>
-                        <b>Message Chain Corruption</b> (will be caused by either of the above)
-                        <br /><i><small>This integrity check detects any message insertion/deletion/reordering.</small></i>
-                    </p>
-                    <sui-button floated="right" @click="showDemo=!showDemo" content="Close" />
-                    <br />
-                    <br />
                 </sui-modal-content>
             </sui-modal> 
         </div>
@@ -430,9 +400,7 @@ module.exports = {
         exporting: false,
         messages: [],
         integrityStatus: {},
-        demoCorruptionStatus: {},
-        showScan: false,
-        showDemo: false
+        showScan: false
     }),
     computed: {
         filters: function() {
@@ -466,7 +434,7 @@ module.exports = {
             });
         },
         scanPercentage: function() {
-            const retval = Math.floor(100 * (this.integrityStatus.offset / this.integrityStatus.fullCount));
+            const retval = Math.floor(100 * ((this.integrityStatus.offset || 1.0) / (this.integrityStatus.fullCount || 1.0)));
             return isNaN(retval) ? 0 : retval;
         },
         scanProgressLabel: function() {
@@ -640,10 +608,8 @@ module.exports = {
         getIntegrityStatus: function() {
             util.fetch.call(this, '/api/vault/integrity/v1')
             .then(result => {
-                this.integrityStatus = result.theJson.status;
-                this.demoCorruptionStatus = result.theJson.demoCorruptionStatus;
+                this.integrityStatus = result.theJson.status || {};
                 console.log('got integrity status', this.integrityStatus);
-                console.log('got demo corruption status', this.demoCorruptionStatus);
             });
         },
         countify: function(n, label) {
@@ -696,13 +662,6 @@ module.exports = {
         timestamp: function(ts) {
             return ts ? moment(ts).format('llll') : '';
         },
-        demoToggle(category) {
-            this.demoCorruptionStatus[category] = !this.demoCorruptionStatus[category];
-            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { demoCorruptionToggle: category }})
-            .then(result => {
-                this.demoCorruptionStatus = result.theJson;
-            });
-        }
     },
     mounted: function() {
         util.checkPrerequisites.call(this);
