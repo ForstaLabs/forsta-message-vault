@@ -169,7 +169,7 @@
                 </div>
             </div>
             <div v-if="m.attachmentIds.length" class="content">
-                <a @click="getAttachment(m, i)" v-for="(_, i) of m.attachmentIds" data-tooltip="click to download" class="butspacer ui compact mini button">
+                <a @click="getAttachment(m, i)" v-for="(_, i) of m.attachmentIds" :key="i" data-tooltip="click to download" class="butspacer ui compact mini button">
                     <i class="download icon"></i> {{attachmentName(m, i)}}
                 </a>
             </div>
@@ -183,7 +183,7 @@
                 <div class="description integrity">
                     <span><i class="exclamation triangle icon"></i> Integrity Alerts</span>
                     <ul>
-                        <li v-for="issue in integrityIssues(m)" data-position="top left"><span :data-tooltip="issue.time">{{issue.text}}</span> <a class="icobut" data-tooltip="add filter for this issue" @click="addFilter(issue.filter, 'yes')"><sui-icon name="crosshairs" /></a></li>
+                        <li v-for="issue in integrityIssues(m)" :key="issue.text" data-position="top left"><span :data-tooltip="issue.time">{{issue.text}}</span> <a class="icobut" data-tooltip="add filter for this issue" @click="addFilter(issue.filter, 'yes')"><sui-icon name="crosshairs" /></a></li>
                     </ul>
                 </div>
             </div>
@@ -212,7 +212,7 @@
                 <form class="ui form">
                 <div class="fields">
                     <select v-model="pageSize" class="ui selection dropdown rightify" @change="offset=0">
-                        <option v-for="limit in selectablePageSizes" :value="limit">{{limit + ' Results / Page&nbsp;'}}</option>
+                        <option v-for="limit in selectablePageSizes" :key="limit" :value="limit">{{limit + ' Results / Page&nbsp;'}}</option>
                     </select>
                     <select v-model="ascending" class="ui selection dropdown">
                         <option value="yes">Oldest First</option>
@@ -240,7 +240,7 @@
             </div>
             <div class="filter-section" v-if="Object.keys(filters).length">
                 <h3>Current Filters</h3>
-                <a v-for="(v,k) in filters" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button">
+                <a v-for="(v,k) in filters" :key="k" @click="removeFilter(k)" data-tooltip="click to remove filter" class="butspacer ui compact primary basic button">
                     <i class="remove icon"></i> {{v.presentation}}
                 </a>
             </div>
@@ -258,68 +258,40 @@
                 </sui-modal-header>
                 <sui-modal-content>
                     <sui-progress
+                        v-if="integrityStatus.started"
                         :state="scanState"
                         indicating
                         :percent="scanPercentage"
                         :label="scanProgressLabel"
                     />
-                    <sui-table striped fixed>
+                    <sui-table striped fixed v-if="integrityStatus.started">
                         <sui-table-body>
                             <sui-table-row>
-                                <sui-table-cell text-align="right">Started {{timestamp(this.integrityStatus.started)}}</sui-table-cell>
-                                <sui-table-cell v-if="this.integrityStatus.finished">Finished {{timestamp(this.integrityStatus.finished)}}</sui-table-cell>
-                                <sui-table-cell class="diminished" v-else>Checking {{this.integrityStatus.offset}}-{{this.integrityStatus.offset + this.integrityStatus.limit}} of {{this.integrityStatus.fullCount}}...</sui-table-cell>
+                                <sui-table-cell v-if="integrityStatus.started" text-align="right">Started {{timestamp(integrityStatus.started)}}</sui-table-cell>
+                                <sui-table-cell v-if="integrityStatus.finished">Finished {{timestamp(this.integrityStatus.finished)}}</sui-table-cell>
+                                <sui-table-cell class="diminished" v-else-if="integrityStatus.fullCount">Checking {{integrityStatus.offset}}-{{integrityStatus.offset + integrityStatus.limit}} of {{integrityStatus.fullCount}}...</sui-table-cell>
                             </sui-table-row>
-                            <sui-table-row v-if="this.integrityStatus.mainHash" state="error" class="emphasized">
+                            <sui-table-row v-if="integrityStatus.mainHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Envelope/Body Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.mainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('mainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
+                                <sui-table-cell>{{countify(integrityStatus.mainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('mainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
-                            <sui-table-row v-if="this.integrityStatus.attachmentsHash" state="error" class="emphasized">
+                            <sui-table-row v-if="integrityStatus.attachmentsHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Attachments Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.attachmentsHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('attachmentsCorruption')"><sui-icon name="search" /></a></sui-table-cell>
+                                <sui-table-cell>{{countify(integrityStatus.attachmentsHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('attachmentsCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
-                            <sui-table-row v-if="this.integrityStatus.chainHash" state="error" class="emphasized">
+                            <sui-table-row v-if="integrityStatus.chainHash" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Message Chain Corruption</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.chainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('chainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
+                                <sui-table-cell>{{countify(integrityStatus.chainHash, 'Message')}} <a class="clickable icobut" @click="showCorruption('chainCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
-                            <sui-table-row v-if="this.integrityStatus.previousId" state="error" class="emphasized">
+                            <sui-table-row v-if="integrityStatus.previousId" state="error" class="emphasized">
                                 <sui-table-cell text-align="right"><sui-icon name="exclamation triangle" /> Previous-Message Misses</sui-table-cell>
-                                <sui-table-cell>{{countify(this.integrityStatus.previousId, 'Message')}} <a class="clickable icobut" @click="showCorruption('previousCorruption')"><sui-icon name="search" /></a></sui-table-cell>
+                                <sui-table-cell>{{countify(integrityStatus.previousId, 'Message')}} <a class="clickable icobut" @click="showCorruption('previousCorruption')"><sui-icon name="search" /></a></sui-table-cell>
                             </sui-table-row>
                         </sui-table-body>
                     </sui-table>
-                    <sui-button primary @click="beginScan" :icon="scanningIcon" :disabled="scanning" content="Initiate Full Integrity Scan" />
-                    <sui-button v-if="demoCorruptionStatus.offerCorruptionDemoUI" basic @click="showDemo=!showDemo" content="Simulated Corruption" />
+                    <sui-button v-if="offerScanOverride" color="orange" @click="beginScan(true)" icon="shield alternate" content="Force Full Integrity Scan" />
+                    <sui-button v-else primary @click="beginScan(false)" :icon="scanningIcon" :disabled="scanning" :content="(scanning ? 'Running' : 'Initiate') + ' Full Integrity Scan'" />
                     <sui-button floated="right" @click="showScan=!showScan" content="Hide" />
-                </sui-modal-content>
-            </sui-modal> 
-            <sui-modal size="tiny" v-model="showDemo">
-                <sui-modal-header>
-                    <b>Simulate the Effect of...</b>
-                </sui-modal-header>
-                <sui-modal-content>
-                    <p class="integrity">These controls simulate changes in randomly-chosen messages.</p>
-                    <p>
-                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('mainHash')">
-                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.mainHash">
-                            <label class="clickable" @click.prevent><b>Envelope/Body Corruption</b></label>
-                        </div>
-                        <br /><i><small>This integrity check detects any changes in body, timing, and distribution.</small></i>
-                    </p>
-                    <p>
-                        <div class="ui toggle checkbox" @click.prevent.stop="demoToggle('attachmentsHash')">
-                            <input type="checkbox" name="public" v-model="demoCorruptionStatus.attachmentsHash">
-                            <label class="clickable" @click.prevent><b>Attachments Corruption</b></label>
-                        </div>
-                        <br /><i><small>This integrity check detects any changes in attached data.</small></i>
-                    </p>
-                    <p>
-                        <b>Message Chain Corruption</b> (will be caused by either of the above)
-                        <br /><i><small>This integrity check detects any message insertion/deletion/reordering.</small></i>
-                    </p>
-                    <sui-button floated="right" @click="showDemo=!showDemo" content="Close" />
-                    <br />
-                    <br />
                 </sui-modal-content>
             </sui-modal> 
         </div>
@@ -338,6 +310,10 @@ const INTEGRITY_REFRESH_POLL_RATE = 1500;
 
 const PAGE_SIZES = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000, 10000];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[4];
+
+let lastIntegrityScanOffset = undefined;
+let lastIntegrityScanUpdateTime = undefined;
+let lastIntegrityScanUpdateDelta = undefined;
 
 async function getExport(queryString, acceptType) {
     let result;
@@ -430,9 +406,8 @@ module.exports = {
         exporting: false,
         messages: [],
         integrityStatus: {},
-        demoCorruptionStatus: {},
         showScan: false,
-        showDemo: false
+        offerScanOverride: false,
     }),
     computed: {
         filters: function() {
@@ -466,7 +441,7 @@ module.exports = {
             });
         },
         scanPercentage: function() {
-            const retval = Math.floor(100 * (this.integrityStatus.offset / this.integrityStatus.fullCount));
+            const retval = Math.floor(100 * ((this.integrityStatus.offset || 1.0) / (this.integrityStatus.fullCount || 1.0)));
             return isNaN(retval) ? 0 : retval;
         },
         scanProgressLabel: function() {
@@ -481,7 +456,7 @@ module.exports = {
         scanState: function() {
             const wellDone = this.integrityStatus.finished && (Date.now() - this.integrityStatus.finished > 3000)
             return wellDone ? 'disabled' : 'active';
-        }
+        },
     },
     watch: {
         queryString: function(val) {
@@ -640,18 +615,22 @@ module.exports = {
         getIntegrityStatus: function() {
             util.fetch.call(this, '/api/vault/integrity/v1')
             .then(result => {
-                this.integrityStatus = result.theJson.status;
-                this.demoCorruptionStatus = result.theJson.demoCorruptionStatus;
-                console.log('got integrity status', this.integrityStatus);
-                console.log('got demo corruption status', this.demoCorruptionStatus);
+                const newIntegrityStatus = result.theJson.status || {};
+                console.log('got integrity status', newIntegrityStatus);
+                if (lastIntegrityScanOffset != newIntegrityStatus.offset) {
+                    lastIntegrityScanUpdateTime = Date.now();
+                    lastIntegrityScanOffset = newIntegrityStatus.offset;
+                }
+                this.offerScanOverride = this.scanning && (Date.now() - lastIntegrityScanUpdateTime) > 10000;
+                this.integrityStatus = newIntegrityStatus;
             });
         },
         countify: function(n, label) {
             return `${n} ${n == 1 ? label : (label + 's')}`;
         },
-        beginScan: function() {
+        beginScan: function(force) {
             this.integrityStatus = {started:Date.now()};
-            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { }})
+            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { force }})
             .then(result => {
                 console.log('initiated integrity scan', result);
                 this.getIntegrityStatus();
@@ -696,13 +675,6 @@ module.exports = {
         timestamp: function(ts) {
             return ts ? moment(ts).format('llll') : '';
         },
-        demoToggle(category) {
-            this.demoCorruptionStatus[category] = !this.demoCorruptionStatus[category];
-            util.fetch.call(this, '/api/vault/integrity/v1', { method: 'post', body: { demoCorruptionToggle: category }})
-            .then(result => {
-                this.demoCorruptionStatus = result.theJson;
-            });
-        }
     },
     mounted: function() {
         util.checkPrerequisites.call(this);

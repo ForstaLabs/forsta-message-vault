@@ -29,6 +29,7 @@ class BotAtlasClient extends relay.AtlasClient {
                     method: "POST",
                     json: Object.assign({}, this.onboardingCreatedUser, { phone: botUser.phone, email: botUser.email, user_type: "BOT" })
                 });
+                console.log('GEP!!!!  botUser creation returned', botUser);
                 console.info(
                     `Created new ${botUser.is_monitor ? "MONITOR" : ""} bot user @${
                     botUser.tag.slug
