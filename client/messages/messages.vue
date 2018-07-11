@@ -621,7 +621,7 @@ module.exports = {
                     lastIntegrityScanUpdateTime = Date.now();
                     lastIntegrityScanOffset = newIntegrityStatus.offset;
                 }
-                this.offerScanOverride = this.scanning && (Date.now() - lastIntegrityScanUpdateTime) > 10000;
+                this.offerScanOverride = this.scanning && (Date.now() - lastIntegrityScanUpdateTime) > 20000;
                 this.integrityStatus = newIntegrityStatus;
             });
         },
