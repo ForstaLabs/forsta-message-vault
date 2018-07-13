@@ -373,25 +373,30 @@ class ForstaBot {
 
     async addIntegrity() { await serialize('add integrity', ()=>this.serializedAddIntegrity()); }
     async serializedAddIntegrity() {
-        const previous = await this.pgStore.getMessages({ limit: 1, hasIntegrity: true, orderby: 'received', ascending: 'no' });
-        let previousId = previous.length ? previous[0].messageId : null;
-        let previousChainHash = previous.length ? previous[0].integrity.chainHash : null;
+        await this.pgStore.beginProtectedTransaction();
+        try {
+            const previous = await this.pgStore.getMessages({ limit: 1, hasIntegrity: true, orderby: 'received', ascending: 'no' });
+            let previousId = previous.length ? previous[0].messageId : null;
+            let previousChainHash = previous.length ? previous[0].integrity.chainHash : null;
 
-        const messages = await this.pgStore.getMessages({ needsIntegrity: true, orderby: 'received', ascending: 'yes' });
+            const messages = await this.pgStore.getMessages({ needsIntegrity: true, orderby: 'received', ascending: 'yes' });
 
-        for (let message of messages) {
-            const mainHash = objectHash(message, objectHashConfig);
-            let attachments = {};
-            for (let aid of message.attachmentIds) {
-                attachments[aid] = await this.pgStore.getAttachment(aid);
+            for (let message of messages) {
+                const mainHash = objectHash(message, objectHashConfig);
+                let attachments = {};
+                for (let aid of message.attachmentIds) {
+                    attachments[aid] = await this.pgStore.getAttachment(aid);
+                }
+                const attachmentsHash = objectHash(attachments, objectHashConfig);
+                const chainHash = objectHash({mainHash, attachmentsHash, previousChainHash}, objectHashConfig);
+                const integrity = { mainHash, attachmentsHash, previousId, chainHash };
+                await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
+
+                previousId = message.messageId;
+                previousChainHash = chainHash;
             }
-            const attachmentsHash = objectHash(attachments, objectHashConfig);
-            const chainHash = objectHash({mainHash, attachmentsHash, previousChainHash}, objectHashConfig);
-            const integrity = { mainHash, attachmentsHash, previousId, chainHash };
-            await this.pgStore.updateIntegrity(message.messageId, JSON.stringify(integrity));
-
-            previousId = message.messageId;
-            previousChainHash = chainHash;
+        } finally {
+            await this.pgStore.endProtectedTransaction();
         }
     }
 

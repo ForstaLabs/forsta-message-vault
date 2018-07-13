@@ -88,6 +88,13 @@ class PGStore {
 
         this.queryGetAttachment = `
             SELECT data, type, name FROM ${this.prefix}_attachment WHERE id=$1`;
+
+        this.queryBeginProtectedTransaction = `
+            BEGIN;
+            SELECT pg_advisory_xact_lock(42);`;
+
+        this.queryEndProtectedTransaction = `
+            COMMIT;`;
     }
 
     async initialize() {
@@ -150,6 +157,17 @@ class PGStore {
             throw new Error("Failure in postgres message insert");
         
         return result;
+    }
+
+    async beginProtectedTransaction() {
+        const result = await this.client.query(this.queryBeginProtectedTransaction);
+        console.log('beginProtectedTransaction');
+        if (result.length !== 2 || result[1].rowCount !== 1) throw new Error('Failure in postgres protected-transaction lock');
+    }
+
+    async endProtectedTransaction() {
+        await this.client.query(this.queryEndProtectedTransaction);
+        console.log('endProtectedTransaction');
     }
 
     async getMessages({ 
