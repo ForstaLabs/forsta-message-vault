@@ -24,19 +24,8 @@ for the current set of features!
 
 Quick Start
 --------
-### Hosted (by you)
-These deployment buttons can be used to validate that this message vault
-will meet your organizations needs with as little setup pain as possible.
-
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ForstaLabs/message-vault)
-[![Deploy to Docker Cloud](https://files.cloud.docker.com/images/deploy-to-dockercloud.svg)](https://cloud.docker.com/stack/deploy/)
 
-### Bundled Download (embedded database)
-For serious deployments we recommend you run your own database server, but for
-small sites or testing these bundles may suffice.
- * [Download v0.6.3 - Linux](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-linux.AppImage)
- * [Download v0.6.3 - macOS](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-mac.zip)
- * [Download v0.6.3 - Windows](https://s3-us-west-2.amazonaws.com/forsta-message-vault-downloads/forsta-message-vault-0.6.3-win.exe)
 
 
 Decentralized Data Security
