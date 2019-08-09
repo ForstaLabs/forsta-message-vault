@@ -6,7 +6,7 @@
   "engines": {
     "node": "8"
   },
-  "repository": "ForstaLabs/message-vault",
+  "repository": "ForstaLabs/forsta-message-vault",
   "keywords": [
     "forsta",
     "e-discovery",
@@ -14,9 +14,9 @@
   ],
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/ForstaLabs/message-vault/issues"
+    "url": "https://github.com/ForstaLabs/forsta-message-vault/issues"
   },
-  "homepage": "https://github.com/ForstaLabs/message-vault#readme",
+  "homepage": "https://github.com/ForstaLabs/forsta-message-vault#readme",
   "scripts": {
     "postinstall": "SKIP_PACKAGES=1 make",
     "start": "node server"

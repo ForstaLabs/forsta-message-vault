@@ -1,8 +1,8 @@
 {
     "name": "Forsta Message Vault",
     "description": "A Forsta 'monitor' bot that stores of all message traffic in an organization for forensic e-discovery.",
-    "repository": "https://github.com/ForstaLabs/message-vault.git",
-    "logo": "https://raw.githubusercontent.com/ForstaLabs/message-vault/master/images/forsta-logo.svg?sanitize=true",
+    "repository": "https://github.com/ForstaLabs/forsta-message-vault.git",
+    "logo": "https://raw.githubusercontent.com/ForstaLabs/forsta-message-vault/master/images/forsta-logo.svg?sanitize=true",
     "keywords": ["forsta", "messaging", "bot", "e-discovery"],
     "website": "https://forsta.io",
     "addons": ["heroku-postgresql"],
